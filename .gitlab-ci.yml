@@ -1,0 +1,36 @@
+default:
+  tags:
+    - local
+
+## Global stages
+stages:
+  - setup
+  - build
+  - test
+
+setup:
+  stage: setup
+  script:
+    - curl -L https://foundry.paradigm.xyz | bash
+    - source /Users/lappi/.zshenv
+    - foundryup
+    - npm install
+  artifacts:
+    untracked: true
+    expire_in: 2 hours
+
+contract-build:
+  stage: build
+  dependencies:
+    - setup
+  script:
+    - source /Users/lappi/.zshenv
+    - npx nx build contract
+
+contract-test:
+  stage: test
+  dependencies:
+    - setup
+  script:
+    - source /Users/lappi/.zshenv
+    - npx nx test contract

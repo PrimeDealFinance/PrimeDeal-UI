@@ -1,0 +1,9 @@
+{
+  "name": "contract",
+  "version": "0.0.0",
+  "main": "src/Counter.sol",
+  "devDependencies": {},
+  "scripts": {
+    "build": "forge build"
+  }
+}

@@ -1,0 +1,4 @@
+build-contract:
+  stage: build
+  script:
+    - npx nx build contract

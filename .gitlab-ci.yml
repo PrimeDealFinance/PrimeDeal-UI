@@ -1,5 +1,10 @@
-tags:
-  - local
+default:
+  tags:
+    - local
+
+## Global stages
+stages:
+  - build
 
 build-contract:
   stage: build

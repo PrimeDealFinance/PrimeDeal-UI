@@ -4,6 +4,7 @@
   "main": "src/Counter.sol",
   "devDependencies": {},
   "scripts": {
-    "build": "forge build"
+    "build": "forge build",
+    "test": "forge test"
   }
 }

@@ -1,3 +1,6 @@
+tags:
+  - local
+
 build-contract:
   stage: build
   script:

@@ -6,8 +6,9 @@ default:
 stages:
   - setup
   - build
+  - test
 
-setup-tools:
+setup:
   stage: setup
   script:
     - curl -L https://foundry.paradigm.xyz | bash

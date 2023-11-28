@@ -11,6 +11,7 @@ setup-tools:
   stage: setup
   script:
     - curl -L https://foundry.paradigm.xyz | bash
+    - source /Users/lappi/.zshenv
     - foundryup
     - npm install
 

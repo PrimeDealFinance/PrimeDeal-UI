@@ -9,4 +9,5 @@ stages:
 build-contract:
   stage: build
   script:
+    - npm install
     - npx nx build contract

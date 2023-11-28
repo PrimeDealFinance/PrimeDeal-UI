@@ -4,10 +4,17 @@ default:
 
 ## Global stages
 stages:
+  - setup
   - build
+
+setup-tools:
+  stage: setup
+  script:
+    - curl -L https://foundry.paradigm.xyz | bash
+    - foundryup
+    - npm install
 
 build-contract:
   stage: build
   script:
-    - npm install
     - npx nx build contract

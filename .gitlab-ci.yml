@@ -27,6 +27,13 @@ contract-build:
     - source /Users/lappi/.zshenv
     - npx nx build contract
 
+frontend-build:
+  stage: build
+  dependencies:
+    - setup
+  script:
+    - npx nx build frontend
+
 contract-test:
   stage: test
   dependencies:

@@ -7,3 +7,9 @@ optimizer=true
 optimizer_runs=200
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
+remappings = [
+  '@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/',
+  '@uniswap-v3-core/contracts/=lib/uniswap-v3-core/contracts/',
+  '@uniswap-v3-periphery/contracts/=lib/uniswap-v3-periphery/contracts/',
+]

@@ -1,15 +1,23 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import "@uniswap-v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
+import "@uniswap-v3-periphery/contracts/interfaces/InonFungiblePositionManager.sol";
 import "@uniswap-v3-periphery/contracts/libraries/TransferHelper.sol";
-import "@uniswap-v3-core/contracts/libraries/TickMath.sol";
+// import "@uniswap-v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 
 contract PositionManager {
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
     IUniswapV3Factory public immutable uniswapFactory;
+
+    // TODO: remove
+    uint256 amount0ToMint = 0;
+    uint256 amount1ToMint = 0;
+    uint256 amount0ToAdd = 0;
+    uint256 amount1ToAdd = 0;
+    address recepient;
 
     struct Position {
         uint256 tokenId;
@@ -47,8 +55,8 @@ contract PositionManager {
     }
 
     function addLiquidity(
-        address tokenA,
-        address tokenB,
+        address payable tokenA,
+        address payable tokenB,
         uint24 fee,
         int24 tickLower,
         int24 tickUpper,
@@ -106,7 +114,7 @@ contract PositionManager {
             uint256 liquidity,
             uint256 amount0,
             uint256 amount1
-        ) = nonFungiblePositionManager.mint(params);
+        ) = nonfungiblePositionManager.mint(params);
 
         // Сохранение информации о позиции
         positions[tokenId] = Position({
@@ -124,14 +132,14 @@ contract PositionManager {
         
         //вернём юзеру остатки
         if (amount0 < amount0ToAdd) {
-            tokenA.approve(address(nonfungiblePositionManager), 0);
+            // tokenA.approve(address(nonfungiblePositionManager), 0);
             uint refund0 = amount0ToAdd - amount0;
-            tokenA.transfer(msg.sender, refund0);
+            tokenA.transfer(refund0);
         }
         if (amount1 < amount1ToAdd) {
-            tokenB.approve(address(nonfungiblePositionManager), 0);
+            // tokenB.approve(address(nonfungiblePositionManager), 0);
             uint refund1 = amount1ToAdd - amount1;
-            tokenB.transfer(msg.sender, refund1);
+            tokenB.transfer(refund1);
         }
 
         emit PositionOpened(tokenId, recepient, tickLower, tickUpper);
@@ -149,7 +157,7 @@ contract PositionManager {
                     deadline: block.timestamp
                 });
 
-        nonFungiblePositionManager.decreaseLiquidity(params);
+        nonfungiblePositionManager.decreaseLiquidity(params);
     }
 
     //функция чтобы забрать средства с позиции
@@ -162,12 +170,12 @@ contract PositionManager {
                 amount1Max: type(uint128).max
             });
 
-        nonFungiblePositionManager.collect(params);
+        nonfungiblePositionManager.collect(params);
     }
 
     //сжигаем нфт позиции
     function burnPosition(uint256 tokenId) internal {
-        nonFungiblePositionManager.burn(tokenId);
+        nonfungiblePositionManager.burn(tokenId);
     }
 
     //функция для проверки ончейн нужно ли закрывать позицию
@@ -222,7 +230,7 @@ contract PositionManager {
         address,
         uint256 tokenId,
         bytes calldata
-    ) external override returns (bytes4) {
+    ) external returns (bytes4) {
         return this.onERC721Received.selector;
     }
 }

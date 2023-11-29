@@ -121,6 +121,18 @@ contract PositionManager {
             amountB: amount1,
             owner: recipient
         });
+        
+        //вернём юзеру остатки
+        if (amount0 < amount0ToAdd) {
+            tokenA.approve(address(nonfungiblePositionManager), 0);
+            uint refund0 = amount0ToAdd - amount0;
+            tokenA.transfer(msg.sender, refund0);
+        }
+        if (amount1 < amount1ToAdd) {
+            tokenB.approve(address(nonfungiblePositionManager), 0);
+            uint refund1 = amount1ToAdd - amount1;
+            tokenB.transfer(msg.sender, refund1);
+        }
 
         emit PositionOpened(tokenId, recepient, tickLower, tickUpper);
     }
@@ -181,7 +193,12 @@ contract PositionManager {
 
         delete positions[tokenId];
 
-        emit PositionClosed(tokenId, positions[tokenId].owner, positions[tokenId].tickLower, positions[tokenId].tickUpper);
+        emit PositionClosed(
+            tokenId,
+            positions[tokenId].owner,
+            positions[tokenId].tickLower,
+            positions[tokenId].tickUpper
+        );
     }
 
     //функция для получения адреса пула

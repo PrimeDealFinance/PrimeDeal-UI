@@ -27,6 +27,8 @@ contract PositionManagerTest is Test {
         address recipient = myEOA;
         uint256 deadline = block.timestamp;
 
+        vm.startPrank(myEOA);
         positionManager.addLiquidity(tokenA, tokenB, fee, tickLower, tickUpper, amountADesired, amountBDesired, amountAMin, amountBMin, recipient, deadline);
+        vm.stopPrank();
     }
 }

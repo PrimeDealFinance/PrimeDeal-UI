@@ -15,6 +15,7 @@ setup:
     - source /Users/lappi/.zshenv
     - foundryup
     - npm install
+    - cd packages/contract/lib/uniswap-v3-periphery/ && patch -p1 < ../../uniswap-v3-periphery.patch
   artifacts:
     untracked: true
     expire_in: 2 hours

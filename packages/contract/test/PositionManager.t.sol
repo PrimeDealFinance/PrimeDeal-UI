@@ -14,7 +14,7 @@ contract PositionManagerTest is Test {
         positionManager = new PositionManager(nonfungiblePositionManager, uniswapFactory);
     }
 
-    function test_Increment() public {
+    function test_addLiquidity() public {
         address tokenA = 0x9EC3c43006145f5701d4FD527e826131778cA122; // USDT
         address tokenB = 0xf4EE6EE04b2f3b34bA941d2C08828933d9D719A9; // ETH
         uint24 fee = 3000;
@@ -27,8 +27,6 @@ contract PositionManagerTest is Test {
         address recipient = myEOA;
         uint256 deadline = block.timestamp;
 
-
         positionManager.addLiquidity(tokenA, tokenB, fee, tickLower, tickUpper, amountADesired, amountBDesired, amountAMin, amountBMin, recipient, deadline);
-        assertEq(1, 1);
     }
 }

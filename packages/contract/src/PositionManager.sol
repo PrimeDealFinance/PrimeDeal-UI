@@ -17,12 +17,11 @@ contract PositionManager {
     uint256 amount1ToMint = 0;
     uint256 amount0ToAdd = 0;
     uint256 amount1ToAdd = 0;
-    address recepient;
 
     struct Position {
         uint256 tokenId;
-        address tokenA;
-        address tokenB;
+        address token0;
+        address token1;
         uint24 fee;
         int24 tickLower;
         int24 tickUpper;
@@ -37,26 +36,26 @@ contract PositionManager {
     event PositionOpened(
         uint256 indexed positionId,
         address user,
-        uint24 tickLower,
-        uint24 tickUpper
+        int24 tickLower,
+        int24 tickUpper
     );
     event PositionClosed(
         uint256 indexed positionId,
         address user,
-        uint24 tickLower,
-        uint24 tickUpper
+        int24 tickLower,
+        int24 tickUpper
     );
 
     constructor(address _nonfungiblePositionManager, address _uniswapFactory) {
         nonfungiblePositionManager = INonfungiblePositionManager(
             _nonfungiblePositionManager
         );
-        uniswapFactory = IUniswapV3Factory(uniswapFactory);
+        uniswapFactory = IUniswapV3Factory(_uniswapFactory);
     }
 
     function addLiquidity(
-        address payable tokenA,
-        address payable tokenB,
+        address tokenA,
+        address tokenB,
         uint24 fee,
         int24 tickLower,
         int24 tickUpper,
@@ -119,8 +118,8 @@ contract PositionManager {
         // Сохранение информации о позиции
         positions[tokenId] = Position({
             tokenId: tokenId,
-            tokenA: tokenA,
-            tokenB: tokenB,
+            token0: tokenA,
+            token1: tokenB,
             fee: fee,
             tickLower: tickLower,
             tickUpper: tickUpper,
@@ -134,15 +133,15 @@ contract PositionManager {
         if (amount0 < amount0ToAdd) {
             // tokenA.approve(address(nonfungiblePositionManager), 0);
             uint refund0 = amount0ToAdd - amount0;
-            tokenA.transfer(refund0);
+            payable(tokenA).transfer(refund0);
         }
         if (amount1 < amount1ToAdd) {
             // tokenB.approve(address(nonfungiblePositionManager), 0);
             uint refund1 = amount1ToAdd - amount1;
-            tokenB.transfer(refund1);
+            payable(tokenB).transfer(refund1);
         }
 
-        emit PositionOpened(tokenId, recepient, tickLower, tickUpper);
+        emit PositionOpened(tokenId, recipient, tickLower, tickUpper);
     }
 
     //функция для уменьшения ликвидности для указанной позиции
@@ -151,7 +150,7 @@ contract PositionManager {
             memory params = INonfungiblePositionManager
                 .DecreaseLiquidityParams({
                     tokenId: tokenId,
-                    liquidity: positions[tokenId].liquidity,
+                    liquidity: uint128(positions[tokenId].liquidity),
                     amount0Min: 0,
                     amount1Min: 0,
                     deadline: block.timestamp
@@ -181,11 +180,11 @@ contract PositionManager {
     //функция для проверки ончейн нужно ли закрывать позицию
     function canClosePosition(uint256 tokenId) public view returns (bool) {
         address pool = getPoolAddress(
-            positions[tokenId].tokenA,
-            positions[tokenId].tokenB,
+            positions[tokenId].token0,
+            positions[tokenId].token1,
             positions[tokenId].fee
         );
-        uint24 currentTick = getCurrentTick(pool);
+        int24 currentTick = getCurrentTick(pool);
         return
             currentTick > positions[tokenId].tickUpper ||
             currentTick < positions[tokenId].tickLower;
@@ -226,7 +225,7 @@ contract PositionManager {
 
     // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
     function onERC721Received(
-        address operator,
+        // address operator,
         address,
         uint256 tokenId,
         bytes calldata

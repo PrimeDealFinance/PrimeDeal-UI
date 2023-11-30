@@ -5,6 +5,7 @@
   "devDependencies": {},
   "scripts": {
     "build": "forge build",
-    "test": "forge test --fork-url \"https://lb.drpc.org/ogrpc?network=ethereum&dkey=AsidPtsErUyZubtI9TsBlxmnRdP2jvcR7rqTHqSlA2KD\" -vvv"
+    "test": "forge test --fork-url \"https://lb.drpc.org/ogrpc?network=ethereum&dkey=AsidPtsErUyZubtI9TsBlxmnRdP2jvcR7rqTHqSlA2KD\" -vv",
+    "test4": "forge test --fork-url \"https://lb.drpc.org/ogrpc?network=ethereum&dkey=AsidPtsErUyZubtI9TsBlxmnRdP2jvcR7rqTHqSlA2KD\" -vvvv"
   }
 }

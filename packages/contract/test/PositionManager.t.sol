@@ -22,14 +22,12 @@ contract PositionManagerTest is Test {
         address tokenA = 0x9EC3c43006145f5701d4FD527e826131778cA122; // USDT
         address tokenB = 0xf4EE6EE04b2f3b34bA941d2C08828933d9D719A9; // ETH
         uint24 fee = 3000;
-        int24 tickLower = -68303;
-        int24 tickUpper = -69303;
-        uint256 amountADesired = 100000000000000000000;
-        uint256 amountBDesired = 50;
-        uint256 amountAMin = 0;
-        uint256 amountBMin = 0;
-        address recipient = myEOA;
-        uint256 deadline = block.timestamp;
+        int24 tickLower = -887220;
+        int24 tickUpper = 887220;
+        uint256 amountADesired = 9999999999999999724;
+        uint256 amountBDesired = 9781121969859473;
+        uint256 amountAMin = 9975093361076328755;
+        uint256 amountBMin = 9756638522274018;
 
         vm.startPrank(myEOA);
         positionManager.addLiquidity(
@@ -41,9 +39,7 @@ contract PositionManagerTest is Test {
             amountADesired,
             amountBDesired,
             amountAMin,
-            amountBMin,
-            recipient,
-            deadline
+            amountBMin
         );
         vm.stopPrank();
     }

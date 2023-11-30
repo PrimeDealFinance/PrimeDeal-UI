@@ -41,4 +41,4 @@ contract-test:
     - setup
   script:
     - source /Users/lappi/.zshenv
-    - npx nx test contract
+    - npx nx test4 contract

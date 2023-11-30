@@ -7,8 +7,9 @@ import "@uniswap-v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-contract PositionManager {
+contract PositionManager is IERC721Receiver {
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
     IUniswapV3Factory public immutable uniswapFactory;
 
@@ -62,9 +63,7 @@ contract PositionManager {
         uint256 amountADesired,
         uint256 amountBDesired,
         uint256 amountAMin,
-        uint256 amountBMin,
-        address recipient,
-        uint256 deadline
+        uint256 amountBMin
     ) external {
         // transfer tokens to contract
         TransferHelper.safeTransferFrom(
@@ -104,8 +103,8 @@ contract PositionManager {
                 amount1Desired: amountBDesired,
                 amount0Min: amountAMin,
                 amount1Min: amountBMin,
-                recipient: recipient,
-                deadline: deadline
+                recipient: msg.sender,
+                deadline: block.timestamp + 10 days
             });
 
         (
@@ -126,26 +125,34 @@ contract PositionManager {
             liquidity: liquidity,
             amountA: amount0,
             amountB: amount1,
-            owner: recipient
+            owner: msg.sender
         });
-        
+
         //вернём юзеру остатки
         if (amount0 < amount0ToAdd) {
-            // tokenA.approve(address(nonfungiblePositionManager), 0);
+            TransferHelper.safeApprove(
+                tokenA,
+                address(nonfungiblePositionManager),
+                0
+            );
             uint refund0 = amount0ToAdd - amount0;
-            payable(tokenA).transfer(refund0);
+            TransferHelper.safeTransfer(tokenA, msg.sender, refund0);
         }
         if (amount1 < amount1ToAdd) {
-            // tokenB.approve(address(nonfungiblePositionManager), 0);
+            TransferHelper.safeApprove(
+                tokenB,
+                address(nonfungiblePositionManager),
+                0
+            );
             uint refund1 = amount1ToAdd - amount1;
-            payable(tokenB).transfer(refund1);
+            TransferHelper.safeTransfer(tokenA, msg.sender, refund1);
         }
 
-        emit PositionOpened(tokenId, recipient, tickLower, tickUpper);
+        emit PositionOpened(tokenId, msg.sender, tickLower, tickUpper);
     }
 
     //функция для уменьшения ликвидности для указанной позиции
-    function decreaseLiquidity(uint256 tokenId) internal {
+    function _decreaseLiquidity(uint256 tokenId) internal {
         INonfungiblePositionManager.DecreaseLiquidityParams
             memory params = INonfungiblePositionManager
                 .DecreaseLiquidityParams({
@@ -194,7 +201,7 @@ contract PositionManager {
     function closePosition(uint256 tokenId) public {
         require(canClosePosition(tokenId), "position not need to close");
 
-        decreaseLiquidity(tokenId);
+        _decreaseLiquidity(tokenId);
         collect(tokenId);
         burnPosition(tokenId);
 
@@ -225,11 +232,12 @@ contract PositionManager {
 
     // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
     function onERC721Received(
-        // address operator,
-        address,
+        address operator,
+        address from,
         uint256 tokenId,
-        bytes calldata
-    ) external returns (bytes4) {
+        bytes calldata data
+    ) public override returns (bytes4) {
+        //
         return this.onERC721Received.selector;
     }
 }

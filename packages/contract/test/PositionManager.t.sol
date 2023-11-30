@@ -21,12 +21,12 @@ contract PositionManagerTest is Test {
         int24 tickLower = -68303;
         int24 tickUpper = -69303;
         uint256 amountADesired = 100000000000000000000;
-        uint256 amountBDesired = 0;
+        uint256 amountBDesired = 50;
         uint256 amountAMin = 0;
         uint256 amountBMin = 0;
         address recipient = myEOA;
         uint256 deadline = block.timestamp;
 
-        positionManager.addLiquidity(tokenA, tokenB, fee, tickLower, tickUpper, amountADesired, amountBDesired, amountAMin, amountBMin, recipient, deadline);
+        positionManager.addLiquidity(tokenA, tokenB, fee, tickLower, tickUpper, amountADesired, amountBDesired, amountAMin, amountBMin);
     }
 }

@@ -6,12 +6,16 @@ import {PositionManager} from "../src/PositionManager.sol";
 
 contract PositionManagerTest is Test {
     PositionManager public positionManager;
-    address nonfungiblePositionManager = 0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
+    address nonfungiblePositionManager =
+        0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
     address uniswapFactory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     address myEOA = 0x42d8C4BA2f3E2c90D0a7045c25f36D67445f96b2;
 
     function setUp() public {
-        positionManager = new PositionManager(nonfungiblePositionManager, uniswapFactory);
+        positionManager = new PositionManager(
+            nonfungiblePositionManager,
+            uniswapFactory
+        );
     }
 
     function test_addLiquidity() public {
@@ -27,6 +31,20 @@ contract PositionManagerTest is Test {
         address recipient = myEOA;
         uint256 deadline = block.timestamp;
 
-        positionManager.addLiquidity(tokenA, tokenB, fee, tickLower, tickUpper, amountADesired, amountBDesired, amountAMin, amountBMin);
+        vm.startPrank(myEOA);
+        positionManager.addLiquidity(
+            tokenA,
+            tokenB,
+            fee,
+            tickLower,
+            tickUpper,
+            amountADesired,
+            amountBDesired,
+            amountAMin,
+            amountBMin,
+            recipient,
+            deadline
+        );
+        vm.stopPrank();
     }
 }

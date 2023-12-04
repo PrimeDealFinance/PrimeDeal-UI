@@ -1,6 +1,6 @@
 default:
   tags:
-    - local
+    - cloud-runner
 
 ## Global stages
 stages:

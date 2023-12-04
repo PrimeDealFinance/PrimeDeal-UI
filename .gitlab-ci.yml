@@ -16,6 +16,7 @@ setup:
   stage: setup
   script:
     - npm install
+    - mkdir -p .nx
   artifacts:
     untracked: true
     expire_in: 2 hours

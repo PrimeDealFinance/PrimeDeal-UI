@@ -1,4 +1,5 @@
 default:
+  image: alpine:latest
   tags:
     - cloud-runner
 

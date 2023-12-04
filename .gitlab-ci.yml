@@ -1,5 +1,6 @@
 default:
-  variables: GIT_DEPTH=1
+  variables:
+    - GIT_DEPTH=1
   image: my:latest
   tags:
     - cloud-runner

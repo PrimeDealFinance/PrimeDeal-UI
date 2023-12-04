@@ -1,5 +1,5 @@
 default:
-  image: my
+  image: my:latest
   tags:
     - cloud-runner
 

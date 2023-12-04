@@ -12,9 +12,6 @@ stages:
 setup:
   stage: setup
   script:
-    - curl -L https://foundry.paradigm.xyz | bash
-    - source /Users/lappi/.zshenv
-    - foundryup
     - npm install
   artifacts:
     untracked: true
@@ -25,7 +22,6 @@ contract-build:
   dependencies:
     - setup
   script:
-    - source /Users/lappi/.zshenv
     - npx nx build contract
 
 frontend-build:
@@ -40,5 +36,4 @@ contract-test:
   dependencies:
     - setup
   script:
-    - source /Users/lappi/.zshenv
     - npx nx test contract

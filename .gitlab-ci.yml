@@ -2,12 +2,6 @@ variables:
   GIT_DEPTH: 1
 
 default:
-  cache:
-    key: build-cache
-    paths:
-      - node_modules/
-      - packages/contract/lib
-      - .nx/
   image: gitlab-executor:latest
   tags:
     - local-docker-runner
@@ -21,11 +15,22 @@ stages:
 setup:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
+  cache:
+    key: node-cache
+    paths:
+      - node_modules/
+      - .nx/
+    key: contract-cache
+    paths:
+      - packages/contract/lib
   stage: setup
   script:
     - npm install
 
 contract-build:
+  cache:
+    key: node-cache
+    key: contract-cache
   stage: build
   dependencies:
     - setup

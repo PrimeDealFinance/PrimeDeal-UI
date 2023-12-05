@@ -2,6 +2,11 @@ variables:
   GIT_DEPTH: 1
 
 default:
+  cache:
+    key: build-cache
+    paths:
+      - node_modules/
+      - .nx/
   image: my:latest
   tags:
     - cloud-runner
@@ -17,9 +22,6 @@ setup:
   script:
     - npm install
     - mkdir -p .nx
-  artifacts:
-    untracked: true
-    expire_in: 2 hours
 
 contract-build:
   stage: build

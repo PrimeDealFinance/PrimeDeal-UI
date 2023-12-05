@@ -72,4 +72,4 @@ contract-test:
   dependencies:
     - setup
   script:
-    - npx nx test contract
+    - npx nx test4 contract

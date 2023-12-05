@@ -89,10 +89,10 @@ contract-deploy:
     - setup
   script:
     - forge create
-      --rpc-url '${DEPLOY_RPC}'
-      --private-key '${TEST_EOA_PRIVATE_KEY}'
-      --constructor-args ${UNISWAP_NF_POSITION_MANAGER_ADDR} ${UNISWAP_FACTORY_ADDR}
+      --rpc-url $DEPLOY_RPC
+      --private-key $TEST_EOA_PRIVATE_KEY
+      --constructor-args $UNISWAP_NF_POSITION_MANAGER_ADDR $UNISWAP_FACTORY_ADDR
       --verify
       --legacy
-      --etherscan-api-key '${ETHERSCAN_API_KEY}'
+      --etherscan-api-key $ETHERSCAN_API_KEY
       src/PositionManager.sol:PositionManager

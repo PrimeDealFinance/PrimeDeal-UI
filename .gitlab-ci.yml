@@ -12,25 +12,35 @@ stages:
   - build
   - test
 
+.node-cache: &node-cache
+    key: node-cache-$CI_COMMIT_REF_SLUG
+    paths:
+      - node_modules/
+      - .nx/
+    policy: pull
+
+.forge-cache: &forge-cache
+    key: forge-cache-$CI_COMMIT_REF_SLUG
+    paths:
+        - packages/contract/lib/
+    policy: pull
+
 setup:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   cache:
-    key: node-cache
-    paths:
-      - node_modules/
-      - .nx/
-    key: contract-cache
-    paths:
-      - packages/contract/lib
+      - <<: *node-cache
+        policy: push
+      - <<: *forge-cache
+        policy: push
   stage: setup
   script:
     - npm install
 
 contract-build:
   cache:
-    key: node-cache
-    key: contract-cache
+    - <<: *node-cache
+    - <<: *forge-cache
   stage: build
   dependencies:
     - setup
@@ -38,6 +48,9 @@ contract-build:
     - npx nx build contract
 
 frontend-build:
+  cache:
+  cache:
+    - <<: *node-cache
   stage: build
   dependencies:
     - setup
@@ -45,6 +58,9 @@ frontend-build:
     - npx nx build frontend
 
 contract-test:
+  cache:
+    - <<: *node-cache
+    - <<: *forge-cache
   stage: test
   dependencies:
     - setup

@@ -1,6 +1,12 @@
+## Global variables
+variables:
+  GIT_DEPTH: 1
+
+## Global defaults
 default:
+  image: gitlab-executor:latest
   tags:
-    - local
+    - local-docker-runner
 
 ## Global stages
 stages:
@@ -8,36 +14,62 @@ stages:
   - build
   - test
 
+## Caches
+.node-cache: &node-cache
+    key: node-cache-$CI_COMMIT_REF_SLUG
+    paths:
+      - node_modules/
+      - .nx/
+    policy: pull
+
+.forge-cache: &forge-cache
+    key: forge-cache-$CI_COMMIT_REF_SLUG
+    paths:
+        - packages/contract/lib/
+    policy: pull
+
+## Jobs
 setup:
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  cache:
+      - <<: *node-cache
+        policy: push
+      - <<: *forge-cache
+        policy: push
   stage: setup
   script:
-    - curl -L https://foundry.paradigm.xyz | bash
-    - source /Users/lappi/.zshenv
-    - foundryup
     - npm install
-  artifacts:
-    untracked: true
-    expire_in: 2 hours
 
 contract-build:
+  cache:
+    - <<: *node-cache
+    - <<: *forge-cache
   stage: build
+  needs: [setup]
   dependencies:
     - setup
   script:
-    - source /Users/lappi/.zshenv
     - npx nx build contract
 
 frontend-build:
+  cache:
+  cache:
+    - <<: *node-cache
   stage: build
+  needs: [setup]
   dependencies:
     - setup
   script:
     - npx nx build frontend
 
 contract-test:
+  cache:
+    - <<: *node-cache
+    - <<: *forge-cache
   stage: test
+  needs: [setup]
   dependencies:
     - setup
   script:
-    - source /Users/lappi/.zshenv
-    - npx nx test contract
+    - npx nx test4 contract

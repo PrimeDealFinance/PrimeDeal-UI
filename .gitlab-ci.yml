@@ -88,6 +88,12 @@ contract-deploy:
   dependencies:
     - setup
   script:
+    - echo $DEPLOY_RPC
+    - echo $TEST_EOA_PRIVATE_KEY
+    - echo $UNISWAP_NF_POSITION_MANAGER_ADDR
+    - echo $UNISWAP_FACTORY_ADDR
+    - echo $ETHERSCAN_API_KEY
+
     - forge create
       --rpc-url $DEPLOY_RPC
       --private-key $TEST_EOA_PRIVATE_KEY

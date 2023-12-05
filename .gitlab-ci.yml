@@ -26,8 +26,6 @@ stages:
     key: forge-cache-$CI_COMMIT_REF_SLUG
     paths:
         - packages/contract/lib/
-        - packages/contract/lib/uniswap-v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol
-        - packages/contract/lib/uniswap-v3-periphery/contracts/libraries/PoolAddress.sol
     policy: pull
 
 ## Jobs
@@ -42,7 +40,6 @@ setup:
   stage: setup
   script:
     - npm install
-    - cd packages/contract/lib/uniswap-v3-periphery/ && patch -p1 < ../../uniswap-v3-periphery.patch
 
 contract-build:
   cache:

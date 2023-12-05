@@ -7,7 +7,7 @@ default:
     paths:
       - node_modules/
       # - .nx/
-  image: my:latest
+  image: gitlab-executor:latest
   tags:
     - local-docker-runner
 

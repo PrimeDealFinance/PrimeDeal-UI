@@ -6,7 +6,7 @@ default:
     key: build-cache
     paths:
       - node_modules/
-      - .nx/
+      # - .nx/
   image: my:latest
   tags:
     - cloud-runner
@@ -21,7 +21,7 @@ setup:
   stage: setup
   script:
     - npm install
-    - mkdir -p .nx
+    # - mkdir -p .nx
 
 contract-build:
   stage: build

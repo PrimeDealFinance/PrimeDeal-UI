@@ -9,7 +9,7 @@ default:
       # - .nx/
   image: my:latest
   tags:
-    - local-docker
+    - local-docker-runner
 
 ## Global stages
 stages:

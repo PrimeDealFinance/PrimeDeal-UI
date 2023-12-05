@@ -22,9 +22,3 @@
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
 [submodule "lib\\openzeppelin-contracts"]
 	branch = v5.0.0
-[submodule "packages/contract/lib/v3-core"]
-	path = packages/contract/lib/v3-core
-	url = https://github.com/uniswap/v3-core
-[submodule "packages/contract/lib/v3-periphery"]
-	path = packages/contract/lib/v3-periphery
-	url = https://github.com/uniswap/v3-periphery

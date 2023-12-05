@@ -42,6 +42,7 @@ contract-build:
     - <<: *node-cache
     - <<: *forge-cache
   stage: build
+  needs: [setup]
   dependencies:
     - setup
   script:
@@ -52,6 +53,7 @@ frontend-build:
   cache:
     - <<: *node-cache
   stage: build
+  needs: [setup]
   dependencies:
     - setup
   script:
@@ -62,6 +64,7 @@ contract-test:
     - <<: *node-cache
     - <<: *forge-cache
   stage: test
+  needs: [setup]
   dependencies:
     - setup
   script:

@@ -6,7 +6,7 @@ default:
     key: build-cache
     paths:
       - node_modules/
-      # - .nx/
+      - .nx/
   image: gitlab-executor:latest
   tags:
     - local-docker-runner

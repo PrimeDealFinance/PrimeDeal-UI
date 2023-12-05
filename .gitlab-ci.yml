@@ -1,6 +1,8 @@
+## Global variables
 variables:
   GIT_DEPTH: 1
 
+## Global defaults
 default:
   image: gitlab-executor:latest
   tags:
@@ -12,6 +14,7 @@ stages:
   - build
   - test
 
+## Caches
 .node-cache: &node-cache
     key: node-cache-$CI_COMMIT_REF_SLUG
     paths:
@@ -25,6 +28,7 @@ stages:
         - packages/contract/lib/
     policy: pull
 
+## Jobs
 setup:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive

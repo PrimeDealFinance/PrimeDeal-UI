@@ -1,6 +1,5 @@
 variables:
   GIT_DEPTH: 1
-  GIT_SUBMODULE_STRATEGY: recursive
 
 default:
   cache:
@@ -20,10 +19,11 @@ stages:
   - test
 
 setup:
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
   stage: setup
   script:
     - npm install
-    # - mkdir -p .nx
 
 contract-build:
   stage: build

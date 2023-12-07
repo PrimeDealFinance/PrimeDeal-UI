@@ -72,7 +72,6 @@ contract-deploy:
   stage: deploy
   needs: [test]
   dependencies:
-    - setup
     - test
   script:
     - npx nx deploy contract

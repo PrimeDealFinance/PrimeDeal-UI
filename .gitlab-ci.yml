@@ -94,10 +94,10 @@ contract-deploy:
     - echo $UNISWAP_FACTORY_ADDR
     - echo $ETHERSCAN_API_KEY
 
-    - npx nx deploy contract
+    - npx nx deploy contract --
       --rpc-url "$DEPLOY_RPC"
       --private-key "$TEST_EOA_PRIVATE_KEY"
-      --constructor-args $UNISWAP_NF_POSITION_MANAGER_ADDR $UNISWAP_FACTORY_ADDR
+      --constructor-args "$UNISWAP_NF_POSITION_MANAGER_ADDR" "$UNISWAP_FACTORY_ADDR"
       --verify
       --legacy
       --etherscan-api-key "$ETHERSCAN_API_KEY"

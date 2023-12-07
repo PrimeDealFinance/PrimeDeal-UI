@@ -38,7 +38,8 @@ contract PositionManager is IERC721Receiver {
         uint256 indexed positionId,
         address user,
         int24 tickLower,
-        int24 tickUpper
+        int24 tickUpper,
+        address poolAddress
     );
     event PositionClosed(
         uint256 indexed positionId,
@@ -148,7 +149,7 @@ contract PositionManager is IERC721Receiver {
             TransferHelper.safeTransfer(tokenA, msg.sender, refund1);
         }
 
-        emit PositionOpened(tokenId, msg.sender, tickLower, tickUpper);
+        emit PositionOpened(tokenId, msg.sender, tickLower, tickUpper, getPoolAddress(tokenA, tokenB, fee));
     }
 
     //функция для уменьшения ликвидности для указанной позиции

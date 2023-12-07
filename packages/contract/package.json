@@ -6,6 +6,6 @@
   "scripts": {
     "build": "forge build",
     "test4": "forge test",
-    "deploy": "forge create"
+    "deploy": "script/deploy.sh"
   }
 }

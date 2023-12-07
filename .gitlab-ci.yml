@@ -1,6 +1,7 @@
 ## Global variables
 variables:
   GIT_DEPTH: 1
+  CONTRACT_PATH: "packages/contract"
 
 ## Global defaults
 default:
@@ -85,4 +86,7 @@ contract-deploy:
     - setup
   script:
     - npx nx deploy contract
-    - cat deploy_info.txt | head -n 1 | jq '.deployedTo'
+  artifacts:
+    paths:
+      - $CONTRACT_PATH/script/contract_deploy_address.txt
+    expire_in: 2 days

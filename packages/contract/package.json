@@ -5,7 +5,7 @@
   "devDependencies": {},
   "scripts": {
     "build": "forge build",
-    "test": "forge test --gas-report --fork-url \"https://lb.drpc.org/ogrpc?network=ethereum&dkey=AsidPtsErUyZubtI9TsBlxmnRdP2jvcR7rqTHqSlA2KD\" -vvvv",
+    "test": "forge test --gas-report -vvvvv --fork-url \"https://lb.drpc.org/ogrpc?network=ethereum&dkey=AsidPtsErUyZubtI9TsBlxmnRdP2jvcR7rqTHqSlA2KD\"",
     "deploy": "script/deploy.sh"
   }
 }

@@ -1,6 +1,7 @@
 ## Global variables
 variables:
   GIT_DEPTH: 1
+  CONTRACT_PATH: "packages/contract"
 
 ## Global defaults
 default:
@@ -13,44 +14,34 @@ stages:
   - setup
   - build
   - test
+  - deploy
 
 ## Caches
 .node-cache: &node-cache
-    key: node-cache-$CI_COMMIT_REF_SLUG
-    paths:
-      - node_modules/
-      - .nx/
-    policy: pull
+  key: node-cache
+  paths:
+    - node_modules/
+    - .nx/
+  policy: pull
 
 .forge-cache: &forge-cache
-    key: forge-cache-$CI_COMMIT_REF_SLUG
-    paths:
-        - packages/contract/lib/
-    policy: pull
+  key: forge-cache
+  paths:
+    - packages/contract/lib/
+  policy: pull
 
 ## Jobs
 setup:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   cache:
-      - <<: *node-cache
-        policy: push
-      - <<: *forge-cache
-        policy: push
+    - <<: *node-cache
+      policy: pull-push
+    - <<: *forge-cache
+      policy: pull-push
   stage: setup
   script:
     - npm install
-
-contract-build:
-  cache:
-    - <<: *node-cache
-    - <<: *forge-cache
-  stage: build
-  needs: [setup]
-  dependencies:
-    - setup
-  script:
-    - npx nx build contract
 
 frontend-build:
   cache:
@@ -72,4 +63,19 @@ contract-test:
   dependencies:
     - setup
   script:
-    - npx nx test4 contract
+    - npx nx test contract
+
+contract-deploy:
+  cache:
+    - <<: *node-cache
+    - <<: *forge-cache
+  stage: deploy
+  needs: [contract-test]
+  dependencies:
+    - contract-test
+  script:
+    - npx nx deploy contract
+  artifacts:
+    paths:
+      - $CONTRACT_PATH/script/contract_deploy_address.txt
+    expire_in: 2 days

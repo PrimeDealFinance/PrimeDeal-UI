@@ -12,20 +12,20 @@ default:
 ## Global stages
 stages:
   - setup
-  # - build
-  # - test
+  - build
+  - test
   - deploy
 
 ## Caches
 .node-cache: &node-cache
-  key: node-cache-$CI_COMMIT_REF_SLUG
+  key: node-cache
   paths:
     - node_modules/
     - .nx/
   policy: pull
 
 .forge-cache: &forge-cache
-  key: forge-cache-$CI_COMMIT_REF_SLUG
+  key: forge-cache
   paths:
     - packages/contract/lib/
   policy: pull
@@ -36,45 +36,34 @@ setup:
     GIT_SUBMODULE_STRATEGY: recursive
   cache:
     - <<: *node-cache
-      policy: push
+      policy: pull-push
     - <<: *forge-cache
-      policy: push
+      policy: pull-push
   stage: setup
   script:
     - npm install
 
-# contract-build:
-#   cache:
-#     - <<: *node-cache
-#     - <<: *forge-cache
-#   stage: build
-#   needs: [setup]
-#   dependencies:
-#     - setup
-#   script:
-#     - npx nx build contract
+frontend-build:
+  cache:
+  cache:
+    - <<: *node-cache
+  stage: build
+  needs: [setup]
+  dependencies:
+    - setup
+  script:
+    - npx nx build frontend
 
-# frontend-build:
-#   cache:
-#   cache:
-#     - <<: *node-cache
-#   stage: build
-#   needs: [setup]
-#   dependencies:
-#     - setup
-#   script:
-#     - npx nx build frontend
-
-# contract-test:
-#   cache:
-#     - <<: *node-cache
-#     - <<: *forge-cache
-#   stage: test
-#   needs: [setup]
-#   dependencies:
-#     - setup
-#   script:
-#     - npx nx test contract --fork-url \"https://lb.drpc.org/ogrpc?network=ethereum&dkey=AsidPtsErUyZubtI9TsBlxmnRdP2jvcR7rqTHqSlA2KD\" -vvvv
+contract-test:
+  cache:
+    - <<: *node-cache
+    - <<: *forge-cache
+  stage: test
+  needs: [setup]
+  dependencies:
+    - setup
+  script:
+    - npx nx test contract
 
 contract-deploy:
   cache:

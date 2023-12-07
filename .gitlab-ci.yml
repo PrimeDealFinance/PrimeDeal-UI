@@ -70,9 +70,9 @@ contract-deploy:
     - <<: *node-cache
     - <<: *forge-cache
   stage: deploy
-  needs: [test]
+  needs: [contract-test]
   dependencies:
-    - test
+    - contract-test
   script:
     - npx nx deploy contract
   artifacts:

@@ -28,28 +28,44 @@ contract PositionManagerTest is Test {
         );
     }
 
-    // function test_getPoolAddress() public view {
-    //     positionManager.getPoolAddress(
-    //         tokenA,
-    //         tokenB,
-    //         fee
-    //     );
-    // }
+    function test_openPosition() public {
+        uint160 sqrtPriceRatio = 2;
 
-    // function test_addLiquidity() public {
-    //     // vm.startPrank(myEOA);
-    //     vm.deal(address(this), THIS_BALANCE);
-    //     positionManager.addLiquidity(
-    //         tokenA,
-    //         tokenB,
-    //         fee,
-    //         tickLower,
-    //         tickUpper,
-    //         amountADesired,
-    //         amountBDesired,
-    //         amountAMin,
-    //         amountBMin
-    //     );
-    //     // vm.stopPrank();
-    // }
+        positionManager.openPosition(
+            PositionManager.PositionDirection.BUY,
+            tokenA,
+            tokenB,
+            fee,
+            sqrtPriceRatio,
+            amountADesired,
+            amountBDesired,
+            amountAMin,
+            amountBMin
+        );
+    }
+
+    function test_getPoolAddress() public view {
+        positionManager.getPoolAddress(
+            tokenA,
+            tokenB,
+            fee
+        );
+    }
+
+    function test_addLiquidity() public {
+        // vm.startPrank(myEOA);
+        // vm.deal(address(this), THIS_BALANCE);
+        positionManager.addLiquidity(
+            tokenA,
+            tokenB,
+            fee,
+            tickLower,
+            tickUpper,
+            amountADesired,
+            amountBDesired,
+            amountAMin,
+            amountBMin
+        );
+        // vm.stopPrank();
+    }
 }

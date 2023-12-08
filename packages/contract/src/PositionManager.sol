@@ -3,11 +3,14 @@ pragma solidity ^0.8.17;
 
 import "@uniswap-v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import "@uniswap-v3-periphery/contracts/libraries/TransferHelper.sol";
-// import "@uniswap-v3-core/contracts/libraries/TickMath.sol";
+import "@uniswap-v3-core/contracts/libraries/TickMath.sol";
+import "@uniswap-v3-core/contracts/libraries/FullMath.sol";
+import "@uniswap-v3-core/contracts/libraries/FixedPoint96.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract PositionManager is IERC721Receiver {
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
@@ -34,6 +37,8 @@ contract PositionManager is IERC721Receiver {
 
     mapping(uint256 => Position) public positions;
 
+    enum PositionDirection { BUY, SELL }
+
     event PositionOpened(
         uint256 indexed positionId,
         address user,
@@ -53,6 +58,46 @@ contract PositionManager is IERC721Receiver {
             _nonfungiblePositionManager
         );
         uniswapFactory = IUniswapV3Factory(_uniswapFactory);
+    }
+
+    function openPosition(
+        PositionDirection positionDirection,
+        address tokenA,
+        address tokenB,
+        uint24 fee,
+        uint160 sqrtPriceRatio,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin
+    ) external {
+        address currentPool = getPoolAddress(tokenA, tokenB, fee);
+        int24 currentTick;
+        int24 startingTick = currentTick;
+        int24 trailingTick;
+        int24 tickSpacing;
+        uint160 currentSqrtPriceX96;
+        uint160 stopSqrtPriceX96;
+
+        IUniswapV3Pool uniswapPool = IUniswapV3Pool(currentPool);
+        (currentSqrtPriceX96, currentTick, , , , , ) = uniswapPool.slot0();
+
+        if (fee == 100) tickSpacing = 1;
+        if (fee == 500) tickSpacing = 10;
+        if (fee == 3000) tickSpacing = 60;
+        if (fee == 10000) tickSpacing = 200;
+
+        if (positionDirection == PositionDirection.BUY) {
+            startingTick -= tickSpacing;
+            stopSqrtPriceX96 = uint160(SafeMath.div(uint256(currentSqrtPriceX96), uint256(sqrtPriceRatio)));
+            trailingTick = TickMath.getTickAtSqrtRatio(stopSqrtPriceX96);
+            this.addLiquidity(tokenA, tokenB, fee, trailingTick, startingTick, amountADesired, amountBDesired, amountAMin, amountBMin);
+        } else if (positionDirection == PositionDirection.SELL) {
+            startingTick += tickSpacing;
+            stopSqrtPriceX96 = uint160(SafeMath.mul(uint256(currentSqrtPriceX96), uint256(sqrtPriceRatio)));
+            trailingTick = TickMath.getTickAtSqrtRatio(stopSqrtPriceX96);
+            this.addLiquidity(tokenA, tokenB, fee, startingTick, trailingTick, amountADesired, amountBDesired, amountAMin, amountBMin);
+        }
     }
 
     function addLiquidity(

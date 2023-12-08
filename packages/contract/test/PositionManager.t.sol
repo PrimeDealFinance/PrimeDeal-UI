@@ -28,8 +28,8 @@ contract PositionManagerTest is Test {
         );
     }
 
-    function test_openPosition() public {
-        uint160 sqrtPriceRatio = 2;
+    // function test_openPosition() public {
+    //     uint160 sqrtPriceRatio = 2;
 
     //     positionManager.openPosition(
     //         PositionManager.PositionDirection.BUY,

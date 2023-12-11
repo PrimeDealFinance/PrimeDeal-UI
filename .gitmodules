@@ -22,3 +22,6 @@
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
 [submodule "lib\\openzeppelin-contracts"]
 	branch = v5.0.0
+[submodule "packages/contract/lib/abdk-libraries-solidity"]
+	path = packages/contract/lib/abdk-libraries-solidity
+	url = https://github.com/abdk-consulting/abdk-libraries-solidity

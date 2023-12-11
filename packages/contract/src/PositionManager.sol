@@ -12,13 +12,12 @@ import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
+import {console2} from "forge-std/Test.sol";
+
 contract PositionManager is IERC721Receiver {
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
     IUniswapV3Factory public immutable uniswapFactory;
 
-    // TODO: remove
-    uint256 amount0ToMint = 0;
-    uint256 amount1ToMint = 0;
     uint256 amount0ToAdd = 0;
     uint256 amount1ToAdd = 0;
 
@@ -99,6 +98,11 @@ contract PositionManager is IERC721Receiver {
                 )
             );
             trailingTick = TickMath.getTickAtSqrtRatio(stopSqrtPriceX96);
+
+            console2.log(currentTick);
+            console2.log(trailingTick);
+            console2.log(startingTick);
+
             uint256 tokenId = this.addLiquidity(
                 tokenA,
                 tokenB,
@@ -157,31 +161,31 @@ contract PositionManager is IERC721Receiver {
         uint256 amountBDesired,
         uint256 amountAMin,
         uint256 amountBMin
-    ) external returns (uint256 tokenId) {
+    ) external returns (uint256 _tokenId) {
         // transfer tokens to contract
         TransferHelper.safeTransferFrom(
             tokenA,
             msg.sender,
             address(this),
-            amount0ToMint
+            amountADesired
         );
         TransferHelper.safeTransferFrom(
             tokenB,
             msg.sender,
             address(this),
-            amount1ToMint
+            amountBDesired
         );
 
         // Approve the position manager
         TransferHelper.safeApprove(
             tokenA,
             address(nonfungiblePositionManager),
-            amount0ToMint
+            amountADesired
         );
         TransferHelper.safeApprove(
             tokenB,
             address(nonfungiblePositionManager),
-            amount1ToMint
+            amountBDesired
         );
 
         // Создание позиции и добавление ликвидности
@@ -207,6 +211,8 @@ contract PositionManager is IERC721Receiver {
             uint256 amount1
         ) = nonfungiblePositionManager.mint(params);
 
+        _tokenId = tokenId;
+
         // Сохранение информации о позиции
         positions[tokenId] = Position({
             tokenId: tokenId,
@@ -222,22 +228,22 @@ contract PositionManager is IERC721Receiver {
         });
 
         //вернём юзеру остатки
-        if (amount0 < amount0ToAdd) {
+        if (amount0 < amountADesired) {
             TransferHelper.safeApprove(
                 tokenA,
                 address(nonfungiblePositionManager),
                 0
             );
-            uint refund0 = amount0ToAdd - amount0;
+            uint refund0 = amountADesired - amount0;
             TransferHelper.safeTransfer(tokenA, msg.sender, refund0);
         }
-        if (amount1 < amount1ToAdd) {
+        if (amount1 < amountBDesired) {
             TransferHelper.safeApprove(
                 tokenB,
                 address(nonfungiblePositionManager),
                 0
             );
-            uint refund1 = amount1ToAdd - amount1;
+            uint refund1 = amountBDesired - amount1;
             TransferHelper.safeTransfer(tokenA, msg.sender, refund1);
         }
     }

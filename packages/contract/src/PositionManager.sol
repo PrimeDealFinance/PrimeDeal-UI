@@ -37,7 +37,10 @@ contract PositionManager is IERC721Receiver {
 
     mapping(uint256 => Position) public positions;
 
-    enum PositionDirection { BUY, SELL }
+    enum PositionDirection {
+        BUY,
+        SELL
+    }
 
     event PositionOpened(
         uint256 indexed positionId,
@@ -89,14 +92,58 @@ contract PositionManager is IERC721Receiver {
 
         if (positionDirection == PositionDirection.BUY) {
             startingTick -= tickSpacing;
-            stopSqrtPriceX96 = uint160(SafeMath.div(uint256(currentSqrtPriceX96), uint256(sqrtPriceRatio)));
+            stopSqrtPriceX96 = uint160(
+                SafeMath.div(
+                    uint256(currentSqrtPriceX96),
+                    uint256(sqrtPriceRatio)
+                )
+            );
             trailingTick = TickMath.getTickAtSqrtRatio(stopSqrtPriceX96);
-            this.addLiquidity(tokenA, tokenB, fee, trailingTick, startingTick, amountADesired, amountBDesired, amountAMin, amountBMin);
+            uint256 tokenId = this.addLiquidity(
+                tokenA,
+                tokenB,
+                fee,
+                trailingTick,
+                startingTick,
+                amountADesired,
+                amountBDesired,
+                amountAMin,
+                amountBMin
+            );
+            emit PositionOpened(
+                tokenId,
+                msg.sender,
+                startingTick,
+                trailingTick,
+                currentPool
+            );
         } else if (positionDirection == PositionDirection.SELL) {
             startingTick += tickSpacing;
-            stopSqrtPriceX96 = uint160(SafeMath.mul(uint256(currentSqrtPriceX96), uint256(sqrtPriceRatio)));
+            stopSqrtPriceX96 = uint160(
+                SafeMath.mul(
+                    uint256(currentSqrtPriceX96),
+                    uint256(sqrtPriceRatio)
+                )
+            );
             trailingTick = TickMath.getTickAtSqrtRatio(stopSqrtPriceX96);
-            this.addLiquidity(tokenA, tokenB, fee, startingTick, trailingTick, amountADesired, amountBDesired, amountAMin, amountBMin);
+            uint256 tokenId = this.addLiquidity(
+                tokenA,
+                tokenB,
+                fee,
+                startingTick,
+                trailingTick,
+                amountADesired,
+                amountBDesired,
+                amountAMin,
+                amountBMin
+            );
+            emit PositionOpened(
+                tokenId,
+                msg.sender,
+                startingTick,
+                trailingTick,
+                currentPool
+            );
         }
     }
 
@@ -110,7 +157,7 @@ contract PositionManager is IERC721Receiver {
         uint256 amountBDesired,
         uint256 amountAMin,
         uint256 amountBMin
-    ) external {
+    ) external returns (uint256 tokenId) {
         // transfer tokens to contract
         TransferHelper.safeTransferFrom(
             tokenA,
@@ -193,8 +240,6 @@ contract PositionManager is IERC721Receiver {
             uint refund1 = amount1ToAdd - amount1;
             TransferHelper.safeTransfer(tokenA, msg.sender, refund1);
         }
-
-        emit PositionOpened(tokenId, msg.sender, tickLower, tickUpper, getPoolAddress(tokenA, tokenB, fee));
     }
 
     //функция для уменьшения ликвидности для указанной позиции
@@ -214,8 +259,8 @@ contract PositionManager is IERC721Receiver {
 
     //функция чтобы забрать средства с позиции
     function collect(uint256 tokenId) internal {
-        INonfungiblePositionManager.CollectParams
-            memory params = INonfungiblePositionManager.CollectParams({
+        INonfungiblePositionManager.CollectParams memory params = INonfungiblePositionManager
+            .CollectParams({
                 tokenId: tokenId,
                 recipient: positions[tokenId].owner, //отправляем юзеру
                 amount0Max: type(uint128).max,

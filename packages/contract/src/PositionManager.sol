@@ -8,6 +8,8 @@ import "@uniswap-v3-core/contracts/libraries/FullMath.sol";
 import "@uniswap-v3-core/contracts/libraries/FixedPoint96.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -15,12 +17,11 @@ import "@abdk-libraries-solidity/ABDKMath64x64.sol";
 
 import {console2} from "forge-std/Test.sol";
 
-contract PositionManager is IERC721Receiver {
+contract PositionManager is IERC721Receiver, Pausable, Ownable {
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
     IUniswapV3Factory public immutable uniswapFactory;
 
-    uint256 amount0ToAdd = 0;
-    uint256 amount1ToAdd = 0;
+    mapping(uint256 => Position) public positions;
 
     struct Position {
         uint256 tokenId;
@@ -35,8 +36,6 @@ contract PositionManager is IERC721Receiver {
         address owner;
     }
 
-    mapping(uint256 => Position) public positions;
-
     enum PositionDirection {
         BUY,
         SELL
@@ -49,6 +48,7 @@ contract PositionManager is IERC721Receiver {
         int24 tickUpper,
         address poolAddress
     );
+
     event PositionClosed(
         uint256 indexed positionId,
         address user,
@@ -63,6 +63,10 @@ contract PositionManager is IERC721Receiver {
         uniswapFactory = IUniswapV3Factory(_uniswapFactory);
     }
 
+    function setPause(bool state) public onlyOwner {
+        state ? _pause() : _unpause();
+    }
+
     function openPosition(
         PositionDirection positionDirection,
         address tokenA,
@@ -73,7 +77,7 @@ contract PositionManager is IERC721Receiver {
         uint256 amountBDesired,
         uint256 amountAMin,
         uint256 amountBMin
-    ) public {
+    ) public whenNotPaused {
         address currentPool = getPoolAddress(tokenA, tokenB, fee);
         int24 startingTick;
         int24 trailingTick;

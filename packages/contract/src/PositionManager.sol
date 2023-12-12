@@ -67,6 +67,46 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         state ? _pause() : _unpause();
     }
 
+    function openBuyPosition(
+        address tokenA,
+        address tokenB,
+        uint24 fee,
+        uint160 stopSqrtPriceX96,
+        uint256 amountA
+    ) public whenNotPaused {
+        openPosition(
+            PositionDirection.BUY,
+            tokenA,
+            tokenB,
+            fee,
+            stopSqrtPriceX96,
+            amountA,
+            0,
+            amountA - 1, // to pass slippage check
+            0
+        );
+    }
+
+    function openSellPosition(
+        address tokenA,
+        address tokenB,
+        uint24 fee,
+        uint160 stopSqrtPriceX96,
+        uint256 amountB
+    ) public whenNotPaused {
+        openPosition(
+            PositionDirection.SELL,
+            tokenA,
+            tokenB,
+            fee,
+            stopSqrtPriceX96,
+            0,
+            amountB,
+            0,
+            amountB - 1 // to pass slippage check
+        );
+    }
+
     function openPosition(
         PositionDirection positionDirection,
         address tokenA,
@@ -86,16 +126,42 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         IUniswapV3Pool uniswapPool = IUniswapV3Pool(currentPool);
         (, startingTick, , , , , ) = uniswapPool.slot0();
 
+        trailingTick = _nearestUsableTick(
+            TickMath.getTickAtSqrtRatio(stopSqrtPriceX96),
+            tickSpacing
+        );
+
         if (positionDirection == PositionDirection.BUY) {
+            startingTick =
+                _nearestUsableTick(startingTick, tickSpacing) +
+                tickSpacing;
+
+            uint256 tokenId = _addLiquidity(
+                tokenA,
+                tokenB,
+                fee,
+                startingTick,
+                trailingTick,
+                amountADesired,
+                amountBDesired,
+                amountAMin,
+                amountBMin,
+                true,
+                false
+            );
+
+            emit PositionOpened(
+                tokenId,
+                msg.sender,
+                startingTick,
+                trailingTick,
+                currentPool
+            );
+        } else if (positionDirection == PositionDirection.SELL) {
             startingTick =
                 _nearestUsableTick(startingTick, tickSpacing) -
                 tickSpacing;
 
-            trailingTick = _nearestUsableTick(
-                TickMath.getTickAtSqrtRatio(stopSqrtPriceX96),
-                tickSpacing
-            );
-
             uint256 tokenId = _addLiquidity(
                 tokenA,
                 tokenB,
@@ -105,44 +171,19 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
                 amountADesired,
                 amountBDesired,
                 amountAMin,
-                amountBMin
+                amountBMin,
+                false,
+                true
             );
 
             emit PositionOpened(
                 tokenId,
                 msg.sender,
-                startingTick,
                 trailingTick,
+                startingTick,
                 currentPool
             );
-        } /* else if (positionDirection == PositionDirection.SELL) {
-            startingTick += tickSpacing;
-            stopSqrtPriceX96 = uint160(
-                SafeMath.mul(
-                    uint256(currentSqrtPriceX96),
-                    uint256(sqrtPriceRatio)
-                )
-            );
-            trailingTick = TickMath.getTickAtSqrtRatio(stopSqrtPriceX96);
-            uint256 tokenId = _addLiquidity(
-                tokenA,
-                tokenB,
-                fee,
-                startingTick,
-                trailingTick,
-                amountADesired,
-                amountBDesired,
-                amountAMin,
-                amountBMin
-            );
-            emit PositionOpened(
-                tokenId,
-                msg.sender,
-                startingTick,
-                trailingTick,
-                currentPool
-            );
-        }*/
+        }
     }
 
     //функция для проверки ончейн нужно ли закрывать позицию
@@ -240,33 +281,43 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         uint256 amountADesired,
         uint256 amountBDesired,
         uint256 amountAMin,
-        uint256 amountBMin
+        uint256 amountBMin,
+        bool useTokenA,
+        bool useTokenB
     ) internal returns (uint256 _tokenId) {
         // transfer tokens to contract
-        TransferHelper.safeTransferFrom(
-            tokenA,
-            msg.sender,
-            address(this),
-            amountADesired
-        );
-        TransferHelper.safeTransferFrom(
-            tokenB,
-            msg.sender,
-            address(this),
-            amountBDesired
-        );
+        if (useTokenA) {
+            TransferHelper.safeTransferFrom(
+                tokenA,
+                msg.sender,
+                address(this),
+                amountADesired
+            );
+        }
+        if (useTokenB) {
+            TransferHelper.safeTransferFrom(
+                tokenB,
+                msg.sender,
+                address(this),
+                amountBDesired
+            );
+        }
 
         // Approve the position manager
-        TransferHelper.safeApprove(
-            tokenA,
-            address(nonfungiblePositionManager),
-            amountADesired
-        );
-        TransferHelper.safeApprove(
-            tokenB,
-            address(nonfungiblePositionManager),
-            amountBDesired
-        );
+        if (useTokenA) {
+            TransferHelper.safeApprove(
+                tokenA,
+                address(nonfungiblePositionManager),
+                amountADesired
+            );
+        }
+        if (useTokenB) {
+            TransferHelper.safeApprove(
+                tokenB,
+                address(nonfungiblePositionManager),
+                amountBDesired
+            );
+        }
 
         // Создание позиции и добавление ликвидности
         INonfungiblePositionManager.MintParams
@@ -308,23 +359,27 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         });
 
         //вернём юзеру остатки
-        if (amount0 < amountADesired) {
-            TransferHelper.safeApprove(
-                tokenA,
-                address(nonfungiblePositionManager),
-                0
-            );
-            uint refund0 = amountADesired - amount0;
-            TransferHelper.safeTransfer(tokenA, msg.sender, refund0);
+        if (useTokenA) {
+            if (amount0 < amountADesired) {
+                uint refund0 = amountADesired - amount0;
+                TransferHelper.safeApprove(
+                    tokenA,
+                    address(nonfungiblePositionManager),
+                    refund0
+                );
+                TransferHelper.safeTransfer(tokenA, msg.sender, refund0);
+            }
         }
-        if (amount1 < amountBDesired) {
-            TransferHelper.safeApprove(
-                tokenB,
-                address(nonfungiblePositionManager),
-                0
-            );
-            uint refund1 = amountBDesired - amount1;
-            TransferHelper.safeTransfer(tokenA, msg.sender, refund1);
+        if (useTokenB) {
+            if (amount1 < amountBDesired) {
+                uint refund1 = amountBDesired - amount1;
+                TransferHelper.safeApprove(
+                    tokenB,
+                    address(nonfungiblePositionManager),
+                    refund1
+                );
+                TransferHelper.safeTransfer(tokenA, msg.sender, refund1);
+            }
         }
     }
 

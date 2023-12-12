@@ -61,24 +61,7 @@ contract PositionManagerTest is Test, Constants {
             UNISWAP_V3_FACTORY
         );
 
-        deal(MY_USDT, MY_EOA, AMOUNT_A_DESIRED);
-        deal(MY_ETH, MY_EOA, AMOUNT_B_DESIRED);
-
-        IERC20(MY_USDT).approve(address(positionManager), AMOUNT_A_DESIRED);
-        IERC20(MY_ETH).approve(address(positionManager), AMOUNT_B_DESIRED);
-        IERC20(MY_USDT).approve(
-            address(positionManagerHarness),
-            AMOUNT_A_DESIRED
-        );
-        IERC20(MY_ETH).approve(
-            address(positionManagerHarness),
-            AMOUNT_B_DESIRED
-        );
-
         vm.stopPrank();
-
-        showTokensInfo(address(positionManager));
-        showTokensInfo(address(positionManagerHarness));
     }
 
     function test_getPoolAddress() public {
@@ -98,6 +81,14 @@ contract PositionManagerTest is Test, Constants {
     function test_openPosition() public {
         vm.startPrank(MY_EOA);
 
+        deal(MY_USDT, MY_EOA, AMOUNT_A_DESIRED);
+        deal(MY_ETH, MY_EOA, AMOUNT_B_DESIRED);
+
+        IERC20(MY_USDT).approve(address(positionManager), AMOUNT_A_DESIRED);
+        IERC20(MY_ETH).approve(address(positionManager), AMOUNT_B_DESIRED);
+
+        showTokensInfo(address(positionManager));
+
         positionManager.openPosition(
             PositionManager.PositionDirection.BUY,
             MY_USDT,
@@ -116,6 +107,20 @@ contract PositionManagerTest is Test, Constants {
     function test_addLiquidity() public {
         vm.startPrank(MY_EOA);
 
+        deal(MY_USDT, MY_EOA, AMOUNT_A_DESIRED);
+        deal(MY_ETH, MY_EOA, AMOUNT_B_DESIRED);
+
+        IERC20(MY_USDT).approve(
+            address(positionManagerHarness),
+            AMOUNT_A_DESIRED
+        );
+        IERC20(MY_ETH).approve(
+            address(positionManagerHarness),
+            AMOUNT_B_DESIRED
+        );
+
+        showTokensInfo(address(positionManagerHarness));
+
         positionManagerHarness.exposed_addLiquidity(
             MY_USDT,
             MY_ETH,
@@ -129,6 +134,47 @@ contract PositionManagerTest is Test, Constants {
         );
 
         vm.stopPrank();
+    }
+
+    function test_pauseIsOwnable() public {
+        vm.expectRevert();
+        (bool revertsAsExpected, ) = address(positionManager).call(
+            abi.encodeWithSignature("setPause(bool)", true, msg.sender)
+        );
+        assertTrue(revertsAsExpected, "expectRevert: call did not revert");
+    }
+
+    function test_setPause() public {
+        bool state;
+
+        vm.startPrank(MY_EOA);
+
+        state = positionManager.paused();
+        assertEq(state, false);
+
+        positionManager.setPause(true);
+        state = positionManager.paused();
+        assertEq(state, true);
+
+        positionManager.setPause(false);
+        state = positionManager.paused();
+        assertEq(state, false);
+
+        vm.stopPrank();
+    }
+
+    function test_pauseStopsOpenPosition() public {
+        test_openPosition();
+
+        vm.startPrank(MY_EOA);
+        positionManager.setPause(true);
+        vm.stopPrank();
+
+        vm.expectRevert();
+        (bool revertsAsExpected, ) = address(this).call(
+            abi.encodeWithSignature("test_openPosition()", 0, msg.sender)
+        );
+        assertTrue(revertsAsExpected, "expectRevert: call did not revert");
     }
 
     function showTokensInfo(address spender) internal {

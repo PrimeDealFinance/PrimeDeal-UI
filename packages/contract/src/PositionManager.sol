@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@abdk-libraries-solidity/ABDKMath64x64.sol";
 
 import {console2} from "forge-std/Test.sol";
 
@@ -67,43 +68,31 @@ contract PositionManager is IERC721Receiver {
         address tokenA,
         address tokenB,
         uint24 fee,
-        uint160 sqrtPriceRatio,
+        uint160 stopSqrtPriceX96,
         uint256 amountADesired,
         uint256 amountBDesired,
         uint256 amountAMin,
         uint256 amountBMin
-    ) external {
+    ) public {
         address currentPool = getPoolAddress(tokenA, tokenB, fee);
-        int24 currentTick;
-        int24 startingTick = currentTick;
+        int24 startingTick;
         int24 trailingTick;
-        int24 tickSpacing;
-        uint160 currentSqrtPriceX96;
-        uint160 stopSqrtPriceX96;
+        int24 tickSpacing = IUniswapV3PoolImmutables(currentPool).tickSpacing();
 
         IUniswapV3Pool uniswapPool = IUniswapV3Pool(currentPool);
-        (currentSqrtPriceX96, currentTick, , , , , ) = uniswapPool.slot0();
-
-        if (fee == 100) tickSpacing = 1;
-        if (fee == 500) tickSpacing = 10;
-        if (fee == 3000) tickSpacing = 60;
-        if (fee == 10000) tickSpacing = 200;
+        (, startingTick, , , , , ) = uniswapPool.slot0();
 
         if (positionDirection == PositionDirection.BUY) {
-            startingTick -= tickSpacing;
-            stopSqrtPriceX96 = uint160(
-                SafeMath.div(
-                    uint256(currentSqrtPriceX96),
-                    uint256(sqrtPriceRatio)
-                )
+            startingTick =
+                _nearestUsableTick(startingTick, tickSpacing) -
+                tickSpacing;
+
+            trailingTick = _nearestUsableTick(
+                TickMath.getTickAtSqrtRatio(stopSqrtPriceX96),
+                tickSpacing
             );
-            trailingTick = TickMath.getTickAtSqrtRatio(stopSqrtPriceX96);
 
-            console2.log(currentTick);
-            console2.log(trailingTick);
-            console2.log(startingTick);
-
-            uint256 tokenId = this.addLiquidity(
+            uint256 tokenId = _addLiquidity(
                 tokenA,
                 tokenB,
                 fee,
@@ -114,6 +103,7 @@ contract PositionManager is IERC721Receiver {
                 amountAMin,
                 amountBMin
             );
+
             emit PositionOpened(
                 tokenId,
                 msg.sender,
@@ -121,7 +111,7 @@ contract PositionManager is IERC721Receiver {
                 trailingTick,
                 currentPool
             );
-        } else if (positionDirection == PositionDirection.SELL) {
+        } /* else if (positionDirection == PositionDirection.SELL) {
             startingTick += tickSpacing;
             stopSqrtPriceX96 = uint160(
                 SafeMath.mul(
@@ -130,7 +120,7 @@ contract PositionManager is IERC721Receiver {
                 )
             );
             trailingTick = TickMath.getTickAtSqrtRatio(stopSqrtPriceX96);
-            uint256 tokenId = this.addLiquidity(
+            uint256 tokenId = _addLiquidity(
                 tokenA,
                 tokenB,
                 fee,
@@ -148,10 +138,96 @@ contract PositionManager is IERC721Receiver {
                 trailingTick,
                 currentPool
             );
+        }*/
+    }
+
+    //функция для проверки ончейн нужно ли закрывать позицию
+    function canClosePosition(uint256 tokenId) public view returns (bool) {
+        address pool = getPoolAddress(
+            positions[tokenId].token0,
+            positions[tokenId].token1,
+            positions[tokenId].fee
+        );
+        int24 currentTick = getCurrentTick(pool);
+        return
+            currentTick > positions[tokenId].tickUpper ||
+            currentTick < positions[tokenId].tickLower;
+    }
+
+    //закрываем позицию с бэкэнда
+    function closePosition(uint256 tokenId) public {
+        require(canClosePosition(tokenId), "position not need to close");
+
+        _decreaseLiquidity(tokenId);
+        _collect(tokenId);
+        _burnPosition(tokenId);
+
+        delete positions[tokenId];
+
+        emit PositionClosed(
+            tokenId,
+            positions[tokenId].owner,
+            positions[tokenId].tickLower,
+            positions[tokenId].tickUpper
+        );
+    }
+
+    //функция для получения адреса пула
+    function getPoolAddress(
+        address tokenA,
+        address tokenB,
+        uint24 fee
+    ) public view returns (address pool) {
+        pool = uniswapFactory.getPool(tokenA, tokenB, fee);
+    }
+
+    //функция для получения текущего тика на пуле
+    function getCurrentTick(address pool) public view returns (int24 tick) {
+        IUniswapV3Pool uniswapPool = IUniswapV3Pool(pool);
+        (, tick, , , , , ) = uniswapPool.slot0();
+    }
+
+    // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
+    function onERC721Received(
+        address /*operator*/,
+        address /*from*/,
+        uint256 /*tokenId*/,
+        bytes calldata /*data*/
+    ) public pure override returns (bytes4) {
+        //
+        return this.onERC721Received.selector;
+    }
+
+    // https://uniswapv3book.com/docs/milestone_4/tick-rounding/
+    function _nearestUsableTick(
+        int24 tick_,
+        int24 tickSpacing
+    ) internal pure returns (int24 result) {
+        result =
+            int24(_divRound(int128(tick_), int128(tickSpacing))) *
+            tickSpacing;
+
+        if (result < TickMath.MIN_TICK) {
+            result += tickSpacing;
+        } else if (result > TickMath.MAX_TICK) {
+            result -= tickSpacing;
         }
     }
 
-    function addLiquidity(
+    function _divRound(
+        int128 x,
+        int128 y
+    ) internal pure returns (int128 result) {
+        int128 quot = ABDKMath64x64.div(x, y);
+        result = quot >> 64;
+
+        // Check if remainder is greater than 0.5
+        if (quot % 2 ** 64 >= 0x8000000000000000) {
+            result += 1;
+        }
+    }
+
+    function _addLiquidity(
         address tokenA,
         address tokenB,
         uint24 fee,
@@ -161,7 +237,7 @@ contract PositionManager is IERC721Receiver {
         uint256 amountBDesired,
         uint256 amountAMin,
         uint256 amountBMin
-    ) external returns (uint256 _tokenId) {
+    ) internal returns (uint256 _tokenId) {
         // transfer tokens to contract
         TransferHelper.safeTransferFrom(
             tokenA,
@@ -200,7 +276,7 @@ contract PositionManager is IERC721Receiver {
                 amount1Desired: amountBDesired,
                 amount0Min: amountAMin,
                 amount1Min: amountBMin,
-                recipient: msg.sender,
+                recipient: address(this),
                 deadline: block.timestamp + 10 days
             });
 
@@ -264,7 +340,7 @@ contract PositionManager is IERC721Receiver {
     }
 
     //функция чтобы забрать средства с позиции
-    function collect(uint256 tokenId) internal {
+    function _collect(uint256 tokenId) internal {
         INonfungiblePositionManager.CollectParams memory params = INonfungiblePositionManager
             .CollectParams({
                 tokenId: tokenId,
@@ -277,64 +353,7 @@ contract PositionManager is IERC721Receiver {
     }
 
     //сжигаем нфт позиции
-    function burnPosition(uint256 tokenId) internal {
+    function _burnPosition(uint256 tokenId) internal {
         nonfungiblePositionManager.burn(tokenId);
-    }
-
-    //функция для проверки ончейн нужно ли закрывать позицию
-    function canClosePosition(uint256 tokenId) public view returns (bool) {
-        address pool = getPoolAddress(
-            positions[tokenId].token0,
-            positions[tokenId].token1,
-            positions[tokenId].fee
-        );
-        int24 currentTick = getCurrentTick(pool);
-        return
-            currentTick > positions[tokenId].tickUpper ||
-            currentTick < positions[tokenId].tickLower;
-    }
-
-    //закрываем позицию с бэкэнда
-    function closePosition(uint256 tokenId) public {
-        require(canClosePosition(tokenId), "position not need to close");
-
-        _decreaseLiquidity(tokenId);
-        collect(tokenId);
-        burnPosition(tokenId);
-
-        delete positions[tokenId];
-
-        emit PositionClosed(
-            tokenId,
-            positions[tokenId].owner,
-            positions[tokenId].tickLower,
-            positions[tokenId].tickUpper
-        );
-    }
-
-    //функция для получения адреса пула
-    function getPoolAddress(
-        address tokenA,
-        address tokenB,
-        uint24 fee
-    ) public view returns (address pool) {
-        pool = uniswapFactory.getPool(tokenA, tokenB, fee);
-    }
-
-    //функция для получения текущего тика на пуле
-    function getCurrentTick(address pool) public view returns (int24 tick) {
-        IUniswapV3Pool uniswapPool = IUniswapV3Pool(pool);
-        (, tick, , , , , ) = uniswapPool.slot0();
-    }
-
-    // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) public override returns (bytes4) {
-        //
-        return this.onERC721Received.selector;
     }
 }

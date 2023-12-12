@@ -3,19 +3,22 @@ pragma solidity ^0.8.17;
 
 import "@uniswap-v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 import "@uniswap-v3-periphery/contracts/libraries/TransferHelper.sol";
-// import "@uniswap-v3-core/contracts/libraries/TickMath.sol";
+import "@uniswap-v3-core/contracts/libraries/TickMath.sol";
+import "@uniswap-v3-core/contracts/libraries/FullMath.sol";
+import "@uniswap-v3-core/contracts/libraries/FixedPoint96.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@abdk-libraries-solidity/ABDKMath64x64.sol";
+
+import {console2} from "forge-std/Test.sol";
 
 contract PositionManager is IERC721Receiver {
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
     IUniswapV3Factory public immutable uniswapFactory;
 
-    // TODO: remove
-    uint256 amount0ToMint = 0;
-    uint256 amount1ToMint = 0;
     uint256 amount0ToAdd = 0;
     uint256 amount1ToAdd = 0;
 
@@ -34,11 +37,17 @@ contract PositionManager is IERC721Receiver {
 
     mapping(uint256 => Position) public positions;
 
+    enum PositionDirection {
+        BUY,
+        SELL
+    }
+
     event PositionOpened(
         uint256 indexed positionId,
         address user,
         int24 tickLower,
-        int24 tickUpper
+        int24 tickUpper,
+        address poolAddress
     );
     event PositionClosed(
         uint256 indexed positionId,
@@ -54,134 +63,82 @@ contract PositionManager is IERC721Receiver {
         uniswapFactory = IUniswapV3Factory(_uniswapFactory);
     }
 
-    function addLiquidity(
+    function openPosition(
+        PositionDirection positionDirection,
         address tokenA,
         address tokenB,
         uint24 fee,
-        int24 tickLower,
-        int24 tickUpper,
+        uint160 stopSqrtPriceX96,
         uint256 amountADesired,
         uint256 amountBDesired,
         uint256 amountAMin,
         uint256 amountBMin
-    ) external {
-        // transfer tokens to contract
-        TransferHelper.safeTransferFrom(
-            tokenA,
-            msg.sender,
-            address(this),
-            amount0ToMint
-        );
-        TransferHelper.safeTransferFrom(
-            tokenB,
-            msg.sender,
-            address(this),
-            amount1ToMint
-        );
+    ) public {
+        address currentPool = getPoolAddress(tokenA, tokenB, fee);
+        int24 startingTick;
+        int24 trailingTick;
+        int24 tickSpacing = IUniswapV3PoolImmutables(currentPool).tickSpacing();
 
-        // Approve the position manager
-        TransferHelper.safeApprove(
-            tokenA,
-            address(nonfungiblePositionManager),
-            amount0ToMint
-        );
-        TransferHelper.safeApprove(
-            tokenB,
-            address(nonfungiblePositionManager),
-            amount1ToMint
-        );
+        IUniswapV3Pool uniswapPool = IUniswapV3Pool(currentPool);
+        (, startingTick, , , , , ) = uniswapPool.slot0();
 
-        // Создание позиции и добавление ликвидности
-        INonfungiblePositionManager.MintParams
-            memory params = INonfungiblePositionManager.MintParams({
-                token0: tokenA,
-                token1: tokenB,
-                fee: fee,
-                tickLower: tickLower,
-                tickUpper: tickUpper,
-                amount0Desired: amountADesired,
-                amount1Desired: amountBDesired,
-                amount0Min: amountAMin,
-                amount1Min: amountBMin,
-                recipient: msg.sender,
-                deadline: block.timestamp + 10 days
-            });
+        if (positionDirection == PositionDirection.BUY) {
+            startingTick =
+                _nearestUsableTick(startingTick, tickSpacing) -
+                tickSpacing;
 
-        (
-            uint256 tokenId,
-            uint256 liquidity,
-            uint256 amount0,
-            uint256 amount1
-        ) = nonfungiblePositionManager.mint(params);
+            trailingTick = _nearestUsableTick(
+                TickMath.getTickAtSqrtRatio(stopSqrtPriceX96),
+                tickSpacing
+            );
 
-        // Сохранение информации о позиции
-        positions[tokenId] = Position({
-            tokenId: tokenId,
-            token0: tokenA,
-            token1: tokenB,
-            fee: fee,
-            tickLower: tickLower,
-            tickUpper: tickUpper,
-            liquidity: liquidity,
-            amountA: amount0,
-            amountB: amount1,
-            owner: msg.sender
-        });
-
-        //вернём юзеру остатки
-        if (amount0 < amount0ToAdd) {
-            TransferHelper.safeApprove(
+            uint256 tokenId = _addLiquidity(
                 tokenA,
-                address(nonfungiblePositionManager),
-                0
-            );
-            uint refund0 = amount0ToAdd - amount0;
-            TransferHelper.safeTransfer(tokenA, msg.sender, refund0);
-        }
-        if (amount1 < amount1ToAdd) {
-            TransferHelper.safeApprove(
                 tokenB,
-                address(nonfungiblePositionManager),
-                0
+                fee,
+                trailingTick,
+                startingTick,
+                amountADesired,
+                amountBDesired,
+                amountAMin,
+                amountBMin
             );
-            uint refund1 = amount1ToAdd - amount1;
-            TransferHelper.safeTransfer(tokenA, msg.sender, refund1);
-        }
 
-        emit PositionOpened(tokenId, msg.sender, tickLower, tickUpper);
-    }
-
-    //функция для уменьшения ликвидности для указанной позиции
-    function _decreaseLiquidity(uint256 tokenId) internal {
-        INonfungiblePositionManager.DecreaseLiquidityParams
-            memory params = INonfungiblePositionManager
-                .DecreaseLiquidityParams({
-                    tokenId: tokenId,
-                    liquidity: uint128(positions[tokenId].liquidity),
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    deadline: block.timestamp
-                });
-
-        nonfungiblePositionManager.decreaseLiquidity(params);
-    }
-
-    //функция чтобы забрать средства с позиции
-    function collect(uint256 tokenId) internal {
-        INonfungiblePositionManager.CollectParams
-            memory params = INonfungiblePositionManager.CollectParams({
-                tokenId: tokenId,
-                recipient: positions[tokenId].owner, //отправляем юзеру
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
-            });
-
-        nonfungiblePositionManager.collect(params);
-    }
-
-    //сжигаем нфт позиции
-    function burnPosition(uint256 tokenId) internal {
-        nonfungiblePositionManager.burn(tokenId);
+            emit PositionOpened(
+                tokenId,
+                msg.sender,
+                startingTick,
+                trailingTick,
+                currentPool
+            );
+        } /* else if (positionDirection == PositionDirection.SELL) {
+            startingTick += tickSpacing;
+            stopSqrtPriceX96 = uint160(
+                SafeMath.mul(
+                    uint256(currentSqrtPriceX96),
+                    uint256(sqrtPriceRatio)
+                )
+            );
+            trailingTick = TickMath.getTickAtSqrtRatio(stopSqrtPriceX96);
+            uint256 tokenId = _addLiquidity(
+                tokenA,
+                tokenB,
+                fee,
+                startingTick,
+                trailingTick,
+                amountADesired,
+                amountBDesired,
+                amountAMin,
+                amountBMin
+            );
+            emit PositionOpened(
+                tokenId,
+                msg.sender,
+                startingTick,
+                trailingTick,
+                currentPool
+            );
+        }*/
     }
 
     //функция для проверки ончейн нужно ли закрывать позицию
@@ -202,8 +159,8 @@ contract PositionManager is IERC721Receiver {
         require(canClosePosition(tokenId), "position not need to close");
 
         _decreaseLiquidity(tokenId);
-        collect(tokenId);
-        burnPosition(tokenId);
+        _collect(tokenId);
+        _burnPosition(tokenId);
 
         delete positions[tokenId];
 
@@ -232,12 +189,171 @@ contract PositionManager is IERC721Receiver {
 
     // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
     function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) public override returns (bytes4) {
+        address /*operator*/,
+        address /*from*/,
+        uint256 /*tokenId*/,
+        bytes calldata /*data*/
+    ) public pure override returns (bytes4) {
         //
         return this.onERC721Received.selector;
+    }
+
+    // https://uniswapv3book.com/docs/milestone_4/tick-rounding/
+    function _nearestUsableTick(
+        int24 tick_,
+        int24 tickSpacing
+    ) internal pure returns (int24 result) {
+        result =
+            int24(_divRound(int128(tick_), int128(tickSpacing))) *
+            tickSpacing;
+
+        if (result < TickMath.MIN_TICK) {
+            result += tickSpacing;
+        } else if (result > TickMath.MAX_TICK) {
+            result -= tickSpacing;
+        }
+    }
+
+    function _divRound(
+        int128 x,
+        int128 y
+    ) internal pure returns (int128 result) {
+        int128 quot = ABDKMath64x64.div(x, y);
+        result = quot >> 64;
+
+        // Check if remainder is greater than 0.5
+        if (quot % 2 ** 64 >= 0x8000000000000000) {
+            result += 1;
+        }
+    }
+
+    function _addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint24 fee,
+        int24 tickLower,
+        int24 tickUpper,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin
+    ) internal returns (uint256 _tokenId) {
+        // transfer tokens to contract
+        TransferHelper.safeTransferFrom(
+            tokenA,
+            msg.sender,
+            address(this),
+            amountADesired
+        );
+        TransferHelper.safeTransferFrom(
+            tokenB,
+            msg.sender,
+            address(this),
+            amountBDesired
+        );
+
+        // Approve the position manager
+        TransferHelper.safeApprove(
+            tokenA,
+            address(nonfungiblePositionManager),
+            amountADesired
+        );
+        TransferHelper.safeApprove(
+            tokenB,
+            address(nonfungiblePositionManager),
+            amountBDesired
+        );
+
+        // Создание позиции и добавление ликвидности
+        INonfungiblePositionManager.MintParams
+            memory params = INonfungiblePositionManager.MintParams({
+                token0: tokenA,
+                token1: tokenB,
+                fee: fee,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                amount0Desired: amountADesired,
+                amount1Desired: amountBDesired,
+                amount0Min: amountAMin,
+                amount1Min: amountBMin,
+                recipient: address(this),
+                deadline: block.timestamp + 10 days
+            });
+
+        (
+            uint256 tokenId,
+            uint256 liquidity,
+            uint256 amount0,
+            uint256 amount1
+        ) = nonfungiblePositionManager.mint(params);
+
+        _tokenId = tokenId;
+
+        // Сохранение информации о позиции
+        positions[tokenId] = Position({
+            tokenId: tokenId,
+            token0: tokenA,
+            token1: tokenB,
+            fee: fee,
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            liquidity: liquidity,
+            amountA: amount0,
+            amountB: amount1,
+            owner: msg.sender
+        });
+
+        //вернём юзеру остатки
+        if (amount0 < amountADesired) {
+            TransferHelper.safeApprove(
+                tokenA,
+                address(nonfungiblePositionManager),
+                0
+            );
+            uint refund0 = amountADesired - amount0;
+            TransferHelper.safeTransfer(tokenA, msg.sender, refund0);
+        }
+        if (amount1 < amountBDesired) {
+            TransferHelper.safeApprove(
+                tokenB,
+                address(nonfungiblePositionManager),
+                0
+            );
+            uint refund1 = amountBDesired - amount1;
+            TransferHelper.safeTransfer(tokenA, msg.sender, refund1);
+        }
+    }
+
+    //функция для уменьшения ликвидности для указанной позиции
+    function _decreaseLiquidity(uint256 tokenId) internal {
+        INonfungiblePositionManager.DecreaseLiquidityParams
+            memory params = INonfungiblePositionManager
+                .DecreaseLiquidityParams({
+                    tokenId: tokenId,
+                    liquidity: uint128(positions[tokenId].liquidity),
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    deadline: block.timestamp
+                });
+
+        nonfungiblePositionManager.decreaseLiquidity(params);
+    }
+
+    //функция чтобы забрать средства с позиции
+    function _collect(uint256 tokenId) internal {
+        INonfungiblePositionManager.CollectParams memory params = INonfungiblePositionManager
+            .CollectParams({
+                tokenId: tokenId,
+                recipient: positions[tokenId].owner, //отправляем юзеру
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            });
+
+        nonfungiblePositionManager.collect(params);
+    }
+
+    //сжигаем нфт позиции
+    function _burnPosition(uint256 tokenId) internal {
+        nonfungiblePositionManager.burn(tokenId);
     }
 }

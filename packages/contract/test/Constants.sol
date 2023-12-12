@@ -26,5 +26,6 @@ contract Constants {
     uint256 internal constant AMOUNT_A_MIN = 0;
     uint256 internal constant AMOUNT_B_MIN = 0;
 
-    uint160 internal constant SQRT_STOP_PRICE_X96 = 2e27; // 1 ETH / 1570 USDT
+    uint160 internal constant SQRT_STOP_PRICE_X96_SELL = 2e27; // 1 ETH / 1570 USDT
+    uint160 internal constant SQRT_STOP_PRICE_X96_BUY = 4e27; // 1 ETH / 392 USDT
 }

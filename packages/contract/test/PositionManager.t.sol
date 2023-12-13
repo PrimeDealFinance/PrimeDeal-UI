@@ -50,9 +50,7 @@ contract PositionManagerTest is Test, Constants {
     address public owner = vm.addr(0xCFAE);
 
     function setUp() public {
-        vm.createSelectFork(
-            "https://polygon-mumbai.g.alchemy.com/v2/RrXlJHdd3rcZZ3BZXadGxpXu6SA8gQN5"
-        );
+        vm.createSelectFork(vm.envString("MUMBAI_RPC_URL"), USE_BLOCK);
         vm.startPrank(MY_EOA);
 
         positionManager = new PositionManager(
@@ -227,6 +225,15 @@ contract PositionManagerTest is Test, Constants {
         showTokensInfo(address(positionManager));
 
         vm.stopPrank();
+    }
+
+    function test_getCurrentSqrtPriceX96() public {
+        uint160 currentSqrtPriceX96 = positionManager.getCurrentSqrtPriceX96(
+            MY_USDT,
+            MY_ETH,
+            FEE_3000
+        );
+        assertEq(currentSqrtPriceX96, SQRT_CURRENT_PRICE_X96);
     }
 
     function showTokensInfo(address spender) internal {

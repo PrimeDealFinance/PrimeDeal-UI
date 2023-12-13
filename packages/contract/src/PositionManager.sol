@@ -63,10 +63,12 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         uniswapFactory = IUniswapV3Factory(_uniswapFactory);
     }
 
+    // Function that sets pause state of the contract
     function setPause(bool state) public onlyOwner {
         state ? _pause() : _unpause();
     }
 
+    // Function that opens BUY (down-direction) position using ONLY tokenA
     function openBuyPosition(
         address tokenA,
         address tokenB,
@@ -87,6 +89,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         );
     }
 
+    // Function that opens SELL (up-direction) position using ONLY tokenB
     function openSellPosition(
         address tokenA,
         address tokenB,
@@ -107,6 +110,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         );
     }
 
+    // Generic function that opens ANY (any-direction) position using tokenA AND|OR tokenB
     function openPosition(
         PositionDirection positionDirection,
         address tokenA,
@@ -118,13 +122,12 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         uint256 amountAMin,
         uint256 amountBMin
     ) public whenNotPaused {
-        address currentPool = getPoolAddress(tokenA, tokenB, fee);
+        address pool = getPoolAddress(tokenA, tokenB, fee);
         int24 startingTick;
         int24 trailingTick;
-        int24 tickSpacing = IUniswapV3PoolImmutables(currentPool).tickSpacing();
+        int24 tickSpacing = IUniswapV3PoolImmutables(pool).tickSpacing();
 
-        IUniswapV3Pool uniswapPool = IUniswapV3Pool(currentPool);
-        (, startingTick, , , , , ) = uniswapPool.slot0();
+        (, startingTick, , , , , ) = IUniswapV3Pool(pool).slot0();
 
         trailingTick = _nearestUsableTick(
             TickMath.getTickAtSqrtRatio(stopSqrtPriceX96),
@@ -155,7 +158,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
                 msg.sender,
                 startingTick,
                 trailingTick,
-                currentPool
+                pool
             );
         } else if (positionDirection == PositionDirection.SELL) {
             startingTick =
@@ -181,12 +184,12 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
                 msg.sender,
                 trailingTick,
                 startingTick,
-                currentPool
+                pool
             );
         }
     }
 
-    //функция для проверки ончейн нужно ли закрывать позицию
+    // Function that checks if position can be closed
     function canClosePosition(uint256 tokenId) public view returns (bool) {
         address pool = getPoolAddress(
             positions[tokenId].token0,
@@ -199,7 +202,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             currentTick < positions[tokenId].tickLower;
     }
 
-    //закрываем позицию с бэкэнда
+    // Function that closes the position
     function closePosition(uint256 tokenId) public {
         require(canClosePosition(tokenId), "position not need to close");
 
@@ -217,7 +220,17 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         );
     }
 
-    //функция для получения адреса пула
+    // Function that provides the current price of pool in SqrtX96 format
+    function getCurrentSqrtPriceX96(
+        address tokenA,
+        address tokenB,
+        uint24 fee
+    ) public view returns (uint160 currentSqrtPriceX96) {
+        address pool = uniswapFactory.getPool(tokenA, tokenB, fee);
+        (currentSqrtPriceX96, , , , , , ) = IUniswapV3Pool(pool).slot0();
+    }
+
+    // Function that gets the pool address
     function getPoolAddress(
         address tokenA,
         address tokenB,
@@ -226,10 +239,9 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         pool = uniswapFactory.getPool(tokenA, tokenB, fee);
     }
 
-    //функция для получения текущего тика на пуле
+    // Function that gets the current tick on the particular pool
     function getCurrentTick(address pool) public view returns (int24 tick) {
-        IUniswapV3Pool uniswapPool = IUniswapV3Pool(pool);
-        (, tick, , , , , ) = uniswapPool.slot0();
+        (, tick, , , , , ) = IUniswapV3Pool(pool).slot0();
     }
 
     // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
@@ -243,6 +255,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         return this.onERC721Received.selector;
     }
 
+    // Function that returns the nearest tick
     // https://uniswapv3book.com/docs/milestone_4/tick-rounding/
     function _nearestUsableTick(
         int24 tick_,
@@ -259,6 +272,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         }
     }
 
+    // div helper function
     function _divRound(
         int128 x,
         int128 y
@@ -272,6 +286,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         }
     }
 
+    // Function that adds the liquidity and create a new position
     function _addLiquidity(
         address tokenA,
         address tokenB,
@@ -285,7 +300,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         bool useTokenA,
         bool useTokenB
     ) internal returns (uint256 _tokenId) {
-        // transfer tokens to contract
+        // transfer tokens to the contract
         if (useTokenA) {
             TransferHelper.safeTransferFrom(
                 tokenA,
@@ -303,7 +318,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             );
         }
 
-        // Approve the position manager
+        // approve the position manager
         if (useTokenA) {
             TransferHelper.safeApprove(
                 tokenA,
@@ -319,7 +334,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             );
         }
 
-        // Создание позиции и добавление ликвидности
+        // create position and add the liquidity
         INonfungiblePositionManager.MintParams
             memory params = INonfungiblePositionManager.MintParams({
                 token0: tokenA,
@@ -344,7 +359,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
 
         _tokenId = tokenId;
 
-        // Сохранение информации о позиции
+        // store information about position
         positions[tokenId] = Position({
             tokenId: tokenId,
             token0: tokenA,
@@ -358,7 +373,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             owner: msg.sender
         });
 
-        //вернём юзеру остатки
+        // refunds the unspent amount
         if (useTokenA) {
             if (amount0 < amountADesired) {
                 uint refund0 = amountADesired - amount0;
@@ -383,7 +398,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         }
     }
 
-    //функция для уменьшения ликвидности для указанной позиции
+    // Function that decreases the liquidity
     function _decreaseLiquidity(uint256 tokenId) internal {
         INonfungiblePositionManager.DecreaseLiquidityParams
             memory params = INonfungiblePositionManager
@@ -398,7 +413,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         nonfungiblePositionManager.decreaseLiquidity(params);
     }
 
-    //функция чтобы забрать средства с позиции
+    // function that collects the position funds
     function _collect(uint256 tokenId) internal {
         INonfungiblePositionManager.CollectParams memory params = INonfungiblePositionManager
             .CollectParams({
@@ -411,7 +426,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         nonfungiblePositionManager.collect(params);
     }
 
-    //сжигаем нфт позиции
+    // function that that burns the NFT
     function _burnPosition(uint256 tokenId) internal {
         nonfungiblePositionManager.burn(tokenId);
     }

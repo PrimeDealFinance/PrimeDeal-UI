@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { Providers } from "@/app/providers"
+import  Header  from "@/components/header"
+import { Rainbow } from "@/service/rainbow-kit-provider"
+import { ConnectButton } from "@rainbow-me/rainbowkit"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -16,7 +20,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+     <Rainbow>
+       <Providers>
+         
+            <main className='light text-foreground bg-[#D2D9EE]'>
+              <Header/>
+                {children}
+            </main> 
+         
+        </Providers>
+      </Rainbow>
+      </body>
     </html>
   )
 }

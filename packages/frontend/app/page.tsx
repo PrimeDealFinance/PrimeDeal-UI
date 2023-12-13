@@ -1,95 +1,81 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client"
+import React from "react"
+import Image from "next/image"
+import { Button }  from "@nextui-org/button"
+import { Input } from "@nextui-org/input"
+import { Select, SelectItem} from "@nextui-org/select"
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@nextui-org/modal"
+ 
 
 export default function Home() {
+
+  const {isOpen, onOpen, onOpenChange} = useDisclosure();
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="flex flex-col h-screen flex flex-col items-center"> 
+      <div className=" flex flex-col items-center bg-white rounded-[15px] w-[464px] h-[263px] mt-[129px]">
+        <div className="flex flex-wrap md:flex-nowrap gap-[43px] mt-[63px]">
+          <Select variant="bordered" placeholder="Select an asset" className="w-[187px] h-[44px]" radius="lg" size="sm">
+              <SelectItem key="ETH" value="ETH">
+                  ETH
+              </SelectItem>
+              <SelectItem key="BTC" value="BTC">
+                  BTC
+              </SelectItem>
+          </Select>
+          <Select variant="bordered" placeholder="Select option" className="w-[187px]" radius="lg" size="sm">
+              <SelectItem key="BUY" value="BUY">
+                BUY
+              </SelectItem>
+              <SelectItem key="SELL" value="SELL">
+                SELL
+              </SelectItem>
+          </Select>
         </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+        <div className="flex flex-wrap md:flex-nowrap gap-[41px] mt-[15px]">
+            <Input type="number" label="Enter amount()"  variant="bordered" className="w-[187px]" radius="lg" size="sm" />
+            <Input type="number" label="Set price()"  variant="bordered" className="w-[187px]" radius="lg" size="sm" />
+        </div>
+        <>
+        <Button onPress={onOpen} className="bg-[#F9607CF0] text-white w-[185px] h-[36px] rounded-[15px] mt-[38px] font-semibold font-inter text-[16px]">View Order</Button>
+        <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+        <ModalContent className="flex flex-col items-center">
+          {(onClose) => (
+            <>
+              <ModalHeader className="text-[#F9607C]">Your Position</ModalHeader>
+              <ModalBody className="flex flex-row">
+               <div className="text-right">
+                <p> 
+                You’II get: ()
+                </p>
+                <p>
+                Average price of purchase: $
+                </p>
+                <p>
+                Your reward in a day: $
+                </p>
+                <p>
+                Your reward in a week: $
+                </p>
+                <p>
+                Your reward in a month: $
+                </p>
+                </div>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" onPress={onClose}>
+                  Change order
+                </Button>
+                <Button color="primary" onPress={onClose}>
+                  Confirm order
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+        </>
+      </div> 
+    </div>      
+  );
 }

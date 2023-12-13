@@ -2,6 +2,8 @@
 pragma solidity ^0.8.17;
 
 contract Constants {
+    uint256 internal constant USE_BLOCK = 43537896;
+
     address internal constant UNISWAP_V3_NPM =
         0xC36442b4a4522E871399CD717aBDD847Ab11FE88;
     address internal constant UNISWAP_V3_FACTORY =
@@ -28,4 +30,7 @@ contract Constants {
 
     uint160 internal constant SQRT_STOP_PRICE_X96_SELL = 2e27; // 1 ETH / 1570 USDT
     uint160 internal constant SQRT_STOP_PRICE_X96_BUY = 4e27; // 1 ETH / 392 USDT
+
+    uint160 internal constant SQRT_CURRENT_PRICE_X96 =
+        2804843978760484196155948446; // fixed price on USE_BLOCK
 }

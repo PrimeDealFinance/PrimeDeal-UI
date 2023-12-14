@@ -2,6 +2,7 @@
 variables:
   GIT_DEPTH: 1
   CONTRACT_PATH: "packages/contract"
+  FRONTEND_PATH: "packages/frontend"
 
 ## Global defaults
 default:
@@ -13,7 +14,7 @@ default:
 stages:
   - setup
   # - build
-  # - test
+  - test
   - deploy
 
 ## Caches
@@ -21,14 +22,20 @@ stages:
   key: node-cache
   paths:
     - node_modules/
-    - packages/frontend/node_modules
+    - $FRONTEND_PATH/node_modules
     - .nx/
   policy: pull
 
 .forge-cache: &forge-cache
   key: forge-cache
   paths:
-    - packages/contract/lib/
+    - $CONTRACT_PATH/lib/
+  policy: pull
+
+.contract-cache: &contract-cache
+  key: contract-cache
+  paths:
+    - $CONTRACT_PATH/script/contract_deploy_address.txt
   policy: pull
 
 ## Jobs
@@ -55,34 +62,36 @@ setup:
 #   script:
 #     - npx nx build frontend
 
-# contract-test:
-#   cache:
-#     - <<: *node-cache
-#     - <<: *forge-cache
-#   stage: test
-#   needs: [setup]
-#   dependencies:
-#     - setup
-#   script:
-#     - npx nx test contract
+contract-test:
+  cache:
+    - <<: *node-cache
+    - <<: *forge-cache
+  stage: test
+  needs: [setup]
+  dependencies:
+    - setup
+  script:
+    - npx nx test contract
 
-# contract-deploy:
-#   cache:
-#     - <<: *node-cache
-#     - <<: *forge-cache
-#   stage: deploy
-#   needs: [contract-test]
-#   dependencies:
-#     - contract-test
-#   script:
-#     - npx nx deploy contract
-#   when: manual
-#   artifacts:
-#     paths:
-#       - $CONTRACT_PATH/script/contract_deploy_address.txt
-#     expire_in: 2 days
+contract-deploy:
+  cache:
+    - <<: *node-cache
+    - <<: *forge-cache
+    - <<: *contract-cache
+      policy: push
+  stage: deploy
+  needs: [contract-test]
+  dependencies:
+    - contract-test
+  script:
+    - npx nx deploy contract
+  only:
+    changes:
+      - $CONTRACT_PATH/src/PositionManager.sol
 
 frontend-deploy:
+  cache:
+    - <<: *contract-cache
   tags:
     - local
   stage: deploy
@@ -90,7 +99,8 @@ frontend-deploy:
   before_script:
     - docker info
   script:
-    - cd packages/frontend
+    - cat $CONTRACT_PATH/src/PositionManager.sol
+    - cd $FRONTEND_PATH
     - COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build
     - docker tag w3a-mvp-dapp-frontend:latest registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest
     - docker login registry.digitalocean.com

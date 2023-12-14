@@ -4,6 +4,7 @@ services:
     image: w3a-mvp-dapp-frontend
     build:
       context: ./
+      target: production
       dockerfile: Dockerfile
     volumes:
       - .:/app

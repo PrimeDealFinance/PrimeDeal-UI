@@ -12,8 +12,8 @@ default:
 ## Global stages
 stages:
   - setup
-  - build
-  - test
+  # - build
+  # - test
   - deploy
 
 ## Caches
@@ -44,40 +44,52 @@ setup:
   script:
     - npm install
 
-frontend-build:
-  cache:
-  cache:
-    - <<: *node-cache
-  stage: build
-  needs: [setup]
-  dependencies:
-    - setup
-  script:
-    - npx nx build frontend
+# frontend-build:
+#   cache:
+#   cache:
+#     - <<: *node-cache
+#   stage: build
+#   needs: [setup]
+#   dependencies:
+#     - setup
+#   script:
+#     - npx nx build frontend
 
-contract-test:
-  cache:
-    - <<: *node-cache
-    - <<: *forge-cache
-  stage: test
-  needs: [setup]
-  dependencies:
-    - setup
-  script:
-    - npx nx test contract
+# contract-test:
+#   cache:
+#     - <<: *node-cache
+#     - <<: *forge-cache
+#   stage: test
+#   needs: [setup]
+#   dependencies:
+#     - setup
+#   script:
+#     - npx nx test contract
 
-contract-deploy:
-  cache:
-    - <<: *node-cache
-    - <<: *forge-cache
+# contract-deploy:
+#   cache:
+#     - <<: *node-cache
+#     - <<: *forge-cache
+#   stage: deploy
+#   needs: [contract-test]
+#   dependencies:
+#     - contract-test
+#   script:
+#     - npx nx deploy contract
+#   when: manual
+#   artifacts:
+#     paths:
+#       - $CONTRACT_PATH/script/contract_deploy_address.txt
+#     expire_in: 2 days
+
+frontend-deploy:
+  tags:
+    - local
   stage: deploy
-  needs: [contract-test]
-  dependencies:
-    - contract-test
+  needs: [setup]
+  before_script:
+    - docker info
   script:
-    - npx nx deploy contract
-  when: manual
-  artifacts:
-    paths:
-      - $CONTRACT_PATH/script/contract_deploy_address.txt
-    expire_in: 2 days
+    - cd packages/frontend
+    - COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build
+    # - docker run my-docker-image /script/to/run/tests

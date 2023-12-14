@@ -49,7 +49,8 @@ setup:
       policy: pull-push
   stage: setup
   script:
-    - npm install
+    - echo "npm install skipped"
+    # - npm install
 
 # frontend-build:
 #   cache:
@@ -99,7 +100,7 @@ frontend-deploy:
   before_script:
     - docker info
   script:
-    - cat $CONTRACT_PATH/src/PositionManager.sol
+    - cat $CONTRACT_PATH/script/contract_deploy_address.txt
     - cd $FRONTEND_PATH
     - COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build
     - docker tag w3a-mvp-dapp-frontend:latest registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest

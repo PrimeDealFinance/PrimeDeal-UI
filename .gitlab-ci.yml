@@ -21,6 +21,7 @@ stages:
   key: node-cache
   paths:
     - node_modules/
+    - packages/frontend/node_modules
     - .nx/
   policy: pull
 

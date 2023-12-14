@@ -92,4 +92,6 @@ frontend-deploy:
   script:
     - cd packages/frontend
     - COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build
-    # - docker run my-docker-image /script/to/run/tests
+    - docker tag w3a-mvp-dapp-frontend:latest registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest
+    - docker login registry.digitalocean.com
+    - docker push registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest

@@ -76,6 +76,7 @@ contract-deploy:
     - contract-test
   script:
     - npx nx deploy contract
+  when: manual
   artifacts:
     paths:
       - $CONTRACT_PATH/script/contract_deploy_address.txt

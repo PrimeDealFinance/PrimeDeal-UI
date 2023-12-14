@@ -86,9 +86,10 @@ contract-deploy:
     - contract-test
   script:
     - npx nx deploy contract
-  only:
-    changes:
-      - $CONTRACT_PATH/src/PositionManager.sol
+  rules:
+    - if: $CI_COMMIT_BRANCH == "10-create-deploy-state-for-frontend"
+      changes:
+        - $CONTRACT_PATH/src/PositionManager.sol
 
 frontend-deploy:
   cache:
@@ -96,7 +97,9 @@ frontend-deploy:
   tags:
     - local
   stage: deploy
-  needs: [setup]
+  needs: [contract-deploy]
+  dependencies:
+    - contract-deploy
   before_script:
     - docker info
   script:

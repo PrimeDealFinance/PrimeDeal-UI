@@ -1,5 +1,6 @@
 #/bin/bash
 
+echo "Deploying contract..."
 forge create \
     --rpc-url 'https://lb.drpc.org/ogrpc?network=polygon-mumbai&dkey=AmvHqebJ6k7ThQWeGwnLVmnsDTC3hx0R7qTGrkUU-y5L' \
     --private-key '0xe713b29254fcbfa701a7210983075d4813eeedf6e5b22551e354a7b40e44c9c9' \
@@ -10,6 +11,13 @@ forge create \
     --json \
     --silent \
     src/PositionManager.sol:PositionManager | tee script/out.txt
+
+if [ $? -eq 0 ]; then
+    echo "DONE"
+else
+    echo "FAIL"
+    exit 1
+fi
 
 echo "Extracting deployedTo address..."
 cat script/out.txt | head -n 1 | jq '.deployedTo' | tee script/contract_deploy_address.txt

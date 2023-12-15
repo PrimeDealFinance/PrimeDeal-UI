@@ -78,10 +78,10 @@ contract-deploy:
     - contract-test
   script:
     - npx nx deploy contract
-  rules:
-    - if: $CI_COMMIT_BRANCH == "10-create-deploy-state-for-frontend"
-      changes:
-        - $CONTRACT_PATH/src/PositionManager.sol
+  # rules:
+  #   - if: $CI_COMMIT_BRANCH == "10-create-deploy-state-for-frontend"
+  #     changes:
+  #       - $CONTRACT_PATH/src/PositionManager.sol
   artifacts:
     reports:
       dotenv: $CONTRACT_PATH/script/deploy.env

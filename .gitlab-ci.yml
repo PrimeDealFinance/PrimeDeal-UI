@@ -2,6 +2,7 @@
 variables:
   GIT_DEPTH: 1
   CONTRACT_PATH: "packages/contract"
+  FRONTEND_PATH: "packages/frontend"
 
 ## Global defaults
 default:
@@ -12,7 +13,7 @@ default:
 ## Global stages
 stages:
   - setup
-  - build
+  # - build
   - test
   - deploy
 
@@ -21,13 +22,14 @@ stages:
   key: node-cache
   paths:
     - node_modules/
+    - $FRONTEND_PATH/node_modules
     - .nx/
   policy: pull
 
 .forge-cache: &forge-cache
   key: forge-cache
   paths:
-    - packages/contract/lib/
+    - $CONTRACT_PATH/lib/
   policy: pull
 
 ## Jobs
@@ -41,18 +43,19 @@ setup:
       policy: pull-push
   stage: setup
   script:
-    - npm install
+    - echo "npm install skipped"
+    # - npm install
 
-frontend-build:
-  cache:
-  cache:
-    - <<: *node-cache
-  stage: build
-  needs: [setup]
-  dependencies:
-    - setup
-  script:
-    - npx nx build frontend
+# frontend-build:
+#   cache:
+#   cache:
+#     - <<: *node-cache
+#   stage: build
+#   needs: [setup]
+#   dependencies:
+#     - setup
+#   script:
+#     - npx nx build frontend
 
 contract-test:
   cache:
@@ -75,7 +78,27 @@ contract-deploy:
     - contract-test
   script:
     - npx nx deploy contract
+  # rules:
+  #   - if: $CI_COMMIT_BRANCH == "10-create-deploy-state-for-frontend"
+  #     changes:
+  #       - $CONTRACT_PATH/src/PositionManager.sol
   artifacts:
-    paths:
-      - $CONTRACT_PATH/script/contract_deploy_address.txt
-    expire_in: 2 days
+    reports:
+      dotenv: $CONTRACT_PATH/script/deploy.env
+
+frontend-deploy:
+  tags:
+    - local
+  stage: deploy
+  needs: [contract-deploy]
+  dependencies:
+    - contract-deploy
+  before_script:
+    - docker info
+  script:
+    - echo $CONTRACT_ADDRESS
+    - cd $FRONTEND_PATH
+    - COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build
+    - docker tag w3a-mvp-dapp-frontend:latest registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest
+    - docker login registry.digitalocean.com
+    - docker push registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest

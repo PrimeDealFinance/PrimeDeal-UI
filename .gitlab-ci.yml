@@ -32,12 +32,6 @@ stages:
     - $CONTRACT_PATH/lib/
   policy: pull
 
-.contract-cache: &contract-cache
-  key: contract-cache
-  paths:
-    - $CONTRACT_PATH/script/contract_deploy_address.txt
-  policy: pull
-
 ## Jobs
 setup:
   variables:
@@ -78,8 +72,6 @@ contract-deploy:
   cache:
     - <<: *node-cache
     - <<: *forge-cache
-    - <<: *contract-cache
-      policy: push
   stage: deploy
   needs: [contract-test]
   dependencies:
@@ -90,10 +82,11 @@ contract-deploy:
     - if: $CI_COMMIT_BRANCH == "10-create-deploy-state-for-frontend"
       changes:
         - $CONTRACT_PATH/src/PositionManager.sol
+  artifacts:
+    reports:
+      dotenv: $CONTRACT_PATH/script/deploy.env
 
 frontend-deploy:
-  cache:
-    - <<: *contract-cache
   tags:
     - local
   stage: deploy
@@ -103,7 +96,7 @@ frontend-deploy:
   before_script:
     - docker info
   script:
-    - cat $CONTRACT_PATH/script/contract_deploy_address.txt
+    - echo $CONTRACT_ADDRESS
     - cd $FRONTEND_PATH
     - COMPOSE_DOCKER_CLI_BUILD=1 DOCKER_BUILDKIT=1 docker-compose build
     - docker tag w3a-mvp-dapp-frontend:latest registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest

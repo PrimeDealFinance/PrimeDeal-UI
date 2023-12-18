@@ -13,7 +13,6 @@ default:
 ## Global stages
 stages:
   - setup
-  # - build
   - test
   - deploy
 
@@ -53,18 +52,9 @@ setup:
   stage: setup
   script:
     - echo "npm install skipped"
+    - du -sh node_modules/
+    - du -sh $FRONTEND_PATH/node_modules
     # - npm install
-
-# frontend-build:
-#   cache:
-#   cache:
-#     - <<: *node-cache
-#   stage: build
-#   needs: [setup]
-#   dependencies:
-#     - setup
-#   script:
-#     - npx nx build frontend
 
 contract-test:
   cache:

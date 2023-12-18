@@ -41,12 +41,20 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         SELL
     }
 
-    event PositionOpened(
+    event BuyPositionOpened(
         uint256 indexed positionId,
         address user,
-        int24 tickLower,
-        int24 tickUpper,
-        address poolAddress
+        int24 stopTick,
+        address poolAddress,
+        uint256 amountA
+    );
+
+    event SellPositionOpened(
+        uint256 indexed positionId,
+        address user,
+        int24 stopTick,
+        address poolAddress,
+        uint256 amountB
     );
 
     event PositionClosed(
@@ -139,6 +147,11 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
                 _nearestUsableTick(startingTick, tickSpacing) +
                 tickSpacing;
 
+            require(
+                startingTick < trailingTick,
+                "Stop price must be lower than the current"
+            );
+
             uint256 tokenId = _addLiquidity(
                 tokenA,
                 tokenB,
@@ -153,17 +166,22 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
                 false
             );
 
-            emit PositionOpened(
+            emit BuyPositionOpened(
                 tokenId,
                 msg.sender,
-                startingTick,
                 trailingTick,
-                pool
+                pool,
+                positions[tokenId].amountA
             );
         } else if (positionDirection == PositionDirection.SELL) {
             startingTick =
                 _nearestUsableTick(startingTick, tickSpacing) -
                 tickSpacing;
+
+            require(
+                startingTick > trailingTick,
+                "Stop price must be higher than the current"
+            );
 
             uint256 tokenId = _addLiquidity(
                 tokenA,
@@ -179,12 +197,12 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
                 true
             );
 
-            emit PositionOpened(
+            emit SellPositionOpened(
                 tokenId,
                 msg.sender,
                 trailingTick,
-                startingTick,
-                pool
+                pool,
+                positions[tokenId].amountB
             );
         }
     }

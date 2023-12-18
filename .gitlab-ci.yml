@@ -32,6 +32,12 @@ stages:
     - $CONTRACT_PATH/lib/
   policy: pull
 
+.deploy-cache: &deploy-cache
+  key: deploy-cache
+  paths:
+    - $CONTRACT_PATH/script/deploy.env
+  policy: pull
+
 ## Jobs
 setup:
   variables:
@@ -72,27 +78,43 @@ contract-deploy:
   cache:
     - <<: *node-cache
     - <<: *forge-cache
+    - <<: *deploy-cache
+      policy: push
   stage: deploy
   needs: [contract-test]
   dependencies:
     - contract-test
   script:
     - npx nx deploy contract
-  # rules:
-  #   - if: $CI_COMMIT_BRANCH == "10-create-deploy-state-for-frontend"
-  #     changes:
-  #       - $CONTRACT_PATH/src/PositionManager.sol
+  rules:
+    - if: $CI_COMMIT_BRANCH == "34-improve-ci-cd-with-contract_address-env"
+      changes:
+        - $CONTRACT_PATH/src/PositionManager.sol
+
+contract-deploy-env:
+  cache:
+    - <<: *deploy-cache
+  stage: deploy
+  needs: [contract-test]
+  dependencies:
+    - contract-test
+  rules:
+    - if: $CI_COMMIT_BRANCH == "34-improve-ci-cd-with-contract_address-env"
+      # changes:
+      #   - $CONTRACT_PATH/src/PositionManager.sol
   artifacts:
     reports:
       dotenv: $CONTRACT_PATH/script/deploy.env
 
 frontend-deploy:
+  cache:
+    - <<: *deploy-cache
   tags:
     - local
   stage: deploy
-  needs: [contract-deploy]
+  needs: [contract-deploy-env]
   dependencies:
-    - contract-deploy
+    - contract-deploy-env
   before_script:
     - docker info
   script:

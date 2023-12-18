@@ -98,10 +98,6 @@ contract-deploy-env:
   needs: [contract-test]
   dependencies:
     - contract-test
-  rules:
-    - if: $CI_COMMIT_BRANCH == "34-improve-ci-cd-with-contract_address-env"
-      # changes:
-      #   - $CONTRACT_PATH/src/PositionManager.sol
   artifacts:
     reports:
       dotenv: $CONTRACT_PATH/script/deploy.env

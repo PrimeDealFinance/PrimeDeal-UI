@@ -24,4 +24,6 @@ OUTPUT_FILE="script/contract_deploy_address.txt"
 DEPLOY_ENV_FILE="script/deploy.env"
 cat script/out.txt | head -n 1 | jq '.deployedTo' | tee $OUTPUT_FILE
 echo "CONTRACT_ADDRESS=$(cat $OUTPUT_FILE | tr -d '\"')" > $DEPLOY_ENV_FILE
+
+# echo "CONTRACT_ADDRESS=0xABCDEF" > $DEPLOY_ENV_FILE
 echo "Done"

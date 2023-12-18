@@ -13,23 +13,37 @@ default:
 ## Global stages
 stages:
   - setup
-  # - build
   - test
   - deploy
 
 ## Caches
 .node-cache: &node-cache
   key: node-cache
+  unprotect: true
   paths:
     - node_modules/
-    - $FRONTEND_PATH/node_modules
     - .nx/
+  policy: pull
+
+.node-frontend-cache: &node-frontend-cache
+  key: node-frontend-cache
+  unprotect: true
+  paths:
+    - $FRONTEND_PATH/node_modules
   policy: pull
 
 .forge-cache: &forge-cache
   key: forge-cache
+  unprotect: true
   paths:
     - $CONTRACT_PATH/lib/
+  policy: pull
+
+.contract-address-cache: &contract-address-cache
+  key: contract-address-cache
+  unprotect: true
+  paths:
+    - $CONTRACT_PATH/script/deploy.env
   policy: pull
 
 ## Jobs
@@ -39,23 +53,16 @@ setup:
   cache:
     - <<: *node-cache
       policy: pull-push
+    - <<: *node-frontend-cache
+      policy: pull-push
     - <<: *forge-cache
       policy: pull-push
   stage: setup
   script:
     - echo "npm install skipped"
     # - npm install
-
-# frontend-build:
-#   cache:
-#   cache:
-#     - <<: *node-cache
-#   stage: build
-#   needs: [setup]
-#   dependencies:
-#     - setup
-#   script:
-#     - npx nx build frontend
+    - du -sh node_modules/
+    - du -sh $FRONTEND_PATH/node_modules
 
 contract-test:
   cache:
@@ -72,27 +79,41 @@ contract-deploy:
   cache:
     - <<: *node-cache
     - <<: *forge-cache
+    - <<: *contract-address-cache
+      policy: push
   stage: deploy
   needs: [contract-test]
   dependencies:
     - contract-test
   script:
     - npx nx deploy contract
-  # rules:
-  #   - if: $CI_COMMIT_BRANCH == "10-create-deploy-state-for-frontend"
-  #     changes:
-  #       - $CONTRACT_PATH/src/PositionManager.sol
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $CONTRACT_PATH/src/PositionManager.sol
+
+contract-export-cached-address:
+  cache:
+    - <<: *contract-address-cache
+  stage: deploy
+  needs: [contract-test]
+  dependencies:
+    - contract-test
+  script:
+    - echo "Last deployed contract address `cat $CONTRACT_PATH/script/deploy.env`"
   artifacts:
     reports:
       dotenv: $CONTRACT_PATH/script/deploy.env
 
 frontend-deploy:
+  cache:
+    - <<: *contract-address-cache
   tags:
     - local
   stage: deploy
-  needs: [contract-deploy]
+  needs: [contract-export-cached-address]
   dependencies:
-    - contract-deploy
+    - contract-export-cached-address
   before_script:
     - docker info
   script:

@@ -187,10 +187,15 @@ contract PositionManagerTest is Test, Constants {
         vm.startPrank(MY_EOA);
 
         deal(MY_USDT, MY_EOA, AMOUNT_A_DESIRED);
+        deal(MY_ETH, MY_EOA, 0);
 
         IERC20(MY_USDT).approve(address(positionManager), AMOUNT_A_DESIRED);
 
         showTokensInfo(address(positionManager));
+        uint256 usdtBalance = IERC20(MY_USDT).balanceOf(MY_EOA);
+        uint256 ethBalance = IERC20(MY_ETH).balanceOf(MY_EOA);
+        assertEq(usdtBalance, AMOUNT_A_DESIRED);
+        assertEq(ethBalance, 0);
 
         positionManager.openBuyPosition(
             MY_USDT,
@@ -201,6 +206,10 @@ contract PositionManagerTest is Test, Constants {
         );
 
         showTokensInfo(address(positionManager));
+        usdtBalance = IERC20(MY_USDT).balanceOf(MY_EOA);
+        ethBalance = IERC20(MY_ETH).balanceOf(MY_EOA);
+        assertEq(usdtBalance, 1);
+        assertEq(ethBalance, 0);
 
         vm.stopPrank();
     }
@@ -208,11 +217,16 @@ contract PositionManagerTest is Test, Constants {
     function test_openSellPosition() public {
         vm.startPrank(MY_EOA);
 
+        deal(MY_USDT, MY_EOA, 0);
         deal(MY_ETH, MY_EOA, AMOUNT_B_DESIRED);
 
         IERC20(MY_ETH).approve(address(positionManager), AMOUNT_B_DESIRED);
 
         showTokensInfo(address(positionManager));
+        uint256 usdtBalance = IERC20(MY_USDT).balanceOf(MY_EOA);
+        uint256 ethBalance = IERC20(MY_ETH).balanceOf(MY_EOA);
+        assertEq(usdtBalance, 0);
+        assertEq(ethBalance, AMOUNT_B_DESIRED);
 
         positionManager.openSellPosition(
             MY_USDT,
@@ -223,6 +237,10 @@ contract PositionManagerTest is Test, Constants {
         );
 
         showTokensInfo(address(positionManager));
+        usdtBalance = IERC20(MY_USDT).balanceOf(MY_EOA);
+        ethBalance = IERC20(MY_ETH).balanceOf(MY_EOA);
+        assertEq(usdtBalance, 0);
+        assertEq(ethBalance, 0);
 
         vm.stopPrank();
     }

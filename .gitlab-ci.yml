@@ -22,8 +22,14 @@ stages:
   unprotect: true
   paths:
     - node_modules/
-    - $FRONTEND_PATH/node_modules
     - .nx/
+  policy: pull
+
+.node-frontend-cache: &node-frontend-cache
+  key: node-frontend-cache
+  unprotect: true
+  paths:
+    - $FRONTEND_PATH/node_modules
   policy: pull
 
 .forge-cache: &forge-cache
@@ -46,6 +52,8 @@ setup:
     GIT_SUBMODULE_STRATEGY: recursive
   cache:
     - <<: *node-cache
+      policy: pull-push
+    - <<: *node-frontend-cache
       policy: pull-push
     - <<: *forge-cache
       policy: pull-push

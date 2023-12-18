@@ -98,6 +98,8 @@ contract-deploy-env:
   needs: [contract-test]
   dependencies:
     - contract-test
+  script:
+    - echo "DUMMY"
   artifacts:
     reports:
       dotenv: $CONTRACT_PATH/script/deploy.env

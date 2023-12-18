@@ -91,7 +91,7 @@ contract-deploy:
       changes:
         - $CONTRACT_PATH/src/PositionManager.sol
 
-contract-deploy-env:
+contract-export-cached-address:
   cache:
     - <<: *deploy-cache
   stage: deploy
@@ -110,9 +110,9 @@ frontend-deploy:
   tags:
     - local
   stage: deploy
-  needs: [contract-deploy-env]
+  needs: [contract-export-cached-address]
   dependencies:
-    - contract-deploy-env
+    - contract-export-cached-address
   before_script:
     - docker info
   script:

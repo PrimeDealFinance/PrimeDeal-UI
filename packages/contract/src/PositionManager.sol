@@ -83,7 +83,8 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         address tokenB,
         uint24 fee,
         uint160 stopSqrtPriceX96,
-        uint256 amountA
+        uint256 amountA,
+        uint256 amountAMin
     ) public whenNotPaused {
         openPosition(
             PositionDirection.BUY,
@@ -93,7 +94,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             stopSqrtPriceX96,
             amountA,
             0,
-            amountA - 1, // to pass slippage check
+            amountAMin,
             0
         );
     }
@@ -104,7 +105,8 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         address tokenB,
         uint24 fee,
         uint160 stopSqrtPriceX96,
-        uint256 amountB
+        uint256 amountB,
+        uint256 amountBMin
     ) public whenNotPaused {
         openPosition(
             PositionDirection.SELL,
@@ -115,7 +117,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             0,
             amountB,
             0,
-            amountB - 1 // to pass slippage check
+            amountBMin
         );
     }
 
@@ -132,24 +134,24 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         uint256 amountBMin
     ) public whenNotPaused {
         address pool = getPoolAddress(tokenA, tokenB, fee);
-        int24 startingTick;
-        int24 trailingTick;
+        int24 currentTick;
+        int24 startTick;
+        int24 stopTick;
         int24 tickSpacing = IUniswapV3PoolImmutables(pool).tickSpacing();
 
-        (, startingTick, , , , , ) = IUniswapV3Pool(pool).slot0();
+        (, currentTick, , , , , ) = IUniswapV3Pool(pool).slot0();
 
-        trailingTick = _nearestUsableTick(
+        startTick = _nearestUsableTick(currentTick, tickSpacing);
+        stopTick = _nearestUsableTick(
             TickMath.getTickAtSqrtRatio(stopSqrtPriceX96),
             tickSpacing
         );
 
         if (positionDirection == PositionDirection.BUY) {
-            startingTick =
-                _nearestUsableTick(startingTick, tickSpacing) +
-                tickSpacing;
+            startTick += tickSpacing;
 
             require(
-                startingTick < trailingTick,
+                startTick < stopTick,
                 "Stop price must be lower than the current"
             );
 
@@ -157,8 +159,8 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
                 tokenA,
                 tokenB,
                 fee,
-                startingTick,
-                trailingTick,
+                startTick,
+                stopTick,
                 amountADesired,
                 amountBDesired,
                 amountAMin,
@@ -170,17 +172,15 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             emit BuyPositionOpened(
                 tokenId,
                 msg.sender,
-                trailingTick,
+                stopTick,
                 pool,
                 positions[tokenId].amountA
             );
         } else if (positionDirection == PositionDirection.SELL) {
-            startingTick =
-                _nearestUsableTick(startingTick, tickSpacing) -
-                tickSpacing;
+            startTick -= tickSpacing;
 
             require(
-                startingTick > trailingTick,
+                startTick > stopTick,
                 "Stop price must be higher than the current"
             );
 
@@ -188,8 +188,8 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
                 tokenA,
                 tokenB,
                 fee,
-                trailingTick,
-                startingTick,
+                stopTick,
+                startTick,
                 amountADesired,
                 amountBDesired,
                 amountAMin,
@@ -201,7 +201,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             emit SellPositionOpened(
                 tokenId,
                 msg.sender,
-                trailingTick,
+                stopTick,
                 pool,
                 positions[tokenId].amountB
             );

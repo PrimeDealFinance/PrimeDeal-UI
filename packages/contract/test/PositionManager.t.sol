@@ -80,34 +80,6 @@ contract PositionManagerTest is Test, Constants {
         assertEq(pool, UNISWAP_V3_POOL_MY_USDT_MY_ETH);
     }
 
-    function test_openPosition() public {
-        vm.startPrank(MY_EOA);
-
-        deal(MY_USDT, MY_EOA, AMOUNT_A_DESIRED);
-        deal(MY_ETH, MY_EOA, AMOUNT_B_DESIRED);
-
-        IERC20(MY_USDT).approve(address(positionManager), AMOUNT_A_DESIRED);
-        IERC20(MY_ETH).approve(address(positionManager), AMOUNT_B_DESIRED);
-
-        showTokensInfo(address(positionManager));
-
-        positionManager.openPosition(
-            PositionManager.PositionDirection.BUY,
-            MY_USDT,
-            MY_ETH,
-            FEE_3000,
-            SQRT_STOP_PRICE_X96_BUY,
-            AMOUNT_A_DESIRED,
-            AMOUNT_B_DESIRED,
-            AMOUNT_A_MIN,
-            AMOUNT_B_MIN
-        );
-
-        showTokensInfo(address(positionManager));
-
-        vm.stopPrank();
-    }
-
     function test_addLiquidity() public {
         vm.startPrank(MY_EOA);
 
@@ -170,7 +142,7 @@ contract PositionManagerTest is Test, Constants {
     }
 
     function test_pauseStopsOpenPosition() public {
-        test_openPosition();
+        test_openBuyPosition();
 
         vm.startPrank(MY_EOA);
         positionManager.setPause(true);
@@ -202,13 +174,14 @@ contract PositionManagerTest is Test, Constants {
             MY_ETH,
             FEE_3000,
             SQRT_STOP_PRICE_X96_BUY,
-            AMOUNT_A_DESIRED
+            AMOUNT_A_DESIRED,
+            AMOUNT_A_MIN
         );
 
         showTokensInfo(address(positionManager));
         usdtBalance = IERC20(MY_USDT).balanceOf(MY_EOA);
         ethBalance = IERC20(MY_ETH).balanceOf(MY_EOA);
-        assertEq(usdtBalance, 1);
+        assertEq(usdtBalance, 4);
         assertEq(ethBalance, 0);
 
         vm.stopPrank();
@@ -233,7 +206,8 @@ contract PositionManagerTest is Test, Constants {
             MY_ETH,
             FEE_3000,
             SQRT_STOP_PRICE_X96_SELL,
-            AMOUNT_B_DESIRED
+            AMOUNT_B_DESIRED,
+            AMOUNT_B_MIN
         );
 
         showTokensInfo(address(positionManager));

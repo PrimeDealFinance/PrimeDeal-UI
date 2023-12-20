@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  app:
+    image: w3a-mvp-dapp-frontend
+    build:
+      context: ./
+      target: production
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    ports:
+      - "80:3000"

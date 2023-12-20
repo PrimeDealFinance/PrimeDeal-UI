@@ -22,6 +22,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
     IUniswapV3Factory public immutable uniswapFactory;
 
     mapping(uint256 => Position) public positions;
+    mapping(address => uint256[]) public owner2Positions;
 
     struct Position {
         uint256 tokenId;
@@ -262,6 +263,19 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         (, tick, , , , , ) = IUniswapV3Pool(pool).slot0();
     }
 
+    function getOpenPositions(
+        address user
+    ) public view returns (Position[] memory) {
+        uint256[] memory ups = owner2Positions[user];
+        Position[] memory ps = new Position[](ups.length);
+
+        for (uint i = 0; i < ups.length; i++) {
+            ps[i] = positions[ups[i]];
+        }
+
+        return ps;
+    }
+
     // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
     function onERC721Received(
         address /*operator*/,
@@ -390,6 +404,9 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             amountB: amount1,
             owner: msg.sender
         });
+
+        // store user's positions
+        owner2Positions[msg.sender].push(tokenId);
 
         // refunds the unspent amount
         if (useTokenA) {

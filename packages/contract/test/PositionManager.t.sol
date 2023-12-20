@@ -254,6 +254,14 @@ contract PositionManagerTest is Test, Constants {
         assertEq(currentSqrtPriceX96, SQRT_CURRENT_PRICE_X96);
     }
 
+    function test_getOpenPositions() public {
+        assertEq(positionManager.getOpenPositions(MY_EOA).length, 0);
+        test_openPosition();
+        assertEq(positionManager.getOpenPositions(MY_EOA).length, 1);
+        test_openPosition();
+        assertEq(positionManager.getOpenPositions(MY_EOA).length, 2);
+    }
+
     function showTokensInfo(address spender) internal {
         uint256 usdtBalance = IERC20(MY_USDT).balanceOf(MY_EOA);
         uint256 ethBalance = IERC20(MY_ETH).balanceOf(MY_EOA);

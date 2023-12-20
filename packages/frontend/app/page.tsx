@@ -13,6 +13,7 @@ import { MetaMaskInpageProvider } from "@metamask/providers";
 import ModalWindow from "./ModalWindowConnect";
 import StartPage from "./StartPage";
 import CommonModalWindow from "./CommonModalWindow";
+import ModalWindowTx from "./ModalWindowTx";
 const { abi: IUniswapV3PoolABI }  = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
 import ERC20abi from "./ERC20"; 
 import abiContract from "./abiContract";
@@ -32,6 +33,7 @@ export default function Home() {
   
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
   const [isOpenCommonModal, setIsOpenCommonModal] = useState<boolean>(false);
+  const [isOpenModalTx, setIsOpenModalTx] = useState<boolean>(false);
   const [contentCommonModal, setContentCommonModal] = useState<string>("Error");
   const [someBool, setSomeBool] = useState(false);
   //const [someBool, setSomeBool] = useState<boolean>(false);
@@ -50,6 +52,11 @@ export default function Home() {
   const [price, setPrice] = useState<string>("Set target price");
   const [amountCoin, setAmountCoin] = useState<string>("");
   const [targetPrice, setTargetPrice] = useState<string>("");
+
+  const [txhash, setTxhash] = useState("");
+  const miniTxhash = (txhash).substring(0, 5) + '.....' + (txhash).slice(45);
+  const hashLink = 'https://mumbai.polygonscan.com/tx/';
+  const hashLinkPlus = hashLink + txhash;
 
   const addressContract = "0xC9B8ACcCF9223DE977606F20138F057D007e1F40";
 
@@ -124,6 +131,7 @@ export default function Home() {
   }
 
   const getOpenBuyPosition = async () => {
+    onOpenChange();
     try {
    // const contract: any = await getERC20WithSigner(address);
     const tx = await contractSigner.openBuyPosition(
@@ -135,7 +143,10 @@ export default function Home() {
       "10000000000000000000"
     );
     console.log("txSwap1: ", tx);
+    setTxhash(tx.hash);
+    setIsOpenModalTx(true);
     const response = await tx.wait();
+    setIsOpenModalTx(false);
     console.log("responseTxSwap1: ", response);
       } catch (error) {
           console.error(error);
@@ -150,6 +161,9 @@ export default function Home() {
   }
   const handleOpenCommonChange = async () => {
     setIsOpenCommonModal(false);
+  }
+  const handleOpenModalTx = async () => {
+    setIsOpenModalTx(false);
   }
   
 
@@ -255,7 +269,7 @@ function handleDealChange(e: React.ChangeEvent<HTMLSelectElement>) {
           setContentCommonModal("Incorrect amount! You don't have enough ETH");
           setAmountCoin("");
         } 
-        
+
   // разкомментировать когда установим реальный пул для битка
         // else if(coin == "WBTC" && deal == "SELL" && Number(amountCoin) > balanceWBTCview) {
         //   setIsOpenCommonModal(true);
@@ -386,7 +400,8 @@ function handleDealChange(e: React.ChangeEvent<HTMLSelectElement>) {
             </div>
         }
         
-        <Button onClick={previewOrder} 
+        <Button
+         onClick={previewOrder} 
         className="bg-[#F9607CF0] text-white w-[185px] h-[36px] rounded-[15px] mt-[18px] font-semibold font-inter text-[16px]">
           Preview Order</Button>
         <>
@@ -447,6 +462,12 @@ function handleDealChange(e: React.ChangeEvent<HTMLSelectElement>) {
         isOpenCommonModal={isOpenCommonModal}
         onOpenCommonChange={handleOpenCommonChange}
         contentCommonModal={contentCommonModal}
+      /> 
+      <ModalWindowTx
+        isOpenModalTx={isOpenModalTx}
+        onOpenModalTx={handleOpenModalTx}
+        miniTxhash={miniTxhash}
+        hashLinkPlus={hashLinkPlus}
       /> 
     </> 
   );

@@ -9,12 +9,13 @@ import {Popover, PopoverTrigger, PopoverContent, Button, Input} from "@nextui-or
 import { Select, SelectItem} from "@nextui-org/select";
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure } from "@nextui-org/modal";
 import { MetaMaskInpageProvider } from "@metamask/providers";
-import { createExternalExtensionProvider } from '@metamask/providers';
+//import { createExternalExtensionProvider } from '@metamask/providers';
 import ModalWindow from "./ModalWindowConnect";
 import StartPage from "./StartPage";
 import CommonModalWindow from "./CommonModalWindow";
 const { abi: IUniswapV3PoolABI }  = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
 import ERC20abi from "./ERC20"; 
+import abiContract from "./abiContract";
 
 
 declare global {
@@ -38,6 +39,7 @@ export default function Home() {
   const [provider, setProvider] = useState<any>("");
   const [account, setAccount] = useState<string>("");
   const [singer, setSinger] = useState("");
+  const [contractSigner, setContractSigner] = useState<any>("");
   //const [price, setPrice] = useState(30000);
   const [coin, setCoin] = useState<string>("");
   const [deal, setDeal] = useState<string>("");
@@ -49,16 +51,22 @@ export default function Home() {
   const [amountCoin, setAmountCoin] = useState<string>("");
   const [targetPrice, setTargetPrice] = useState<string>("");
 
-  const addressETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"; // arb ETH
+  const addressContract = "0xC9B8ACcCF9223DE977606F20138F057D007e1F40";
+
+  //const addressETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"; // arb ETH
+  const addressETH = "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9"; // mumbai ETH
   const ERC20_ETH = new ethers.Contract(addressETH, ERC20abi, provider);
 
   const addressWBTC = "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"; // arb WBTC
   const ERC20_WBTC = new ethers.Contract(addressWBTC, ERC20abi, provider);
 
-  const addressUSDC = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"; // arb USDC.e
+  //const addressUSDC = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"; // arb USDC.e
+  const addressUSDC = "0x9EC3c43006145f5701d4FD527e826131778cA122"; // mumbai usdt
   const ERC20_USDC = new ethers.Contract(addressUSDC, ERC20abi, provider);
 
-  const poolAddress = "0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443"; // pool ETH/USDC.e
+  //const poolAddress = "0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443"; // pool ETH/USDC.e
+  const poolAddress = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B"; // pool ETH/USDT mumbai
+  
   const [uniswapV3PoolETH_USDC, setUniswapV3PoolETH_USDC] = useState<any>("");
   const [priceUSDC_ETH, setPriceUSDC_ETH] = useState<number>(0);
 
@@ -82,7 +90,7 @@ export default function Home() {
         const signer = await provider.getSigner();
         const network = await provider.getNetwork();
 
-        if(Number(network.chainId) !== 42161) {
+        if(Number(network.chainId) !== 80001) {
           console.log("Wrong network. Need Arb")
           setIsOpenCommonModal(true);
           setContentCommonModal("Wrong network. Please connect to Arbitrum!");
@@ -105,10 +113,34 @@ export default function Home() {
              IUniswapV3PoolABI,
              provider
            ))
+           setContractSigner(
+            new ethers.Contract(
+             addressContract,
+             abiContract,
+             signer
+           ))
         }
     }
-
   }
+
+  const getOpenBuyPosition = async () => {
+    try {
+   // const contract: any = await getERC20WithSigner(address);
+    const tx = await contractSigner.openBuyPosition(
+      "0x9EC3c43006145f5701d4FD527e826131778cA122",
+      "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9",
+      "3000",
+      "2490834112012289581004425200",
+      "100000000000000000000",
+      "10000000000000000000"
+    );
+    console.log("txSwap1: ", tx);
+    const response = await tx.wait();
+    console.log("responseTxSwap1: ", response);
+      } catch (error) {
+          console.error(error);
+      }
+   }
   
   const startAddLiquid = async () => {
     setIsOpenModalConnect(true);
@@ -126,27 +158,24 @@ export default function Home() {
     (async () => {
       if(isCoin && isDeal) {
     const slot0UE = await uniswapV3PoolETH_USDC.slot0();
+    console.log("slot0UE: ", slot0UE);
    // setTickUSDT_ETH(slot0UE[1].toString());
     const sqrtPriceX96UE = slot0UE[0].toString();
+    console.log("sqrtPriceX96UE: ", sqrtPriceX96UE);
    // setSqrtPriceX96USDT_ETH(sqrtPriceX96UE);
 
     //let mathPrice = Number(sqrtPriceX96USDT_ETH) ** 2 / 2 ** 192;
     //const decimalAdjustment = 10 ** (tokenWETHDecimals - tokenUSDTDecimals);
-    const decimalAdjustment = 10 ** (18 - 6);
-    const priceUSDT_ETH = (Number(sqrtPriceX96UE) ** 2 / 2 ** 192) * decimalAdjustment;
+    //const decimalAdjustment = 10 ** (18 - 6);
+    const priceUSDT_ETH = (Number(sqrtPriceX96UE) ** 2 / 2 ** 192);
+    console.log("priceUSDT_ETH: ", priceUSDT_ETH);
     setPriceUSDC_ETH(priceUSDT_ETH);
-
     //
-    const slot0UB = await uniswapV3PoolUSDT_BTC.slot0();
-    // setTickUSDT_ETH(slot0UE[1].toString());
-     const sqrtPriceX96UB = slot0UB[0].toString();
-    // setSqrtPriceX96USDT_ETH(sqrtPriceX96UE);
- 
-     //let mathPrice = Number(sqrtPriceX96USDT_ETH) ** 2 / 2 ** 192;
-     //const decimalAdjustment = 10 ** (tokenWETHDecimals - tokenUSDTDecimals);
-     const decimalAdjustmentUB = 10 ** (8 - 6);
-     const priceUSDT_BTC = (Number(sqrtPriceX96UB) ** 2 / 2 ** 192) * decimalAdjustmentUB;
-     setPriceUSDT_BTC(priceUSDT_BTC);
+   // const slot0UB = await uniswapV3PoolUSDT_BTC.slot0();
+   //  const sqrtPriceX96UB = slot0UB[0].toString();
+   //  const decimalAdjustmentUB = 10 ** (8 - 6);
+   //  const priceUSDT_BTC = (Number(sqrtPriceX96UB) ** 2 / 2 ** 192) * decimalAdjustmentUB;
+    // setPriceUSDT_BTC(priceUSDT_BTC);
       }
   })();
 }, [isCoin, isDeal]);
@@ -205,15 +234,17 @@ function handleDealChange(e: React.ChangeEvent<HTMLSelectElement>) {
         const balanceUSDCview: number = Number(balanceUSDC) * 10**12;
         console.log("balanceUSDCview: ", balanceUSDCview);
 
-        const balanceInWeiETH = await provider.getBalance(account);
+        //const balanceInWeiETH = await provider.getBalance(account);
+        const balanceInWeiETH = await ERC20_ETH.balanceOf(account);
         const balanceETH: string = ethers.formatEther(balanceInWeiETH);
         const balanceETHview: number = Number(balanceETH);
         console.log("ETHbalance: ", balanceETHview);
 
-        const balanceInWeiWBTC = await ERC20_WBTC.balanceOf(account);
-        const balanceWBTC: string = ethers.formatEther(balanceInWeiWBTC);
-        const balanceWBTCview: number = Number(balanceWBTC) * 10**10;
-        console.log("balanceWBTCview: ", balanceWBTCview);
+// разкомментировать когда установим реальный пул для битка
+        // const balanceInWeiWBTC = await ERC20_WBTC.balanceOf(account);
+        // const balanceWBTC: string = ethers.formatEther(balanceInWeiWBTC);
+        // const balanceWBTCview: number = Number(balanceWBTC) * 10**10;
+        // console.log("balanceWBTCview: ", balanceWBTCview);
 
         if(deal == "BUY" && Number(amountCoin) > balanceUSDCview) {
           setIsOpenCommonModal(true);
@@ -223,11 +254,15 @@ function handleDealChange(e: React.ChangeEvent<HTMLSelectElement>) {
           setIsOpenCommonModal(true);
           setContentCommonModal("Incorrect amount! You don't have enough ETH");
           setAmountCoin("");
-        } else if(coin == "WBTC" && deal == "SELL" && Number(amountCoin) > balanceWBTCview) {
-          setIsOpenCommonModal(true);
-          setContentCommonModal("Incorrect amount! You don't have enough WBTC");
-          setAmountCoin("");
-        } else {
+        } 
+        
+  // разкомментировать когда установим реальный пул для битка
+        // else if(coin == "WBTC" && deal == "SELL" && Number(amountCoin) > balanceWBTCview) {
+        //   setIsOpenCommonModal(true);
+        //   setContentCommonModal("Incorrect amount! You don't have enough WBTC");
+        //   setAmountCoin("");
+        // } 
+        else {
         if(coin == "WBTC" && deal == "BUY" && (Number(targetPrice) > priceUSDT_BTC)) {
           setIsOpenCommonModal(true);
           setContentCommonModal("Incorrect target price. NEED LOWER than current price!");
@@ -343,7 +378,7 @@ function handleDealChange(e: React.ChangeEvent<HTMLSelectElement>) {
         </div>
         {coin == "ETH" ?
             <div className="mt-[5px]">
-            Current ETH price, $: {priceUSDC_ETH.toFixed(2)}
+            Current ETH price, $: {priceUSDC_ETH.toFixed(6)}
             </div>
             :
             <div className="mt-[5px]">
@@ -377,7 +412,7 @@ function handleDealChange(e: React.ChangeEvent<HTMLSelectElement>) {
                 <Button color="danger" onPress={onClose}>
                   Change order
                 </Button>
-                              <Button color="primary" onPress={startAddLiquid}>
+                              <Button color="primary" onPress={getOpenBuyPosition}>
                                 Confirm order
                               </Button>
               </ModalFooter>

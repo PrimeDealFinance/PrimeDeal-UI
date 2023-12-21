@@ -13,17 +13,17 @@ import Chart from "@/components/chart";
 
 export default function Order () {
     return (
-        <div className="flex flex-col h-screen flex flex-col items-center">
+        <div className="flex flex-col h-full lg:h-screen flex flex-col items-center">
              
-                <Card className="xl:w-[886px] w-4/6 border-1-solid-#3D59AD rounded-[15px] bg-[#7980A580] mt-[110px] flex flex-col items-center">
+                <Card className="xl:w-[886px] w-5/6 border-1-solid-#3D59AD rounded-[15px] bg-[#7980A580] mt-[110px] max-[1023px]:mb-[30px] flex flex-col items-center">
                     <div className="xl:w-[773px] w-11/12">
-                    <CardHeader className="flex justify-between content-center">
-                        <div className="flex justify-between">
+                    <CardHeader className="flex max-[680px]:flex-col justify-between content-center max-[680px]:items-start">
+                        <div className="flex max-[680px]:flex-col justify-between">
                             <div className="flex justify-between content-center gap-[21px] text-white font-medium text-[20px] font-inter">
                                 <Image src={ETH} alt="" width={31} height={31} />
                                 <p>ETH / USDC</p>
                             </div>
-                            <div className="ml-[48px]">
+                            <div className="min-[681px]:ml-[48px]">
                                 <Chip radius="sm" classNames={{
                                     base: "bg-[#45D483]",
                                     content: "text-white font-medium text-[20px] font-inter",
@@ -38,7 +38,7 @@ export default function Order () {
                         </div>
                     </CardHeader>
                     <Divider className="bg-white"/>
-                    <CardBody className="grid grid-cols-1 content-center lg:grid-cols-2 gap-[18px]">
+                    <CardBody className="grid grid-cols-1 lg:grid-cols-2 gap-[18px]">
                         <div className="flex flex-col justify-center content-center ">    
                             <Chart />
                         </div>
@@ -47,7 +47,7 @@ export default function Order () {
                                 <div className="h-[25px] w-[138px] text-center text-[#F1F1F166] font-medium text-[14px] font-inter">
                                     Order balance
                                 </div>
-                                <div className="flex justify-around w-full md:w-[370px] md:h-[145px] bg-[#F1F3FF] rounded-[15px]">
+                                <div className="flex max-[347px]:flex-col max-[347px]:items-center justify-around w-full xl:w-[370px] h-[145px] bg-[#F1F3FF] rounded-[15px]">
                                     <div className="flex flex-col content-center justify-center">
                                         <div className="text-black text-center font-medium text-[32px] font-inter">
                                             4356 $
@@ -64,7 +64,7 @@ export default function Order () {
                                         </div>
                                     </div>
                                     <div className="flex flex-col justify-center">
-                                        <Button className="bg-[#6078F9] w-[172px] rounded-[6px] text-[#FFFFFF] font-semibold text-[16px] font-inter">
+                                        <Button className="bg-[#6078F9] w-[120px] min-[419px]:w-[172px] rounded-[6px] text-[#FFFFFF] font-semibold text-[16px] font-inter">
                                             Close order
                                         </Button>
                                     </div>
@@ -74,7 +74,7 @@ export default function Order () {
                                 <div className="h-[25px] w-[138px] text-center text-[#F1F1F166] font-medium text-[14px] font-inter">
                                     Fee balance
                                 </div>
-                                <div className="flex justify-around w-full md:w-[370px] md:h-[145px] bg-[#F1F3FF] rounded-[15px]">
+                                <div className="flex max-[347px]:flex-col max-[347px]:items-center justify-around w-full xl:w-[370px] h-[145px] bg-[#F1F3FF] rounded-[15px]">
                                     <div className="flex flex-col content-center justify-center">
                                         <div className="text-black text-center font-medium text-[32px] font-inter">
                                             378 $
@@ -91,7 +91,7 @@ export default function Order () {
                                         </div>
                                     </div>
                                     <div className="flex flex-col justify-center">
-                                        <Button className="bg-[#6078F9] w-[172px] rounded-[6px] text-[#FFFFFF] font-semibold text-[16px] font-inter">
+                                        <Button className="bg-[#6078F9] w-[120px] min-[419px]:w-[172px] rounded-[6px] text-[#FFFFFF] font-semibold text-[16px] font-inter">
                                             Claim fees
                                         </Button>
                                     </div>

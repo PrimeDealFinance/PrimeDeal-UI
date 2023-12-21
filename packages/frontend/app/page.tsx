@@ -13,9 +13,9 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen flex flex-col items-center"> 
-      <div className=" flex flex-col items-center bg-white rounded-[15px] w-[464px] h-[263px] mt-[129px]">
-        <div className="flex flex-wrap md:flex-nowrap gap-[43px] mt-[63px]">
-          <Select variant="bordered" placeholder="Select an asset" className="w-[187px] h-[44px]" radius="lg" size="sm">
+      <div className=" flex flex-col items-center bg-white rounded-[15px] max-[466px]:w-11/12 max-[640px]:px-[15px] max-[640px]:pb-[15px] sm:w-[464px] sm:h-[263px] mt-[129px] max-[472px]:mx-[10px]">
+        <div className="flex min-[466px]:flex-wrap max-[466px]:grid max-[466px]:grid-cols-1 items-center md:flex-nowrap max-[466px]:gap-[15px] gap-[43px] mt-[63px]">
+          <Select variant="bordered" placeholder="Select an asset" className="w-[187px]" radius="lg" size="sm">
               <SelectItem key="ETH" value="ETH">
                   ETH
               </SelectItem>
@@ -32,7 +32,7 @@ export default function Home() {
               </SelectItem>
           </Select>
         </div>
-        <div className="flex flex-wrap md:flex-nowrap gap-[41px] mt-[15px]">
+        <div className="flex min-[466px]:flex-wrap max-[466px]:grid max-[466px]:grid-cols-1 md:flex-nowrap max-[466px]:gap-[15px] gap-[41px] mt-[15px]">
             <Input type="number" label="Enter amount()"  variant="bordered" className="w-[187px]" radius="lg" size="sm" />
             <Input type="number" label="Set price()"  variant="bordered" className="w-[187px]" radius="lg" size="sm" />
         </div>

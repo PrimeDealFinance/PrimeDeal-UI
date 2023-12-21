@@ -4,7 +4,7 @@ import './globals.css'
 import { Providers } from "@/app/providers"
 import  Header  from "@/components/header"
 import { Rainbow } from "@/service/rainbow-kit-provider"
-import { ConnectButton } from "@rainbow-me/rainbowkit"
+import Footer from "@/components/footer"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,9 +24,10 @@ export default function RootLayout({
      <Rainbow>
        <Providers>
          
-            <main className='light text-foreground bg-[#D2D9EE]'>
+            <main className='light text-foreground bg-[#D2D9EE] box-border'>
               <Header/>
-                {children}
+              {children}
+              <Footer />   
             </main> 
          
         </Providers>

@@ -13,7 +13,7 @@ const columns = [
   const orders = [
     {   
         id:1,
-        "avatar": "https://www.imghippo.com/images/1702530421.svg",       
+        "avatar": "/btc.svg",       
         "asset": "BTC / USDC",
         "type": "BUY",
         "feeBalance": "0.001 BTC / 100 USDC",
@@ -25,7 +25,7 @@ const columns = [
 
     {   
         id:2,
-        "avatar": "https://www.svgrepo.com/show/366997/eth.svg",       
+        "avatar": "/eth.svg",       
         "asset": "ETH / USDC",
         "type": "SELL",
         "feeBalance": "0.2 ETH / 212 USDC",

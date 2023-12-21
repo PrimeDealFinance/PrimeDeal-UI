@@ -317,6 +317,34 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
         return this.onERC721Received.selector;
     }
 
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 /*firstTokenId*/,
+        uint256 /*batchSize*/
+    ) internal virtual override {
+        // skip mint & burn
+        if (from == address(0x0) || to == address(0x0)) {
+            return;
+        }
+
+        uint256[] memory currentPositions = owner2Positions[from];
+
+        // rewrite the owner records in position2Owner
+        for (uint i = 0; i < currentPositions.length; i++) {
+            uint256 tokenId = currentPositions[i];
+            Position memory pos = position2Owner[tokenId];
+
+            // set new owner
+            pos.owner = to;
+            position2Owner[tokenId] = pos;
+        }
+
+        // rewrite the records in owner2Positions
+        owner2Positions[to] = currentPositions;
+        delete owner2Positions[from];
+    }
+
     // Function that returns the nearest tick
     // https://uniswapv3book.com/docs/milestone_4/tick-rounding/
     function _nearestUsableTick(
@@ -434,7 +462,7 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
 
         // mint NFT & store to mapping
         uint256 currentNFTId = _nextNFTId++;
-        _safeMint(msg.sender, currentNFTId);
+        super._safeMint(msg.sender, currentNFTId);
         position2NFTId[tokenId] = currentNFTId;
 
         // refunds the unspent amount
@@ -493,7 +521,7 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
     // function that that burns the NFT
     function _burnPosition(uint256 tokenId) internal {
         nonfungiblePositionManager.burn(tokenId);
-        _burn(position2NFTId[tokenId]);
+        super._burn(position2NFTId[tokenId]);
         delete position2NFTId[tokenId];
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {Test, console2, StdStyle} from "forge-std/Test.sol";
+import {Test, console2, StdStyle, Vm} from "forge-std/Test.sol";
 import {PositionManager} from "../src/PositionManager.sol";
 import {Constants} from "./Constants.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -262,6 +262,57 @@ contract PositionManagerTest is Test, Constants {
         assertEq(positionManager.balanceOf(alice), 1);
         assertEq(positionManager.ownerOf(tokenId), alice);
         assertEq(positionManager.balanceOf(MY_EOA), 0);
+    }
+
+    function test_closePosition() public {
+        vm.recordLogs();
+
+        test_openBuyPosition();
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+
+        // keep it for entries logging
+        /*
+        for (uint i = 0; i < entries.length; i++) {
+            console2.log(StdStyle.magenta(i));
+            assertEq(
+                entries[i].topics[0],
+                keccak256(
+                    "BuyPositionOpened(uint256,address,int24,address,uint256)"
+                )
+            );
+        }
+        */
+
+        assertEq(entries.length, 23);
+        assertEq(entries[18].topics.length, 3);
+        assertEq(
+            entries[18].topics[0],
+            keccak256(
+                "BuyPositionOpened(uint256,address,int24,address,uint256)"
+            )
+        );
+
+        uint256 tokenId = uint256(entries[18].topics[1]);
+        positionManager.closePosition(tokenId);
+        entries = vm.getRecordedLogs();
+
+        // keep it for entries logging
+        /*
+        for (uint i = 0; i < entries.length; i++) {
+            console2.log(StdStyle.magenta(i));
+            assertEq(
+                entries[i].topics[0],
+                keccak256("PositionClosed(uint256,address)")
+            );
+        }
+        */
+
+        assertEq(entries.length, 9);
+        assertEq(entries[8].topics.length, 3);
+        assertEq(
+            entries[8].topics[0],
+            keccak256("PositionClosed(uint256,address)")
+        );
     }
 
     function showTokensInfo(address spender) internal {

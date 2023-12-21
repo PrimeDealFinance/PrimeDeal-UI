@@ -14,6 +14,7 @@ contract PositionManagerHarness is PositionManager, Constants {
     ) PositionManager(_nonfungiblePositionManager, _uniswapFactory) {}
 
     function exposed_addLiquidity(
+        PositionDirection positionDirection,
         address tokenA,
         address tokenB,
         uint24 fee,
@@ -28,6 +29,7 @@ contract PositionManagerHarness is PositionManager, Constants {
     ) external returns (uint256 _tokenId) {
         return
             _addLiquidity(
+                positionDirection,
                 tokenA,
                 tokenB,
                 fee,
@@ -99,6 +101,7 @@ contract PositionManagerTest is Test, Constants {
         showTokensInfo(address(positionManagerHarness));
 
         positionManagerHarness.exposed_addLiquidity(
+            PositionManager.PositionDirection.BUY,
             MY_USDT,
             MY_ETH,
             FEE_3000,

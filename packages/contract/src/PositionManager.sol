@@ -31,9 +31,25 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
 
     struct Position {
         address owner;
-        uint128 liquidity;
         uint256 amountA;
         uint256 amountB;
+        PositionDirection positionDirection;
+    }
+
+    struct PositionExtended {
+        Position pos;
+        uint96 nonce;
+        address operator;
+        address token0;
+        address token1;
+        uint24 fee;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidity;
+        uint256 feeGrowthInside0LastX128;
+        uint256 feeGrowthInside1LastX128;
+        uint128 tokensOwed0;
+        uint128 tokensOwed1;
     }
 
     enum PositionDirection {
@@ -153,6 +169,7 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
             );
 
             uint256 tokenId = _addLiquidity(
+                positionDirection,
                 tokenA,
                 tokenB,
                 fee,
@@ -182,6 +199,7 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
             );
 
             uint256 tokenId = _addLiquidity(
+                positionDirection,
                 tokenA,
                 tokenB,
                 fee,
@@ -243,7 +261,6 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
 
         // find and clear tokenId in owner2Positions map
         bool isMoveElement;
-        console2.log(owner2Positions[msg.sender].length);
         for (uint i = 0; i < owner2Positions[msg.sender].length; i++) {
             if (owner2Positions[msg.sender][i] == tokenId) {
                 isMoveElement = true;
@@ -295,12 +312,28 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
 
     function getOpenPositions(
         address user
-    ) public view returns (Position[] memory) {
+    ) public view returns (PositionExtended[] memory) {
         uint256[] memory ups = owner2Positions[user];
-        Position[] memory ps = new Position[](ups.length);
+        PositionExtended[] memory ps = new PositionExtended[](ups.length);
 
         for (uint i = 0; i < ups.length; i++) {
-            ps[i] = position2Owner[ups[i]];
+            uint256 tokenId = ups[i];
+            Position memory position = position2Owner[tokenId];
+            ps[i].pos = position;
+            (
+                ps[i].nonce,
+                ps[i].operator,
+                ps[i].token0,
+                ps[i].token1,
+                ps[i].fee,
+                ps[i].tickLower,
+                ps[i].tickUpper,
+                ps[i].liquidity,
+                ps[i].feeGrowthInside0LastX128,
+                ps[i].feeGrowthInside1LastX128,
+                ps[i].tokensOwed0,
+                ps[i].tokensOwed1
+            ) = nonfungiblePositionManager.positions(tokenId);
         }
 
         return ps;
@@ -378,6 +411,7 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
 
     // Function that adds the liquidity and create a new position
     function _addLiquidity(
+        PositionDirection positionDirection,
         address tokenA,
         address tokenB,
         uint24 fee,
@@ -442,7 +476,7 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
 
         (
             uint256 tokenId,
-            uint128 liquidity,
+            ,
             uint256 amount0,
             uint256 amount1
         ) = nonfungiblePositionManager.mint(params);
@@ -451,8 +485,8 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
 
         // store information about position
         position2Owner[tokenId] = Position({
+            positionDirection: positionDirection,
             owner: msg.sender,
-            liquidity: liquidity,
             amountA: amount0,
             amountB: amount1
         });
@@ -492,11 +526,14 @@ contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
 
     // Function that decreases the liquidity
     function _decreaseLiquidity(uint256 tokenId) internal {
+        uint128 liquidity;
+        (, , , , , , , liquidity, , , , ) = nonfungiblePositionManager
+            .positions(tokenId);
         INonfungiblePositionManager.DecreaseLiquidityParams
             memory params = INonfungiblePositionManager
                 .DecreaseLiquidityParams({
                     tokenId: tokenId,
-                    liquidity: uint128(position2Owner[tokenId].liquidity),
+                    liquidity: uint128(liquidity),
                     amount0Min: 0,
                     amount1Min: 0,
                     deadline: block.timestamp

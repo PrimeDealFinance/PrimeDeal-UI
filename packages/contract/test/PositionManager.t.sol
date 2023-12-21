@@ -230,10 +230,38 @@ contract PositionManagerTest is Test, Constants {
 
     function test_getOpenPositions() public {
         assertEq(positionManager.getOpenPositions(MY_EOA).length, 0);
-        test_openPosition();
+        test_openBuyPosition();
         assertEq(positionManager.getOpenPositions(MY_EOA).length, 1);
-        test_openPosition();
+        test_openSellPosition();
         assertEq(positionManager.getOpenPositions(MY_EOA).length, 2);
+    }
+
+    function test_NFT_mint() public {
+        assertEq(positionManager.balanceOf(MY_EOA), 0);
+        test_openBuyPosition();
+        assertEq(positionManager.balanceOf(MY_EOA), 1);
+    }
+
+    function test_NFT_transfer() public {
+        uint tokenId = 1;
+
+        // internal mint NFT
+        test_openBuyPosition();
+
+        assertEq(positionManager.balanceOf(MY_EOA), 1);
+        assertEq(positionManager.ownerOf(tokenId), MY_EOA);
+
+        address alice = makeAddr("alice");
+
+        vm.prank(MY_EOA);
+        positionManager.approve(alice, tokenId);
+
+        vm.prank(alice);
+        positionManager.transferFrom(MY_EOA, alice, tokenId);
+
+        assertEq(positionManager.balanceOf(alice), 1);
+        assertEq(positionManager.ownerOf(tokenId), alice);
+        assertEq(positionManager.balanceOf(MY_EOA), 0);
     }
 
     function showTokensInfo(address spender) internal {

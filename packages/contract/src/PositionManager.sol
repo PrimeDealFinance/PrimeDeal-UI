@@ -11,18 +11,27 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@abdk-libraries-solidity/ABDKMath64x64.sol";
 
 import {console2} from "forge-std/Test.sol";
 
-contract PositionManager is IERC721Receiver, Pausable, Ownable {
+contract PositionManager is
+    ERC721,
+    ERC721Burnable,
+    IERC721Receiver,
+    Pausable,
+    Ownable
+{
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
     IUniswapV3Factory public immutable uniswapFactory;
 
     mapping(uint256 => Position) public positions;
     mapping(address => uint256[]) public owner2Positions;
+    uint256 private _nextTokenId = 1;
 
     struct Position {
         uint256 tokenId;
@@ -65,7 +74,10 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         int24 tickUpper
     );
 
-    constructor(address _nonfungiblePositionManager, address _uniswapFactory) {
+    constructor(
+        address _nonfungiblePositionManager,
+        address _uniswapFactory
+    ) ERC721("Chain-owls PositionManager NFT", "CHAIN-OWLS-POS") {
         nonfungiblePositionManager = INonfungiblePositionManager(
             _nonfungiblePositionManager
         );
@@ -407,6 +419,9 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
 
         // store user's positions
         owner2Positions[msg.sender].push(tokenId);
+
+        // mint NFT
+        _safeMint(msg.sender, _nextTokenId++);
 
         // refunds the unspent amount
         if (useTokenA) {

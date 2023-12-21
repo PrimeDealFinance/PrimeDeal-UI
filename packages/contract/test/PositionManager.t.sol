@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 
-import {Test, console2, StdStyle} from "forge-std/Test.sol";
+import {Test, console2, StdStyle, Vm} from "forge-std/Test.sol";
 import {PositionManager} from "../src/PositionManager.sol";
 import {Constants} from "./Constants.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -47,7 +47,8 @@ contract PositionManagerTest is Test, Constants {
     PositionManager public positionManager;
     PositionManagerHarness public positionManagerHarness;
 
-    address public owner = vm.addr(0xCFAE);
+    address public alice = makeAddr("alice");
+    address public bob = makeAddr("bob");
 
     function setUp() public {
         vm.createSelectFork(vm.envString("MUMBAI_RPC_URL"), USE_BLOCK);
@@ -78,34 +79,6 @@ contract PositionManagerTest is Test, Constants {
         vm.stopPrank();
 
         assertEq(pool, UNISWAP_V3_POOL_MY_USDT_MY_ETH);
-    }
-
-    function test_openPosition() public {
-        vm.startPrank(MY_EOA);
-
-        deal(MY_USDT, MY_EOA, AMOUNT_A_DESIRED);
-        deal(MY_ETH, MY_EOA, AMOUNT_B_DESIRED);
-
-        IERC20(MY_USDT).approve(address(positionManager), AMOUNT_A_DESIRED);
-        IERC20(MY_ETH).approve(address(positionManager), AMOUNT_B_DESIRED);
-
-        showTokensInfo(address(positionManager));
-
-        positionManager.openPosition(
-            PositionManager.PositionDirection.BUY,
-            MY_USDT,
-            MY_ETH,
-            FEE_3000,
-            SQRT_STOP_PRICE_X96_BUY,
-            AMOUNT_A_DESIRED,
-            AMOUNT_B_DESIRED,
-            AMOUNT_A_MIN,
-            AMOUNT_B_MIN
-        );
-
-        showTokensInfo(address(positionManager));
-
-        vm.stopPrank();
     }
 
     function test_addLiquidity() public {
@@ -170,7 +143,7 @@ contract PositionManagerTest is Test, Constants {
     }
 
     function test_pauseStopsOpenPosition() public {
-        test_openPosition();
+        openBuyPosition(MY_EOA);
 
         vm.startPrank(MY_EOA);
         positionManager.setPause(true);
@@ -183,17 +156,17 @@ contract PositionManagerTest is Test, Constants {
         assertTrue(revertsAsExpected, "expectRevert: call did not revert");
     }
 
-    function test_openBuyPosition() public {
-        vm.startPrank(MY_EOA);
+    function openBuyPosition(address prank) public {
+        vm.startPrank(prank);
 
-        deal(MY_USDT, MY_EOA, AMOUNT_A_DESIRED);
-        deal(MY_ETH, MY_EOA, 0);
+        deal(MY_USDT, prank, AMOUNT_A_DESIRED);
+        deal(MY_ETH, prank, 0);
 
         IERC20(MY_USDT).approve(address(positionManager), AMOUNT_A_DESIRED);
 
         showTokensInfo(address(positionManager));
-        uint256 usdtBalance = IERC20(MY_USDT).balanceOf(MY_EOA);
-        uint256 ethBalance = IERC20(MY_ETH).balanceOf(MY_EOA);
+        uint256 usdtBalance = IERC20(MY_USDT).balanceOf(prank);
+        uint256 ethBalance = IERC20(MY_ETH).balanceOf(prank);
         assertEq(usdtBalance, AMOUNT_A_DESIRED);
         assertEq(ethBalance, 0);
 
@@ -202,16 +175,21 @@ contract PositionManagerTest is Test, Constants {
             MY_ETH,
             FEE_3000,
             SQRT_STOP_PRICE_X96_BUY,
-            AMOUNT_A_DESIRED
+            AMOUNT_A_DESIRED,
+            AMOUNT_A_MIN
         );
 
         showTokensInfo(address(positionManager));
-        usdtBalance = IERC20(MY_USDT).balanceOf(MY_EOA);
-        ethBalance = IERC20(MY_ETH).balanceOf(MY_EOA);
-        assertEq(usdtBalance, 1);
+        usdtBalance = IERC20(MY_USDT).balanceOf(prank);
+        ethBalance = IERC20(MY_ETH).balanceOf(prank);
+        assertEq(usdtBalance, 4);
         assertEq(ethBalance, 0);
 
         vm.stopPrank();
+    }
+
+    function test_openBuyPosition() public {
+        openBuyPosition(MY_EOA);
     }
 
     function test_openSellPosition() public {
@@ -233,7 +211,8 @@ contract PositionManagerTest is Test, Constants {
             MY_ETH,
             FEE_3000,
             SQRT_STOP_PRICE_X96_SELL,
-            AMOUNT_B_DESIRED
+            AMOUNT_B_DESIRED,
+            AMOUNT_B_MIN
         );
 
         showTokensInfo(address(positionManager));
@@ -256,10 +235,92 @@ contract PositionManagerTest is Test, Constants {
 
     function test_getOpenPositions() public {
         assertEq(positionManager.getOpenPositions(MY_EOA).length, 0);
-        test_openPosition();
+        openBuyPosition(MY_EOA);
         assertEq(positionManager.getOpenPositions(MY_EOA).length, 1);
-        test_openPosition();
+        test_openSellPosition();
         assertEq(positionManager.getOpenPositions(MY_EOA).length, 2);
+    }
+
+    function test_NFT_mint() public {
+        assertEq(positionManager.balanceOf(MY_EOA), 0);
+        openBuyPosition(MY_EOA);
+        assertEq(positionManager.balanceOf(MY_EOA), 1);
+    }
+
+    function test_NFT_transfer() public {
+        uint tokenId = 1;
+
+        assertEq(positionManager.balanceOf(alice), 0);
+
+        // internal mint NFT
+        openBuyPosition(alice);
+
+        assertEq(positionManager.balanceOf(alice), 1);
+        assertEq(positionManager.ownerOf(tokenId), alice);
+
+        vm.prank(alice);
+        positionManager.approve(bob, tokenId);
+
+        vm.prank(bob);
+        positionManager.transferFrom(alice, bob, tokenId);
+
+        assertEq(positionManager.balanceOf(alice), 0);
+        assertEq(positionManager.getOpenPositions(alice).length, 0);
+
+        assertEq(positionManager.ownerOf(tokenId), bob);
+        assertEq(positionManager.balanceOf(bob), 1);
+        assertEq(positionManager.getOpenPositions(bob).length, 1);
+    }
+
+    function test_closePosition() public {
+        vm.recordLogs();
+
+        openBuyPosition(MY_EOA);
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+
+        // keep it for entries logging
+        /*
+        for (uint i = 0; i < entries.length; i++) {
+            console2.log(StdStyle.magenta(i));
+            assertEq(
+                entries[i].topics[0],
+                keccak256(
+                    "BuyPositionOpened(uint256,address,int24,address,uint256)"
+                )
+            );
+        }
+        */
+
+        assertEq(entries.length, 23);
+        assertEq(entries[18].topics.length, 3);
+        assertEq(
+            entries[18].topics[0],
+            keccak256(
+                "BuyPositionOpened(uint256,address,int24,address,uint256)"
+            )
+        );
+
+        uint256 tokenId = uint256(entries[18].topics[1]);
+        positionManager.closePosition(tokenId);
+        entries = vm.getRecordedLogs();
+
+        // keep it for entries logging
+        /*
+        for (uint i = 0; i < entries.length; i++) {
+            console2.log(StdStyle.magenta(i));
+            assertEq(
+                entries[i].topics[0],
+                keccak256("PositionClosed(uint256,address)")
+            );
+        }
+        */
+
+        assertEq(entries.length, 9);
+        assertEq(entries[8].topics.length, 3);
+        assertEq(
+            entries[8].topics[0],
+            keccak256("PositionClosed(uint256,address)")
+        );
     }
 
     function showTokensInfo(address spender) internal {

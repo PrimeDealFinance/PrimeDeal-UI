@@ -23,14 +23,16 @@ contract Constants {
     uint24 internal constant FEE_3000 = 3000;
     int24 internal constant UNISWAP_FULL_RANGE_TICK_LOWER = -887220;
     int24 internal constant UNISWAP_FULL_RANGE_TICK_UPPER = 887220;
-    uint256 internal constant AMOUNT_A_DESIRED = 10_000e16;
-    uint256 internal constant AMOUNT_B_DESIRED = 10e16;
-    uint256 internal constant AMOUNT_A_MIN = 0;
-    uint256 internal constant AMOUNT_B_MIN = 0;
+    uint256 internal constant AMOUNT_A_DESIRED = 100e18;
+    uint256 internal constant AMOUNT_B_DESIRED = 125e15;
+    uint256 internal constant AMOUNT_A_MIN = (AMOUNT_A_DESIRED * 8) / 10;
+    uint256 internal constant AMOUNT_B_MIN = (AMOUNT_B_DESIRED * 8) / 10;
 
-    uint160 internal constant SQRT_STOP_PRICE_X96_SELL = 2e27; // 1 ETH / 1570 USDT
-    uint160 internal constant SQRT_STOP_PRICE_X96_BUY = 4e27; // 1 ETH / 392 USDT
+    uint160 internal constant SQRT_STOP_PRICE_X96_SELL =
+        SQRT_CURRENT_PRICE_X96 / 2; // $3191
+    uint160 internal constant SQRT_STOP_PRICE_X96_BUY =
+        SQRT_CURRENT_PRICE_X96 * 2; // $199
 
     uint160 internal constant SQRT_CURRENT_PRICE_X96 =
-        2804843978760484196155948446; // fixed price on USE_BLOCK
+        2804843978760484196155948446; // fixed price on USE_BLOCK // $797
 }

@@ -11,30 +11,29 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Burnable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@abdk-libraries-solidity/ABDKMath64x64.sol";
 
 import {console2} from "forge-std/Test.sol";
 
-contract PositionManager is IERC721Receiver, Pausable, Ownable {
+contract PositionManager is ERC721, IERC721Receiver, Pausable, Ownable {
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
     IUniswapV3Factory public immutable uniswapFactory;
 
-    mapping(uint256 => Position) public positions;
+    mapping(uint256 => Position) public position2Owner;
     mapping(address => uint256[]) public owner2Positions;
+    mapping(uint256 => uint256) public position2NFTId;
+
+    uint256 private _nextNFTId = 1;
 
     struct Position {
-        uint256 tokenId;
-        address token0;
-        address token1;
-        uint24 fee;
-        int24 tickLower;
-        int24 tickUpper;
-        uint256 liquidity;
+        address owner;
+        uint128 liquidity;
         uint256 amountA;
         uint256 amountB;
-        address owner;
     }
 
     enum PositionDirection {
@@ -44,7 +43,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
 
     event BuyPositionOpened(
         uint256 indexed positionId,
-        address user,
+        address indexed user,
         int24 stopTick,
         address poolAddress,
         uint256 amountA
@@ -52,20 +51,18 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
 
     event SellPositionOpened(
         uint256 indexed positionId,
-        address user,
+        address indexed user,
         int24 stopTick,
         address poolAddress,
         uint256 amountB
     );
 
-    event PositionClosed(
-        uint256 indexed positionId,
-        address user,
-        int24 tickLower,
-        int24 tickUpper
-    );
+    event PositionClosed(uint256 indexed positionId, address indexed user);
 
-    constructor(address _nonfungiblePositionManager, address _uniswapFactory) {
+    constructor(
+        address _nonfungiblePositionManager,
+        address _uniswapFactory
+    ) ERC721("Chain-owls PositionManager NFT", "CHAIN-OWLS-POS") {
         nonfungiblePositionManager = INonfungiblePositionManager(
             _nonfungiblePositionManager
         );
@@ -83,7 +80,8 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         address tokenB,
         uint24 fee,
         uint160 stopSqrtPriceX96,
-        uint256 amountA
+        uint256 amountA,
+        uint256 amountAMin
     ) public whenNotPaused {
         openPosition(
             PositionDirection.BUY,
@@ -93,7 +91,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             stopSqrtPriceX96,
             amountA,
             0,
-            amountA - 1, // to pass slippage check
+            amountAMin,
             0
         );
     }
@@ -104,7 +102,8 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         address tokenB,
         uint24 fee,
         uint160 stopSqrtPriceX96,
-        uint256 amountB
+        uint256 amountB,
+        uint256 amountBMin
     ) public whenNotPaused {
         openPosition(
             PositionDirection.SELL,
@@ -115,7 +114,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             0,
             amountB,
             0,
-            amountB - 1 // to pass slippage check
+            amountBMin
         );
     }
 
@@ -132,24 +131,24 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         uint256 amountBMin
     ) public whenNotPaused {
         address pool = getPoolAddress(tokenA, tokenB, fee);
-        int24 startingTick;
-        int24 trailingTick;
+        int24 currentTick;
+        int24 startTick;
+        int24 stopTick;
         int24 tickSpacing = IUniswapV3PoolImmutables(pool).tickSpacing();
 
-        (, startingTick, , , , , ) = IUniswapV3Pool(pool).slot0();
+        (, currentTick, , , , , ) = IUniswapV3Pool(pool).slot0();
 
-        trailingTick = _nearestUsableTick(
+        startTick = _nearestUsableTick(currentTick, tickSpacing);
+        stopTick = _nearestUsableTick(
             TickMath.getTickAtSqrtRatio(stopSqrtPriceX96),
             tickSpacing
         );
 
         if (positionDirection == PositionDirection.BUY) {
-            startingTick =
-                _nearestUsableTick(startingTick, tickSpacing) +
-                tickSpacing;
+            startTick += tickSpacing;
 
             require(
-                startingTick < trailingTick,
+                startTick < stopTick,
                 "Stop price must be lower than the current"
             );
 
@@ -157,8 +156,8 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
                 tokenA,
                 tokenB,
                 fee,
-                startingTick,
-                trailingTick,
+                startTick,
+                stopTick,
                 amountADesired,
                 amountBDesired,
                 amountAMin,
@@ -170,17 +169,15 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             emit BuyPositionOpened(
                 tokenId,
                 msg.sender,
-                trailingTick,
+                stopTick,
                 pool,
-                positions[tokenId].amountA
+                position2Owner[tokenId].amountA
             );
         } else if (positionDirection == PositionDirection.SELL) {
-            startingTick =
-                _nearestUsableTick(startingTick, tickSpacing) -
-                tickSpacing;
+            startTick -= tickSpacing;
 
             require(
-                startingTick > trailingTick,
+                startTick > stopTick,
                 "Stop price must be higher than the current"
             );
 
@@ -188,8 +185,8 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
                 tokenA,
                 tokenB,
                 fee,
-                trailingTick,
-                startingTick,
+                stopTick,
+                startTick,
                 amountADesired,
                 amountBDesired,
                 amountAMin,
@@ -201,24 +198,37 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             emit SellPositionOpened(
                 tokenId,
                 msg.sender,
-                trailingTick,
+                stopTick,
                 pool,
-                positions[tokenId].amountB
+                position2Owner[tokenId].amountB
             );
         }
     }
 
     // Function that checks if position can be closed
     function canClosePosition(uint256 tokenId) public view returns (bool) {
-        address pool = getPoolAddress(
-            positions[tokenId].token0,
-            positions[tokenId].token1,
-            positions[tokenId].fee
-        );
+        address token0;
+        address token1;
+        uint24 fee;
+        int24 tickLower;
+        int24 tickUpper;
+        (
+            ,
+            ,
+            token0,
+            token1,
+            fee,
+            tickLower,
+            tickUpper,
+            ,
+            ,
+            ,
+            ,
+
+        ) = nonfungiblePositionManager.positions(tokenId);
+        address pool = getPoolAddress(token0, token1, fee);
         int24 currentTick = getCurrentTick(pool);
-        return
-            currentTick > positions[tokenId].tickUpper ||
-            currentTick < positions[tokenId].tickLower;
+        return currentTick > tickUpper || currentTick < tickLower;
     }
 
     // Function that closes the position
@@ -229,14 +239,34 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         _collect(tokenId);
         _burnPosition(tokenId);
 
-        delete positions[tokenId];
+        delete position2Owner[tokenId];
 
-        emit PositionClosed(
-            tokenId,
-            positions[tokenId].owner,
-            positions[tokenId].tickLower,
-            positions[tokenId].tickUpper
-        );
+        // find and clear tokenId in owner2Positions map
+        bool isMoveElement;
+        console2.log(owner2Positions[msg.sender].length);
+        for (uint i = 0; i < owner2Positions[msg.sender].length; i++) {
+            if (owner2Positions[msg.sender][i] == tokenId) {
+                isMoveElement = true;
+                continue;
+            }
+            if (isMoveElement) {
+                owner2Positions[msg.sender][i - 1] = owner2Positions[
+                    msg.sender
+                ][i];
+            }
+        }
+
+        // pop the last element (for arrays.length > 1)
+        if (owner2Positions[msg.sender].length != 0) {
+            owner2Positions[msg.sender].pop();
+        }
+
+        // delete the whole record (for arrays.length == 1)
+        if (owner2Positions[msg.sender].length == 0) {
+            delete owner2Positions[msg.sender];
+        }
+
+        emit PositionClosed(tokenId, position2Owner[tokenId].owner);
     }
 
     // Function that provides the current price of pool in SqrtX96 format
@@ -270,7 +300,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         Position[] memory ps = new Position[](ups.length);
 
         for (uint i = 0; i < ups.length; i++) {
-            ps[i] = positions[ups[i]];
+            ps[i] = position2Owner[ups[i]];
         }
 
         return ps;
@@ -285,6 +315,34 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
     ) public pure override returns (bytes4) {
         //
         return this.onERC721Received.selector;
+    }
+
+    function _afterTokenTransfer(
+        address from,
+        address to,
+        uint256 /*firstTokenId*/,
+        uint256 /*batchSize*/
+    ) internal virtual override {
+        // skip mint & burn
+        if (from == address(0x0) || to == address(0x0)) {
+            return;
+        }
+
+        uint256[] memory currentPositions = owner2Positions[from];
+
+        // rewrite the owner records in position2Owner
+        for (uint i = 0; i < currentPositions.length; i++) {
+            uint256 tokenId = currentPositions[i];
+            Position memory pos = position2Owner[tokenId];
+
+            // set new owner
+            pos.owner = to;
+            position2Owner[tokenId] = pos;
+        }
+
+        // rewrite the records in owner2Positions
+        owner2Positions[to] = currentPositions;
+        delete owner2Positions[from];
     }
 
     // Function that returns the nearest tick
@@ -384,7 +442,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
 
         (
             uint256 tokenId,
-            uint256 liquidity,
+            uint128 liquidity,
             uint256 amount0,
             uint256 amount1
         ) = nonfungiblePositionManager.mint(params);
@@ -392,21 +450,20 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         _tokenId = tokenId;
 
         // store information about position
-        positions[tokenId] = Position({
-            tokenId: tokenId,
-            token0: tokenA,
-            token1: tokenB,
-            fee: fee,
-            tickLower: tickLower,
-            tickUpper: tickUpper,
+        position2Owner[tokenId] = Position({
+            owner: msg.sender,
             liquidity: liquidity,
             amountA: amount0,
-            amountB: amount1,
-            owner: msg.sender
+            amountB: amount1
         });
 
         // store user's positions
         owner2Positions[msg.sender].push(tokenId);
+
+        // mint NFT & store to mapping
+        uint256 currentNFTId = _nextNFTId++;
+        super._safeMint(msg.sender, currentNFTId);
+        position2NFTId[tokenId] = currentNFTId;
 
         // refunds the unspent amount
         if (useTokenA) {
@@ -439,7 +496,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
             memory params = INonfungiblePositionManager
                 .DecreaseLiquidityParams({
                     tokenId: tokenId,
-                    liquidity: uint128(positions[tokenId].liquidity),
+                    liquidity: uint128(position2Owner[tokenId].liquidity),
                     amount0Min: 0,
                     amount1Min: 0,
                     deadline: block.timestamp
@@ -453,7 +510,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
         INonfungiblePositionManager.CollectParams memory params = INonfungiblePositionManager
             .CollectParams({
                 tokenId: tokenId,
-                recipient: positions[tokenId].owner, //отправляем юзеру
+                recipient: position2Owner[tokenId].owner, // send to user
                 amount0Max: type(uint128).max,
                 amount1Max: type(uint128).max
             });
@@ -464,5 +521,7 @@ contract PositionManager is IERC721Receiver, Pausable, Ownable {
     // function that that burns the NFT
     function _burnPosition(uint256 tokenId) internal {
         nonfungiblePositionManager.burn(tokenId);
+        super._burn(position2NFTId[tokenId]);
+        delete position2NFTId[tokenId];
     }
 }

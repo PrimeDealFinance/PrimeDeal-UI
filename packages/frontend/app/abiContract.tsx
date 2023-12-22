@@ -260,12 +260,43 @@ const abiContract = [
     outputs: [
       {
         components: [
-          { internalType: "address", name: "owner", type: "address" },
+          {
+            components: [
+              { internalType: "address", name: "owner", type: "address" },
+              { internalType: "uint256", name: "amountA", type: "uint256" },
+              { internalType: "uint256", name: "amountB", type: "uint256" },
+              {
+                internalType: "enum PositionManager.PositionDirection",
+                name: "positionDirection",
+                type: "uint8",
+              },
+            ],
+            internalType: "struct PositionManager.Position",
+            name: "pos",
+            type: "tuple",
+          },
+          { internalType: "uint96", name: "nonce", type: "uint96" },
+          { internalType: "address", name: "operator", type: "address" },
+          { internalType: "address", name: "token0", type: "address" },
+          { internalType: "address", name: "token1", type: "address" },
+          { internalType: "uint24", name: "fee", type: "uint24" },
+          { internalType: "int24", name: "tickLower", type: "int24" },
+          { internalType: "int24", name: "tickUpper", type: "int24" },
           { internalType: "uint128", name: "liquidity", type: "uint128" },
-          { internalType: "uint256", name: "amountA", type: "uint256" },
-          { internalType: "uint256", name: "amountB", type: "uint256" },
+          {
+            internalType: "uint256",
+            name: "feeGrowthInside0LastX128",
+            type: "uint256",
+          },
+          {
+            internalType: "uint256",
+            name: "feeGrowthInside1LastX128",
+            type: "uint256",
+          },
+          { internalType: "uint128", name: "tokensOwed0", type: "uint128" },
+          { internalType: "uint128", name: "tokensOwed1", type: "uint128" },
         ],
-        internalType: "struct PositionManager.Position[]",
+        internalType: "struct PositionManager.PositionExtended[]",
         name: "",
         type: "tuple[]",
       },
@@ -418,9 +449,13 @@ const abiContract = [
     name: "position2Owner",
     outputs: [
       { internalType: "address", name: "owner", type: "address" },
-      { internalType: "uint128", name: "liquidity", type: "uint128" },
       { internalType: "uint256", name: "amountA", type: "uint256" },
       { internalType: "uint256", name: "amountB", type: "uint256" },
+      {
+        internalType: "enum PositionManager.PositionDirection",
+        name: "positionDirection",
+        type: "uint8",
+      },
     ],
     stateMutability: "view",
     type: "function",
@@ -521,4 +556,5 @@ const abiContract = [
     type: "function",
   },
 ];
+
 export default abiContract;

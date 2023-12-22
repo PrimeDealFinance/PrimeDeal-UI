@@ -27,10 +27,7 @@ contract PositionManager is
     INonfungiblePositionManager public immutable nonfungiblePositionManager;
     IUniswapV3Factory public immutable uniswapFactory;
 
-    // Mapping from token ID to Uniswap Token ID
-    mapping(uint256 => uint256) private _uniswapTokenId;
-
-    // Mapping from Uniswap Token ID to Positions
+    // Mapping from Token ID to Positions
     mapping(uint256 => Position) private _positions;
 
     // PositionManager NFT token id
@@ -39,6 +36,7 @@ contract PositionManager is
     struct Position {
         PositionDirection positionDirection;
         uint256 amount;
+        uint256 uniswapTokenId;
     }
 
     struct PositionExtended {
@@ -193,7 +191,7 @@ contract PositionManager is
                 msg.sender,
                 stopTick,
                 pool,
-                _positions[_uniswapTokenId[_nextTokenId]].amount
+                _positions[_nextTokenId].amount
             );
         } else if (positionDirection == PositionDirection.SELL) {
             startTick -= tickSpacing;
@@ -223,7 +221,7 @@ contract PositionManager is
                 msg.sender,
                 stopTick,
                 pool,
-                _positions[_uniswapTokenId[_nextTokenId]].amount
+                _positions[_nextTokenId].amount
             );
         }
     }
@@ -248,7 +246,9 @@ contract PositionManager is
             ,
             ,
 
-        ) = nonfungiblePositionManager.positions(_uniswapTokenId[tokenId]);
+        ) = nonfungiblePositionManager.positions(
+            _positions[tokenId].uniswapTokenId
+        );
         address pool = getPoolAddress(token0, token1, fee);
         int24 currentTick = getCurrentTick(pool);
         return currentTick > tickUpper || currentTick < tickLower;
@@ -301,9 +301,7 @@ contract PositionManager is
 
         for (uint ix = 0; ix < ERC721.balanceOf(user); ix++) {
             uint256 tokenId = ERC721Enumerable.tokenOfOwnerByIndex(user, ix);
-
-            Position memory position = _positions[_uniswapTokenId[tokenId]];
-            positionExtendedArray[ix].pos = position;
+            positionExtendedArray[ix].pos = _positions[tokenId];
             (
                 positionExtendedArray[ix].nonce,
                 positionExtendedArray[ix].operator,
@@ -317,7 +315,9 @@ contract PositionManager is
                 positionExtendedArray[ix].feeGrowthInside1LastX128,
                 positionExtendedArray[ix].tokensOwed0,
                 positionExtendedArray[ix].tokensOwed1
-            ) = nonfungiblePositionManager.positions(_uniswapTokenId[tokenId]);
+            ) = nonfungiblePositionManager.positions(
+                _positions[tokenId].uniswapTokenId
+            );
         }
 
         return positionExtendedArray;
@@ -439,12 +439,12 @@ contract PositionManager is
         uint256 currentTokenId = ++_nextTokenId;
 
         // store information about position
-        _uniswapTokenId[currentTokenId] = uniswapTokenId;
-        _positions[uniswapTokenId] = Position({
+        _positions[_nextTokenId] = Position({
             positionDirection: positionDirection,
             amount: (positionDirection == PositionDirection.BUY)
                 ? amount0
-                : amount1
+                : amount1,
+            uniswapTokenId: uniswapTokenId
         });
 
         // mint NFT & store to mapping
@@ -479,11 +479,11 @@ contract PositionManager is
     function _decreaseLiquidity(uint256 tokenId) internal {
         uint128 liquidity;
         (, , , , , , , liquidity, , , , ) = nonfungiblePositionManager
-            .positions(_uniswapTokenId[tokenId]);
+            .positions(_positions[tokenId].uniswapTokenId);
         INonfungiblePositionManager.DecreaseLiquidityParams
             memory params = INonfungiblePositionManager
                 .DecreaseLiquidityParams({
-                    tokenId: _uniswapTokenId[tokenId],
+                    tokenId: _positions[tokenId].uniswapTokenId,
                     liquidity: liquidity,
                     amount0Min: 0,
                     amount1Min: 0,
@@ -497,7 +497,7 @@ contract PositionManager is
     function _collect(uint256 tokenId) internal {
         INonfungiblePositionManager.CollectParams memory params = INonfungiblePositionManager
             .CollectParams({
-                tokenId: _uniswapTokenId[tokenId],
+                tokenId: _positions[tokenId].uniswapTokenId,
                 recipient: ERC721.ownerOf(tokenId), // send to user
                 amount0Max: type(uint128).max,
                 amount1Max: type(uint128).max
@@ -508,9 +508,8 @@ contract PositionManager is
 
     // function that that burns the NFT
     function _burnPosition(uint256 tokenId) internal {
-        nonfungiblePositionManager.burn(_uniswapTokenId[tokenId]);
-        delete _positions[_uniswapTokenId[tokenId]];
-        delete _uniswapTokenId[tokenId];
+        nonfungiblePositionManager.burn(_positions[tokenId].uniswapTokenId);
+        delete _positions[tokenId];
         ERC721._burn(tokenId);
     }
 }

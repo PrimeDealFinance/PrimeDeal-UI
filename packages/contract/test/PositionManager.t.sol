@@ -26,7 +26,7 @@ contract PositionManagerHarness is PositionManager, Constants {
         uint256 amountBMin,
         bool useTokenA,
         bool useTokenB
-    ) external returns (uint256 _tokenId) {
+    ) external {
         return
             _addLiquidity(
                 positionDirection,
@@ -303,7 +303,15 @@ contract PositionManagerTest is Test, Constants {
             )
         );
 
+        // uint256 indexed tokenId,
+        // address indexed user,
+        // int24 stopTick,
+        // address poolAddress,
+        // uint256 amountA
+
         uint256 tokenId = uint256(entries[18].topics[1]);
+        console2.log(tokenId);
+
         positionManager.closePosition(tokenId);
         entries = vm.getRecordedLogs();
 

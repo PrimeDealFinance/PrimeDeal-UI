@@ -59,8 +59,8 @@ setup:
       policy: pull-push
   stage: setup
   script:
-    - echo "npm install skipped"
-    # - npm install
+    # - echo "npm install skipped"
+    - npm install
     - du -sh node_modules/
     - du -sh $FRONTEND_PATH/node_modules
 

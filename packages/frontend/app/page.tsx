@@ -406,13 +406,13 @@ export default function Home() {
         ) : (
           <>
             <div className="flex flex-col h-screen flex flex-col items-center">
-              <div className=" flex flex-col items-center bg-white rounded-[15px] w-[464px] h-[283px] mt-[129px]">
-                <div className="flex flex-wrap md:flex-nowrap gap-[43px] mt-[63px]">
+              <div className=" flex flex-col items-center bg-white rounded-[15px] max-[466px]:w-11/12 max-[640px]:px-[15px] max-[640px]:pb-[15px] sm:w-[464px] sm:h-[263px] mt-[129px] max-[472px]:mx-[10px]">
+                <div className="flex min-[466px]:flex-wrap max-[466px]:grid max-[466px]:grid-cols-1 items-center md:flex-nowrap max-[466px]:gap-[15px] gap-[43px] mt-[63px]">
                   <Select
                     onChange={handleCoinChange}
                     variant="bordered"
                     placeholder="Select an asset"
-                    className="w-[187px] h-[44px]"
+                    className="w-[187px]"
                     radius="lg"
                     size="sm"
                   >
@@ -441,7 +441,7 @@ export default function Home() {
                 </div>
                 {isConnect && isCoin && isDeal ? (
                   <>
-                    <div className="flex flex-wrap md:flex-nowrap gap-[41px] mt-[15px]">
+                    <div className="flex min-[466px]:flex-wrap max-[466px]:grid max-[466px]:grid-cols-1 md:flex-nowrap max-[466px]:gap-[15px] gap-[41px] mt-[15px]">
                       <Input
                         onChange={setAmount}
                         value={amountCoin}

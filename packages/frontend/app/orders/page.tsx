@@ -25,7 +25,7 @@ export default function Orders() {
                 <User
                   avatarProps={{src: order.avatar}}
                   description={(
-                    <Link href={{pathname: order.link}}>
+                    <Link href={{pathname: order.link}}> 
                         <div className="text-[#006FEE] text-[14px] hover:text-[#002E62] font-medium">
                             Open
                         </div>
@@ -65,8 +65,8 @@ export default function Orders() {
         <>
         <HeaderNotConnect />
         <div className="flex flex-col h-screen flex flex-col items-center">
-            <div className="p-[20px] xl:w-[1262px] w-8/12 border-1-solid-#3D59AD rounded-[15px] bg-[#7980A580] mt-[110px]" >
-                <Tabs variant="underlined" aria-label="Orders">
+            <div className="p-[20px] xl:w-[1262px] w-11/12 border-1-solid-#3D59AD rounded-[15px] bg-[#7980A580] mt-[110px]" >
+                <Tabs variant="underlined" aria-label="Orders" className="w-full">
                     <Tab key="active-orders" title="Active Orders">
                         <Table isStriped aria-label="Active Orders Table">
                             <TableHeader columns={columns}>

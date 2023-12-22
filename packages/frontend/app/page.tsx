@@ -30,7 +30,7 @@ interface Accounts {
  
 
 export default function Home() {
-  
+
   const {isOpen, onOpen, onOpenChange} = useDisclosure();
   const [isOpenCommonModal, setIsOpenCommonModal] = useState<boolean>(false);
   const [isOpenModalTx, setIsOpenModalTx] = useState<boolean>(false);
@@ -40,6 +40,7 @@ export default function Home() {
   const [isConnect, setIsConnect] = useState<boolean>(false);
   const [provider, setProvider] = useState<any>("");
   const [account, setAccount] = useState<string>("");
+  
   const [singer, setSinger] = useState("");
   const [contractSigner, setContractSigner] = useState<any>("");
   //const [price, setPrice] = useState(30000);
@@ -58,7 +59,7 @@ export default function Home() {
   const hashLink = 'https://mumbai.polygonscan.com/tx/';
   const hashLinkPlus = hashLink + txhash;
 
-  const addressContract = "0xC9B8ACcCF9223DE977606F20138F057D007e1F40";
+  const addressContract = "0x7E3DBB135BdFF8E3b72cFefa48da984F3bdB833a";
 
   //const addressETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"; // arb ETH
   const addressETH = "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9"; // mumbai ETH
@@ -132,38 +133,47 @@ export default function Home() {
 
   const getOpenBuyPosition = async () => {
     onOpenChange();
+    console.log("start: ");
     try {
    // const contract: any = await getERC20WithSigner(address);
-    const tx = await contractSigner.openBuyPosition(
+    const tx = await contractSigner.openBuyPosition
+    (
       "0x9EC3c43006145f5701d4FD527e826131778cA122",
       "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9",
       "3000",
-      "2490834112012289581004425200",
-      "100000000000000000000",
-      "10000000000000000000"
+      "2490834112012289581004425200",  // рэнж стоп  // targetPrice
+      "100000000000000000000",    // сумма usdc  // amountCoin
+      "10000000000000000000"   // Олег ;)
     );
     console.log("txSwap1: ", tx);
     setTxhash(tx.hash);
     setIsOpenModalTx(true);
     const response = await tx.wait();
+    setIsCoin(false);
+    setIsDeal(false);
     setIsOpenModalTx(false);
     console.log("responseTxSwap1: ", response);
+
       } catch (error) {
           console.error(error);
       }
    }
   
-  const startAddLiquid = async () => {
+  const startAddLiquid = () => {
     setIsOpenModalConnect(true);
   }
-  const handleOpenModal = async () => {
+  const handleOpenModal = () => {
     onOpenChange();
   }
-  const handleOpenCommonChange = async () => {
+  const handleOpenCommonChange = () => {
     setIsOpenCommonModal(false);
   }
-  const handleOpenModalTx = async () => {
+  const handleOpenModalTx = () => {
     setIsOpenModalTx(false);
+  }
+  const handleConnectNotice = () => {
+    setIsOpenCommonModal(true);
+    setContentCommonModal("Please connect to Metamask!");
   }
   
 
@@ -245,7 +255,9 @@ function handleDealChange(e: React.ChangeEvent<HTMLSelectElement>) {
   const previewOrder = async () => {
         const balanceInWeiUSDC = await ERC20_USDC.balanceOf(account);
         const balanceUSDC: string = ethers.formatEther(balanceInWeiUSDC);
-        const balanceUSDCview: number = Number(balanceUSDC) * 10**12;
+        //вернуть когда usdc будет с десималс 6
+       // const balanceUSDCview: number = Number(balanceUSDC) * 10**12;
+        const balanceUSDCview: number = Number(balanceUSDC);
         console.log("balanceUSDCview: ", balanceUSDCview);
 
         //const balanceInWeiETH = await provider.getBalance(account);
@@ -336,11 +348,11 @@ function handleDealChange(e: React.ChangeEvent<HTMLSelectElement>) {
     }
   }
   
-
   return (
     <>
     <Header
       onClickConnect={handleIsConnected}
+      onConnectNotice={handleConnectNotice}
       isConnect={isConnect}
       account={account}
     />
@@ -471,4 +483,5 @@ function handleDealChange(e: React.ChangeEvent<HTMLSelectElement>) {
       /> 
     </> 
   );
+  
 }

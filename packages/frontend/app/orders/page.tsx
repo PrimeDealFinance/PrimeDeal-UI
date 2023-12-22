@@ -6,10 +6,15 @@ import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, getKeyV
 import { User } from "@nextui-org/user";
 import  Link  from "next/link";
 import { columns, orders } from "@/app/orders/data"
+import HeaderNotConnect from "./headerNotConnect";
+//import anyBalance from "./anyBalance";
+import fetchData from "./fetchData";
 
-type Order = typeof orders[0]
+type Order = typeof orders[0];
 
 export default function Orders() {
+  //anyBalance();
+  fetchData();
 
     const renderCell = React.useCallback((order: Order, columnKey: React.Key) => {
         const cellValue = order[columnKey as keyof Order];
@@ -57,6 +62,8 @@ export default function Orders() {
       
 
     return (
+        <>
+        <HeaderNotConnect />
         <div className="flex flex-col h-screen flex flex-col items-center">
             <div className="p-[20px] xl:w-[1262px] w-8/12 border-1-solid-#3D59AD rounded-[15px] bg-[#7980A580] mt-[110px]" >
                 <Tabs variant="underlined" aria-label="Orders">
@@ -93,5 +100,6 @@ export default function Orders() {
                 </Tabs>
             </div>
         </div>
+        </>
     );
 }

@@ -1,6 +1,3 @@
-import React from "react";
-
-
 
 const columns = [
     {name: "Asset", uid: "asset"},
@@ -34,5 +31,4 @@ const columns = [
         "link": "/orders/example/eth"
     },
   ]
-
-  export {columns, orders};
+   export {columns, orders};

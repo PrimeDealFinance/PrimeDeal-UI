@@ -75,7 +75,7 @@ setup:
       changes:
         - package.json
         - $CONTRACT_PATH/package.json
-        - $FRONTEND_PATH/package.json
+        # - $FRONTEND_PATH/package.json
 
 contract-test:
   cache:

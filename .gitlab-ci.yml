@@ -92,7 +92,7 @@ frontend-test-build:
     - docker info
   script:
     - cd $FRONTEND_PATH
-    - cat docker-compose.yml | sed 's/target: production/target: build/' | docker compose -f - build
+    - cat docker-compose.yml | sed 's/target:\ production/target:\ build/' | docker compose -f - build
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:

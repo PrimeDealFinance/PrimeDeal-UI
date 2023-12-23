@@ -30,6 +30,12 @@ stages:
   unprotect: true
   paths:
     - $FRONTEND_PATH/node_modules
+  policy: pull
+
+.next-frontend-cache: &next-frontend-cache
+  key: next-frontend-cache
+  unprotect: true
+  paths:
     - $FRONTEND_PATH/.next
   policy: pull
 
@@ -86,6 +92,7 @@ frontend-test-build:
   cache:
     - <<: *node-cache
     - <<: *node-frontend-cache
+    - <<: *next-frontend-cache
       policy: pull-push
   stage: test
   needs: [setup]

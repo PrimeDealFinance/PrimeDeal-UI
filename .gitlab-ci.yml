@@ -73,7 +73,9 @@ setup:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"
       changes:
-        - "**/package.json"
+        - package.json
+        - $CONTRACT_PATH/package.json
+        - $FRONTEND_PATH/package.json
 
 contract-test:
   cache:

@@ -30,6 +30,7 @@ stages:
   unprotect: true
   paths:
     - $FRONTEND_PATH/node_modules
+    - $FRONTEND_PATH/.next
   policy: pull
 
 .forge-cache: &forge-cache
@@ -85,6 +86,7 @@ frontend-test-build:
   cache:
     - <<: *node-cache
     - <<: *node-frontend-cache
+      policy: pull-push
   stage: test
   needs: [setup]
   dependencies:

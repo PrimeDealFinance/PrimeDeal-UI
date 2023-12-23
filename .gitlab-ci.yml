@@ -53,7 +53,7 @@ stages:
     - $CONTRACT_PATH/script/deploy.env
   policy: pull
 
-## Jobs
+## Jobs //
 setup:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive

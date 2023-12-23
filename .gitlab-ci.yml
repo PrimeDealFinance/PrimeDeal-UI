@@ -53,7 +53,7 @@ stages:
     - $CONTRACT_PATH/script/deploy.env
   policy: pull
 
-## Jobs //
+## Jobs
 setup:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
@@ -75,7 +75,7 @@ setup:
       changes:
         - package.json
         - $CONTRACT_PATH/package.json
-        # - $FRONTEND_PATH/package.json
+        - $FRONTEND_PATH/package.json
 
 contract-test:
   cache:

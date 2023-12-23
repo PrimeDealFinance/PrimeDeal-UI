@@ -1,5 +1,5 @@
 "use client";
-import { ethers } from "ethers";
+import { Contract, ethers } from "ethers";
 import React, { useState, useEffect, ChangeEvent } from "react";
 import Image from "next/image";
 import Header from "@/components/header";
@@ -32,6 +32,8 @@ const {
 } = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
 import ERC20abi from "./ERC20";
 import abiContract from "./abiContract";
+import contractUsdtRead from "./provider/contractUsdtRead";
+import abiUsdt from "./abiUsdt";
 
 declare global {
   interface Window {
@@ -55,6 +57,8 @@ export default function Home() {
 
   const [singer, setSinger] = useState("");
   const [contractSigner, setContractSigner] = useState<any>("");
+  const [UsdtSigner, setUsdtSigner] = useState<any>("");
+
   //const [price, setPrice] = useState(30000);
   const [coin, setCoin] = useState<string>("");
   const [deal, setDeal] = useState<string>("");
@@ -130,6 +134,8 @@ export default function Home() {
         setContractSigner(
           new ethers.Contract(addressContract, abiContract, signer)
         );
+
+        setUsdtSigner(new ethers.Contract(addressUSDC, abiUsdt, signer));
       }
     }
   };
@@ -138,25 +144,50 @@ export default function Home() {
     onOpenChange();
     console.log("start: ");
     try {
-      const amountCoinBigint = ethers.parseUnits(amountCoin, 18);
-      // const targetPriceBigint = ethers.parseUnits(targetPrice, 18);
-      const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
-      // const targetPrice_ = ethers.formatUnits(targetPriceBigint, 0);
-      // const targetPriceInt = parseInt(targetPrice_);
-      let targetPriceReady = BigInt(Math.sqrt(1 / +targetPrice) * 2 ** 96);
+      const allowance = await contractUsdtRead.allowance(
+        "0xEF999988B857330Fe4B95B7371B5F6bb7e717015",
+        "0x854C54515190581ED6D5c0Bd08645E3F2a7114cA"
+      );
 
+      const allowanceToString = ethers.formatUnits(allowance, 0);
+      const allowanceToNumber = +allowanceToString / 10 ** 18;
+
+      console.log({ allowance });
+      console.log({ allowanceToString });
+      console.log({ allowanceToNumber });
+      // console.log({ allowanceToNumber_ });
+
+      const amountCoinBigint = ethers.parseUnits(amountCoin, 18);
+      const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
+      let targetPriceReady = BigInt(Math.sqrt(1 / +targetPrice) * 2 ** 96);
       let targetReady_ = targetPriceReady.toString();
 
-      console.log("targetPriceReady", targetPriceReady);
+      const amountCoinToNumber = +amountCoin_;
 
-      // const contract: any = await getERC20WithSigner(address);
+      console.log({ amountCoin });
+      console.log({ amountCoinBigint });
+      console.log({ amountCoin_ });
+      console.log({ amountCoinToNumber });
+
+      const maxUint256 = ethers.MaxInt256;
+      console.log({ maxUint256 });
+      // const approve = await UsdtSigner.approve(addressContract, maxUint256);
+      // console.log({ approve });
+
+      allowanceToNumber < +amountCoin
+        ? await UsdtSigner.approve(addressContract, maxUint256)
+        : null;
+
       const tx = await contractSigner.openBuyPosition(
         addressUSDC,
         addressETH,
         "3000",
         targetReady_,
         amountCoin_,
-        "0"
+        "0",
+        {
+          gasLimit: 850000,
+        }
       );
 
       setTxhash(tx.hash);

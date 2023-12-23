@@ -125,9 +125,6 @@ contract-export-cached-address:
   cache:
     - <<: *contract-address-cache
   stage: deploy
-  needs: [contract-test]
-  dependencies:
-    - contract-test
   script:
     - echo "Last deployed contract address `cat $CONTRACT_PATH/script/deploy.env`"
   artifacts:

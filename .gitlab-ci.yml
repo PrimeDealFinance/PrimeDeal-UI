@@ -59,10 +59,12 @@ setup:
       policy: pull-push
   stage: setup
   script:
-    # - echo "npm install skipped"
-    - npm install
+    - echo "npm install skipped"
+    # - npm install
     - du -sh node_modules/
     - du -sh $FRONTEND_PATH/node_modules
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"
 
 contract-test:
   cache:
@@ -74,6 +76,27 @@ contract-test:
     - setup
   script:
     - npx nx test contract
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - $CONTRACT_PATH/*
+
+frontend-test-build:
+  tags:
+    - local
+  stage: test
+  needs: [setup]
+  dependencies:
+    - setup
+  before_script:
+    - docker info
+  script:
+    - cd $FRONTEND_PATH
+    - cat docker-compose.yml | sed 's/target: production/target: build/' | docker compose -f - build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - $FRONTEND_PATH/*
 
 contract-deploy:
   cache:
@@ -105,6 +128,10 @@ contract-export-cached-address:
   artifacts:
     reports:
       dotenv: $CONTRACT_PATH/script/deploy.env
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $FRONTEND_PATH/*
 
 frontend-deploy:
   cache:
@@ -124,3 +151,7 @@ frontend-deploy:
     - docker tag w3a-mvp-dapp-frontend:latest registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest
     - docker login registry.digitalocean.com
     - docker push registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $FRONTEND_PATH/*

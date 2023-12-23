@@ -1,6 +1,6 @@
 ## Global variables
 variables:
-  GIT_DEPTH: 1
+  GIT_DEPTH: 0
   CONTRACT_PATH: "packages/contract"
   FRONTEND_PATH: "packages/frontend"
 
@@ -32,6 +32,13 @@ stages:
     - $FRONTEND_PATH/node_modules
   policy: pull
 
+.next-frontend-cache: &next-frontend-cache
+  key: next-frontend-cache
+  unprotect: true
+  paths:
+    - $FRONTEND_PATH/.next
+  policy: pull
+
 .forge-cache: &forge-cache
   key: forge-cache
   unprotect: true
@@ -59,21 +66,42 @@ setup:
       policy: pull-push
   stage: setup
   script:
-    - echo "npm install skipped"
-    # - npm install
+    # - echo "npm install skipped"
+    - npm install
     - du -sh node_modules/
     - du -sh $FRONTEND_PATH/node_modules
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"
+      changes:
+        - package.json
+        - $CONTRACT_PATH/package.json
+        - $FRONTEND_PATH/package.json
 
 contract-test:
   cache:
     - <<: *node-cache
     - <<: *forge-cache
   stage: test
-  needs: [setup]
-  dependencies:
-    - setup
   script:
     - npx nx test contract
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - $CONTRACT_PATH/*
+
+frontend-test-build:
+  cache:
+    - <<: *node-cache
+    - <<: *node-frontend-cache
+    - <<: *next-frontend-cache
+      policy: pull-push
+  stage: test
+  script:
+    - npx nx build frontend
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - $FRONTEND_PATH/*
 
 contract-deploy:
   cache:
@@ -82,6 +110,7 @@ contract-deploy:
     - <<: *contract-address-cache
       policy: push
   stage: deploy
+  retry: 2
   needs: [contract-test]
   dependencies:
     - contract-test
@@ -104,6 +133,10 @@ contract-export-cached-address:
   artifacts:
     reports:
       dotenv: $CONTRACT_PATH/script/deploy.env
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $FRONTEND_PATH/*
 
 frontend-deploy:
   cache:
@@ -123,3 +156,7 @@ frontend-deploy:
     - docker tag w3a-mvp-dapp-frontend:latest registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest
     - docker login registry.digitalocean.com
     - docker push registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $FRONTEND_PATH/*

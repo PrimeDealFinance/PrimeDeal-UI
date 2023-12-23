@@ -3,10 +3,10 @@ const abiContract = [
     inputs: [
       {
         internalType: "address",
-        name: "_nonfungiblePositionManager",
+        name: "nonfungiblePositionManager_",
         type: "address",
       },
-      { internalType: "address", name: "_uniswapFactory", type: "address" },
+      { internalType: "address", name: "uniswapFactory_", type: "address" },
     ],
     stateMutability: "nonpayable",
     type: "constructor",
@@ -64,7 +64,7 @@ const abiContract = [
       {
         indexed: true,
         internalType: "uint256",
-        name: "positionId",
+        name: "tokenId",
         type: "uint256",
       },
       { indexed: true, internalType: "address", name: "user", type: "address" },
@@ -128,7 +128,7 @@ const abiContract = [
       {
         indexed: true,
         internalType: "uint256",
-        name: "positionId",
+        name: "tokenId",
         type: "uint256",
       },
       { indexed: true, internalType: "address", name: "user", type: "address" },
@@ -142,7 +142,7 @@ const abiContract = [
       {
         indexed: true,
         internalType: "uint256",
-        name: "positionId",
+        name: "tokenId",
         type: "uint256",
       },
       { indexed: true, internalType: "address", name: "user", type: "address" },
@@ -195,6 +195,15 @@ const abiContract = [
     ],
     name: "Unpaused",
     type: "event",
+  },
+  {
+    inputs: [],
+    name: "_uniswapFactory",
+    outputs: [
+      { internalType: "contract IUniswapV3Factory", name: "", type: "address" },
+    ],
+    stateMutability: "view",
+    type: "function",
   },
   {
     inputs: [
@@ -262,13 +271,16 @@ const abiContract = [
         components: [
           {
             components: [
-              { internalType: "address", name: "owner", type: "address" },
-              { internalType: "uint256", name: "amountA", type: "uint256" },
-              { internalType: "uint256", name: "amountB", type: "uint256" },
               {
                 internalType: "enum PositionManager.PositionDirection",
                 name: "positionDirection",
                 type: "uint8",
+              },
+              { internalType: "uint256", name: "amount", type: "uint256" },
+              {
+                internalType: "uint256",
+                name: "uniswapTokenId",
+                type: "uint256",
               },
             ],
             internalType: "struct PositionManager.Position",
@@ -333,19 +345,6 @@ const abiContract = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "nonfungiblePositionManager",
-    outputs: [
-      {
-        internalType: "contract INonfungiblePositionManager",
-        name: "",
-        type: "address",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [
       { internalType: "address", name: "", type: "address" },
       { internalType: "address", name: "", type: "address" },
@@ -373,27 +372,6 @@ const abiContract = [
   },
   {
     inputs: [
-      {
-        internalType: "enum PositionManager.PositionDirection",
-        name: "positionDirection",
-        type: "uint8",
-      },
-      { internalType: "address", name: "tokenA", type: "address" },
-      { internalType: "address", name: "tokenB", type: "address" },
-      { internalType: "uint24", name: "fee", type: "uint24" },
-      { internalType: "uint160", name: "stopSqrtPriceX96", type: "uint160" },
-      { internalType: "uint256", name: "amountADesired", type: "uint256" },
-      { internalType: "uint256", name: "amountBDesired", type: "uint256" },
-      { internalType: "uint256", name: "amountAMin", type: "uint256" },
-      { internalType: "uint256", name: "amountBMin", type: "uint256" },
-    ],
-    name: "openPosition",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
       { internalType: "address", name: "tokenA", type: "address" },
       { internalType: "address", name: "tokenB", type: "address" },
       { internalType: "uint24", name: "fee", type: "uint24" },
@@ -414,16 +392,6 @@ const abiContract = [
     type: "function",
   },
   {
-    inputs: [
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "uint256", name: "", type: "uint256" },
-    ],
-    name: "owner2Positions",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
     inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
     name: "ownerOf",
     outputs: [{ internalType: "address", name: "", type: "address" }],
@@ -434,29 +402,6 @@ const abiContract = [
     inputs: [],
     name: "paused",
     outputs: [{ internalType: "bool", name: "", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    name: "position2NFTId",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    name: "position2Owner",
-    outputs: [
-      { internalType: "address", name: "owner", type: "address" },
-      { internalType: "uint256", name: "amountA", type: "uint256" },
-      { internalType: "uint256", name: "amountB", type: "uint256" },
-      {
-        internalType: "enum PositionManager.PositionDirection",
-        name: "positionDirection",
-        type: "uint8",
-      },
-    ],
     stateMutability: "view",
     type: "function",
   },
@@ -522,9 +467,33 @@ const abiContract = [
     type: "function",
   },
   {
+    inputs: [{ internalType: "uint256", name: "index", type: "uint256" }],
+    name: "tokenByIndex",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "owner", type: "address" },
+      { internalType: "uint256", name: "index", type: "uint256" },
+    ],
+    name: "tokenOfOwnerByIndex",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
     name: "tokenURI",
     outputs: [{ internalType: "string", name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "totalSupply",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
@@ -544,15 +513,6 @@ const abiContract = [
     name: "transferOwnership",
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "uniswapFactory",
-    outputs: [
-      { internalType: "contract IUniswapV3Factory", name: "", type: "address" },
-    ],
-    stateMutability: "view",
     type: "function",
   },
 ];

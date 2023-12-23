@@ -82,6 +82,7 @@ contract-deploy:
     - <<: *contract-address-cache
       policy: push
   stage: deploy
+  retry: 2
   needs: [contract-test]
   dependencies:
     - contract-test

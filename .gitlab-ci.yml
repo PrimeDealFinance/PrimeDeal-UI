@@ -85,8 +85,6 @@ frontend-test-build:
   cache:
     - <<: *node-cache
     - <<: *node-frontend-cache
-  tags:
-    - local
   stage: test
   needs: [setup]
   dependencies:
@@ -94,8 +92,7 @@ frontend-test-build:
   before_script:
     - docker info
   script:
-    - cd $FRONTEND_PATH
-    - cat docker-compose.yml | sed 's/target:\ production/target:\ builder/' | docker compose -f - build
+    - npx nx build frontend
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:

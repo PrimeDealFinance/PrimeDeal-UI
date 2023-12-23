@@ -82,6 +82,9 @@ contract-test:
         - $CONTRACT_PATH/*
 
 frontend-test-build:
+  cache:
+    - <<: *node-cache
+    - <<: *node-frontend-cache
   tags:
     - local
   stage: test

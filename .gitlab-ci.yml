@@ -66,12 +66,14 @@ setup:
       policy: pull-push
   stage: setup
   script:
-    - echo "npm install skipped"
-    # - npm install
+    # - echo "npm install skipped"
+    - npm install
     - du -sh node_modules/
     - du -sh $FRONTEND_PATH/node_modules
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"
+      changes:
+        - "**/package.json"
 
 contract-test:
   cache:

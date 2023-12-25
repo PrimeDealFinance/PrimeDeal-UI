@@ -32,6 +32,7 @@ const {
 } = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
 import ERC20abi from "./ERC20";
 import abiContract from "./abiContract";
+import { useWalletStore } from "@/service/store";
 
 declare global {
   interface Window {
@@ -43,24 +44,27 @@ interface Accounts {
 }
 
 export default function Home() {
+
+  const { handleIsConnected, isConnect, account, handleConnectNotice, provider, contractSigner, isOpenModalConnect, setIsOpenModalConnect, uniswapV3PoolETH_USDC, setUniswapV3PoolUSDT_BTC, setIsOpenCommonModal, isOpenCommonModal, contentCommonModal, setContentCommonModal } = useWalletStore();
+
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  const [isOpenCommonModal, setIsOpenCommonModal] = useState<boolean>(false);
+ // const [isOpenCommonModal, setIsOpenCommonModal] = useState<boolean>(false);
   const [isOpenModalTx, setIsOpenModalTx] = useState<boolean>(false);
-  const [contentCommonModal, setContentCommonModal] = useState<string>("Error");
+  //const [contentCommonModal, setContentCommonModal] = useState<string>("Error");
   const [someBool, setSomeBool] = useState(false);
   //const [someBool, setSomeBool] = useState<boolean>(false);
-  const [isConnect, setIsConnect] = useState<boolean>(false);
-  const [provider, setProvider] = useState<any>("");
-  const [account, setAccount] = useState<string>("");
+  //const [isConnect, setIsConnect] = useState<boolean>(false);
+  //const [provider, setProvider] = useState<any>("");
+  //const [account, setAccount] = useState<string>("");
 
-  const [singer, setSinger] = useState("");
-  const [contractSigner, setContractSigner] = useState<any>("");
+ // const [singer, setSinger] = useState("");
+  //const [contractSigner, setContractSigner] = useState<any>("");
   //const [price, setPrice] = useState(30000);
   const [coin, setCoin] = useState<string>("");
   const [deal, setDeal] = useState<string>("");
   const [isCoin, setIsCoin] = useState<boolean>(false);
   const [isDeal, setIsDeal] = useState<boolean>(false);
-  const [isOpenModalConnect, setIsOpenModalConnect] = useState<boolean>(false);
+  //const [isOpenModalConnect, setIsOpenModalConnect] = useState<boolean>(false);
   const [enterAmount, setEnterAmount] = useState<string>("Enter amount of");
   const [price, setPrice] = useState<string>("Set target price");
   const [amountCoin, setAmountCoin] = useState<string>("");
@@ -71,7 +75,7 @@ export default function Home() {
   const hashLink = "https://mumbai.polygonscan.com/tx/";
   const hashLinkPlus = hashLink + txhash;
 
-  const addressContract = "0x854C54515190581ED6D5c0Bd08645E3F2a7114cA";
+  //const addressContract = "0x854C54515190581ED6D5c0Bd08645E3F2a7114cA";
 
   //const addressETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"; // arb ETH
   const addressETH = "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9"; // mumbai ETH
@@ -85,54 +89,17 @@ export default function Home() {
   const ERC20_USDC = new ethers.Contract(addressUSDC, ERC20abi, provider);
 
   //const poolAddress = "0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443"; // pool ETH/USDC.e
-  const poolAddress = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B"; // pool ETH/USDT mumbai
+  //const poolAddress = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B"; // pool ETH/USDT mumbai
 
-  const [uniswapV3PoolETH_USDC, setUniswapV3PoolETH_USDC] = useState<any>("");
+  //const [uniswapV3PoolETH_USDC, setUniswapV3PoolETH_USDC] = useState<any>("");
   const [priceUSDC_ETH, setPriceUSDC_ETH] = useState<number>(0);
 
-  const poolAddressUSDT_BTC = "0x7E3DBB135BdFF8E3b72cFefa48da984F3bdB833a"; // pool BTC/USDT
-  const [uniswapV3PoolUSDT_BTC, setUniswapV3PoolUSDT_BTC] = useState<any>("");
+  //const poolAddressUSDT_BTC = "0x7E3DBB135BdFF8E3b72cFefa48da984F3bdB833a"; // pool BTC/USDT
+  //const [uniswapV3PoolUSDT_BTC, setUniswapV3PoolUSDT_BTC] = useState<any>("");
   const [priceUSDT_BTC, setPriceUSDT_BTC] = useState<number>(0);
 
-  const handleIsConnected = async () => {
-    if (window.ethereum == null) {
-      console.log("MetaMask not installed; using read-only defaults");
-      //const provider = createExternalExtensionProvider();
-      //const provider = ethers.getDefaultProvider()
-    } else {
-      //const accounts = await provider.request({ method: 'eth_requestAccounts' });
-      const accounts: Accounts =
-        (await window.ethereum.request({
-          method: "eth_requestAccounts",
-        })) ?? 0;
-      //const accounts1: {[index: number]:any}
-      const provider: any = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const network = await provider.getNetwork();
 
-      if (Number(network.chainId) !== 80001) {
-        console.log("Wrong network. Need Arb");
-        setIsOpenCommonModal(true);
-        setContentCommonModal("Wrong network. Please connect to Arbitrum!");
-      } else {
-        setAccount(accounts[0]);
-        setProvider(provider);
-        setSinger(signer);
-        setIsConnect(true);
-        setIsOpenModalConnect(false);
-
-        setUniswapV3PoolETH_USDC(
-          new ethers.Contract(poolAddress, IUniswapV3PoolABI, provider)
-        );
-        setUniswapV3PoolUSDT_BTC(
-          new ethers.Contract(poolAddressUSDT_BTC, IUniswapV3PoolABI, provider)
-        );
-        setContractSigner(
-          new ethers.Contract(addressContract, abiContract, signer)
-        );
-      }
-    }
-  };
+  
 
   const getOpenBuyPosition = async () => {
     onOpenChange();
@@ -181,10 +148,10 @@ export default function Home() {
   const handleOpenModalTx = async () => {
     setIsOpenModalTx(false);
   };
-  const handleConnectNotice = async () => {
-    setIsOpenCommonModal(true);
-    setContentCommonModal("Please connect to Metamask!");
-  };
+ // const handleConnectNotice = async () => {
+  //  setIsOpenCommonModal(true);
+ //   setContentCommonModal("Please connect to Metamask!");
+//  };
 
   // set the prise
   useEffect(() => {
@@ -392,16 +359,11 @@ export default function Home() {
 
   return (
     <>
-      <Header
-        onClickConnect={handleIsConnected}
-        onConnectNotice={handleConnectNotice}
-        isConnect={isConnect}
-        account={account}
-      />
+    
       <>
         {!isConnect ? (
           <div className="flex flex-col h-screen flex flex-col items-center mt-[129px]">
-            <StartPage onClickConnect={handleIsConnected} />
+            <StartPage />
           </div>
         ) : (
           <>

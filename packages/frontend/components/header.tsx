@@ -13,21 +13,12 @@ import {
   DropdownTrigger,
   DropdownSection,
 } from "@nextui-org/dropdown";
+import ConnectButton from "./ConnectButton"; 
+import { useWalletStore } from "@/service/store";
 
-interface Props {
-  onClickConnect: () => void;
-  onConnectNotice: () => void;
-  isConnect: boolean;
-  account: string;
-}
+const Header = () => {
 
-const Header = ({
-  onClickConnect,
-  onConnectNotice,
-  isConnect,
-  account,
-}: Props) => {
-  const miniText: string = account.substring(0, 4) + "..." + account.slice(38);
+  const { isConnect, handleConnectNotice } = useWalletStore();
 
   return (
     <div className="sticky top-0 z-10 flex justify-center relative shadow-lg h-[85px] items-center bg-[#6078F9]">
@@ -48,7 +39,7 @@ const Header = ({
         {!isConnect ? (
           <Link
             href=""
-            onClick={onConnectNotice}
+            onClick={handleConnectNotice}
             className="font-inter text-white hover:text-[#FFFFFF8F] font-bold text-[24px] not-italic"
           >
             Your Orders
@@ -85,15 +76,7 @@ const Header = ({
       </div>
 
       <div className="absolute right-[17px]">
-        {!isConnect ? (
-          <Button color="danger" size="lg" onClick={onClickConnect}>
-            Connect
-          </Button>
-        ) : (
-          <Button color="danger" size="lg">
-            {miniText}
-          </Button>
-        )}
+        <ConnectButton />
       </div>
     </div>
   );

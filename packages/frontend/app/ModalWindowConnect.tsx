@@ -6,7 +6,7 @@ interface Props {
   isConnect: boolean;
   isOpenModalConnect: boolean;
   onOpenChange: () => void;
-  onClickConnect: () => void;
+  onClickConnect: (abiContract:any, IUniswapV3PoolABI:any) => void;
 
 
 }
@@ -34,7 +34,7 @@ const ModalWindowConnect = ({
             <Button color="danger" variant="light" onPress={onOpenChange}>
               Close
             </Button>
-            <Button color="primary" onPress={onClickConnect}>
+            <Button color="primary" onPress={() => onClickConnect}>
               Connect
             </Button>
           </ModalFooter>

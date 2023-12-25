@@ -24,7 +24,9 @@ export default function RootLayout({
         <Rainbow>
           <Providers>
             <main className="light text-foreground bg-[#D2D9EE]">
+              <Header />
               {children}
+              <Footer />
             </main>
           </Providers>
         </Rainbow>

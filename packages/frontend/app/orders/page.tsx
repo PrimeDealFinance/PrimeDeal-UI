@@ -63,7 +63,7 @@ export default function Orders() {
 
     return (
         <>
-        <HeaderNotConnect />
+       
         <div className="flex flex-col h-screen flex flex-col items-center">
             <div className="p-[20px] xl:w-[1262px] w-11/12 border-1-solid-#3D59AD rounded-[15px] bg-[#7980A580] mt-[110px]" >
                 <Tabs variant="underlined" aria-label="Orders" className="w-full">

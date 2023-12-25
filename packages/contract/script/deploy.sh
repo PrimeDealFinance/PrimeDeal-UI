@@ -1,6 +1,7 @@
 #/bin/bash
 
 echo "Deploying contract..."
+set -o pipefail
 forge create \
     --rpc-url 'https://lb.drpc.org/ogrpc?network=polygon-mumbai&dkey=AmvHqebJ6k7ThQWeGwnLVmnsDTC3hx0R7qTGrkUU-y5L' \
     --private-key '0xe713b29254fcbfa701a7210983075d4813eeedf6e5b22551e354a7b40e44c9c9' \

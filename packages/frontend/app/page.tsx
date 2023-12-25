@@ -44,11 +44,25 @@ interface Accounts {
 }
 
 export default function Home() {
-
-  const { handleIsConnected, isConnect, account, handleConnectNotice, provider, contractSigner, isOpenModalConnect, setIsOpenModalConnect, uniswapV3PoolETH_USDC, setUniswapV3PoolUSDT_BTC, setIsOpenCommonModal, isOpenCommonModal, contentCommonModal, setContentCommonModal } = useWalletStore();
+  const {
+    handleIsConnected,
+    isConnect,
+    account,
+    handleConnectNotice,
+    provider,
+    contractSigner,
+    isOpenModalConnect,
+    setIsOpenModalConnect,
+    uniswapV3PoolETH_USDC,
+    setUniswapV3PoolUSDT_BTC,
+    setIsOpenCommonModal,
+    isOpenCommonModal,
+    contentCommonModal,
+    setContentCommonModal,
+  } = useWalletStore();
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
- // const [isOpenCommonModal, setIsOpenCommonModal] = useState<boolean>(false);
+  // const [isOpenCommonModal, setIsOpenCommonModal] = useState<boolean>(false);
   const [isOpenModalTx, setIsOpenModalTx] = useState<boolean>(false);
   //const [contentCommonModal, setContentCommonModal] = useState<string>("Error");
   const [someBool, setSomeBool] = useState(false);
@@ -57,7 +71,7 @@ export default function Home() {
   //const [provider, setProvider] = useState<any>("");
   //const [account, setAccount] = useState<string>("");
 
- // const [singer, setSinger] = useState("");
+  // const [singer, setSinger] = useState("");
   //const [contractSigner, setContractSigner] = useState<any>("");
   //const [price, setPrice] = useState(30000);
   const [coin, setCoin] = useState<string>("");
@@ -75,7 +89,7 @@ export default function Home() {
   const hashLink = "https://mumbai.polygonscan.com/tx/";
   const hashLinkPlus = hashLink + txhash;
 
-  //const addressContract = "0x854C54515190581ED6D5c0Bd08645E3F2a7114cA";
+  const addressContract = "0x5ce832046e25fBAc5De4519f4d3b8052EDA5Fa86";
 
   //const addressETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"; // arb ETH
   const addressETH = "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9"; // mumbai ETH
@@ -97,9 +111,6 @@ export default function Home() {
   //const poolAddressUSDT_BTC = "0x7E3DBB135BdFF8E3b72cFefa48da984F3bdB833a"; // pool BTC/USDT
   //const [uniswapV3PoolUSDT_BTC, setUniswapV3PoolUSDT_BTC] = useState<any>("");
   const [priceUSDT_BTC, setPriceUSDT_BTC] = useState<number>(0);
-
-
-  
 
   const getOpenBuyPosition = async () => {
     onOpenChange();
@@ -148,10 +159,10 @@ export default function Home() {
   const handleOpenModalTx = async () => {
     setIsOpenModalTx(false);
   };
- // const handleConnectNotice = async () => {
+  // const handleConnectNotice = async () => {
   //  setIsOpenCommonModal(true);
- //   setContentCommonModal("Please connect to Metamask!");
-//  };
+  //   setContentCommonModal("Please connect to Metamask!");
+  //  };
 
   // set the prise
   useEffect(() => {
@@ -359,7 +370,6 @@ export default function Home() {
 
   return (
     <>
-    
       <>
         {!isConnect ? (
           <div className="flex flex-col h-screen flex flex-col items-center mt-[129px]">

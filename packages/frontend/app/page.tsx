@@ -146,7 +146,7 @@ export default function Home() {
     try {
       const allowance = await contractUsdtRead.allowance(
         "0xEF999988B857330Fe4B95B7371B5F6bb7e717015",
-        "0x854C54515190581ED6D5c0Bd08645E3F2a7114cA"
+        addressContract
       );
 
       const allowanceToString = ethers.formatUnits(allowance, 0);

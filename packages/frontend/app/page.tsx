@@ -75,7 +75,7 @@ export default function Home() {
   const hashLink = "https://mumbai.polygonscan.com/tx/";
   const hashLinkPlus = hashLink + txhash;
 
-  const addressContract = "0x854C54515190581ED6D5c0Bd08645E3F2a7114cA";
+  const addressContract = "0x5ce832046e25fBAc5De4519f4d3b8052EDA5Fa86";
 
   //const addressETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"; // arb ETH
   const addressETH = "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9"; // mumbai ETH

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Contract, ethers } from "ethers";
 import defaultProvider from "../defaultProvider";
-import abiContract from "../abiContract";
+
 const {
   abi: INonfungiblePositionManagerABI,
 } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
@@ -11,7 +11,7 @@ const AnyBalance = () => {
   const [balan, setBalan] = useState("");
   const [nonPosMan, setNonPosMan] = useState<any>("");
   const [contractView, setContractView] = useState<any>("");
-  const addressContract = "0x7E3DBB135BdFF8E3b72cFefa48da984F3bdB833a";
+  const addressContract = "0x7E3DBB135BdFF8E3b72cFefa48da984F3bdB833a"; // TODO: use WalletState
   const nonfungiblePositionManager =
     "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
   const myId = 206339;
@@ -26,7 +26,7 @@ const AnyBalance = () => {
       setBalan(balanceETH);
       const contractView = new Contract(
         addressContract,
-        abiContract,
+        process.env.NEXT_PUBLIC_POSITION_MANAGER_ABI!, // TODO: use WalletState
         defaultProvider
       );
       setContractView(contractView);

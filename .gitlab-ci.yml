@@ -138,6 +138,9 @@ contract-export-cached-address:
 frontend-deploy:
   cache:
     - <<: *contract-address-cache
+    - <<: *node-cache
+    - <<: *node-frontend-cache
+    - <<: *next-frontend-cache
   tags:
     - local
   stage: deploy

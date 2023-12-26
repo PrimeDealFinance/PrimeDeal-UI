@@ -1,17 +1,7 @@
 "use client";
-import { Contract, ethers } from "ethers";
+import { ethers } from "ethers";
 import React, { useState, useEffect, ChangeEvent } from "react";
-import Image from "next/image";
-import Header from "@/components/header";
-//import { Button }  from "@nextui-org/button";
-//import { Input } from "@nextui-org/input";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  Button,
-  Input,
-} from "@nextui-org/react";
+import { Button, Input } from "@nextui-org/react";
 import { Select, SelectItem } from "@nextui-org/select";
 import {
   Modal,
@@ -22,14 +12,10 @@ import {
   useDisclosure,
 } from "@nextui-org/modal";
 import { MetaMaskInpageProvider } from "@metamask/providers";
-import { createExternalExtensionProvider } from "@metamask/providers";
 import ModalWindow from "./ModalWindowConnect";
 import StartPage from "./StartPage";
 import CommonModalWindow from "./CommonModalWindow";
 import ModalWindowTx from "./ModalWindowTx";
-const {
-  abi: IUniswapV3PoolABI,
-} = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
 import ERC20abi from "./ERC20";
 import contractUsdtRead from "./provider/contractUsdtRead";
 import { useWalletStore } from "@/service/store";
@@ -54,62 +40,39 @@ export default function Home() {
     usdtSigner,
     isOpenModalConnect,
     setIsOpenModalConnect,
-    uniswapV3PoolETH_USDC,
-    setUniswapV3PoolUSDT_BTC,
     setIsOpenCommonModal,
     isOpenCommonModal,
     contentCommonModal,
     setContentCommonModal,
+    positionManagerContractAddress,
+    USDTContractAddress,
+    ETHContractAddress,
   } = useWalletStore();
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
-  // const [isOpenCommonModal, setIsOpenCommonModal] = useState<boolean>(false);
   const [isOpenModalTx, setIsOpenModalTx] = useState<boolean>(false);
-  //const [contentCommonModal, setContentCommonModal] = useState<string>("Error");
-  const [someBool, setSomeBool] = useState(false);
-  //const [someBool, setSomeBool] = useState<boolean>(false);
-  //const [isConnect, setIsConnect] = useState<boolean>(false);
-  //const [provider, setProvider] = useState<any>("");
-  //const [account, setAccount] = useState<string>("");
-  // const [singer, setSinger] = useState("");
-  //const [contractSigner, setContractSigner] = useState<any>("");
-  //const [price, setPrice] = useState(30000);
   const [coin, setCoin] = useState<string>("");
   const [deal, setDeal] = useState<string>("");
   const [isCoin, setIsCoin] = useState<boolean>(false);
   const [isDeal, setIsDeal] = useState<boolean>(false);
-  //const [isOpenModalConnect, setIsOpenModalConnect] = useState<boolean>(false);
   const [enterAmount, setEnterAmount] = useState<string>("Enter amount of");
   const [price, setPrice] = useState<string>("Set target price");
   const [amountCoin, setAmountCoin] = useState<string>("");
   const [targetPrice, setTargetPrice] = useState<string>("");
-
   const [txhash, setTxhash] = useState("");
+
   const miniTxhash = txhash.substring(0, 5) + "....." + txhash.slice(45);
-  const hashLink = "https://mumbai.polygonscan.com/tx/";
+  const hashLink = process.env.NEXT_PUBLIC_HASH_LINK_MUMBAI;
   const hashLinkPlus = hashLink + txhash;
 
-  const addressContract = "0x5ce832046e25fBAc5De4519f4d3b8052EDA5Fa86";
+  const ERC20_ETH = new ethers.Contract(ETHContractAddress, ERC20abi, provider);
+  const ERC20_USDC = new ethers.Contract(
+    USDTContractAddress,
+    ERC20abi,
+    provider
+  );
 
-  //const addressETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"; // arb ETH
-  const addressETH = "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9"; // mumbai ETH
-  const ERC20_ETH = new ethers.Contract(addressETH, ERC20abi, provider);
-
-  const addressWBTC = "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"; // arb WBTC
-  const ERC20_WBTC = new ethers.Contract(addressWBTC, ERC20abi, provider);
-
-  //const addressUSDC = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"; // arb USDC.e
-  const addressUSDC = "0x9EC3c43006145f5701d4FD527e826131778cA122"; // mumbai usdt
-  const ERC20_USDC = new ethers.Contract(addressUSDC, ERC20abi, provider);
-
-  //const poolAddress = "0xC31E54c7a869B9FcBEcc14363CF510d1c41fa443"; // pool ETH/USDC.e
-  //const poolAddress = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B"; // pool ETH/USDT mumbai
-
-  //const [uniswapV3PoolETH_USDC, setUniswapV3PoolETH_USDC] = useState<any>("");
   const [priceUSDC_ETH, setPriceUSDC_ETH] = useState<number>(0);
-
-  //const poolAddressUSDT_BTC = "0x7E3DBB135BdFF8E3b72cFefa48da984F3bdB833a"; // pool BTC/USDT
-  //const [uniswapV3PoolUSDT_BTC, setUniswapV3PoolUSDT_BTC] = useState<any>("");
   const [priceUSDT_BTC, setPriceUSDT_BTC] = useState<number>(0);
 
   const getOpenBuyPosition = async () => {
@@ -117,8 +80,8 @@ export default function Home() {
     console.log("start: ");
     try {
       const allowance = await contractUsdtRead.allowance(
-        "0xEF999988B857330Fe4B95B7371B5F6bb7e717015",
-        addressContract
+        account,
+        positionManagerContractAddress
       );
 
       const allowanceToString = ethers.formatUnits(allowance, 0);
@@ -127,7 +90,6 @@ export default function Home() {
       console.log({ allowance });
       console.log({ allowanceToString });
       console.log({ allowanceToNumber });
-      // console.log({ allowanceToNumber_ });
 
       const amountCoinBigint = ethers.parseUnits(amountCoin, 18);
       const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
@@ -143,16 +105,14 @@ export default function Home() {
 
       const maxUint256 = ethers.MaxInt256;
       console.log({ maxUint256 });
-      // const approve = await UsdtSigner.approve(addressContract, maxUint256);
-      // console.log({ approve });
 
       allowanceToNumber < +amountCoin
-        ? await usdtSigner.approve(addressContract, maxUint256)
+        ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
         : null;
 
       const tx = await contractSigner.openBuyPosition(
-        addressUSDC,
-        addressETH,
+        USDTContractAddress,
+        ETHContractAddress,
         "3000",
         targetReady_,
         amountCoin_,
@@ -172,9 +132,6 @@ export default function Home() {
     }
   };
 
-  const startAddLiquid = async () => {
-    setIsOpenModalConnect(true);
-  };
   const handleOpenModal = async () => {
     onOpenChange();
   };
@@ -189,13 +146,13 @@ export default function Home() {
   //   setContentCommonModal("Please connect to Metamask!");
   //  };
 
-  // set the prise
+  // set the price
   useEffect(() => {
     (async () => {
       if (isCoin && isDeal) {
         const sqrtPriceX96EthUsdt = await contractSigner.getCurrentSqrtPriceX96(
-          addressETH,
-          addressUSDC,
+          ETHContractAddress,
+          USDTContractAddress,
           "3000"
         );
         console.log("sqrtPriceX96EthUsdt", sqrtPriceX96EthUsdt);
@@ -203,11 +160,11 @@ export default function Home() {
         console.log("priceUSDT_ETH: ", 1 / priceUSDT_ETH);
         setPriceUSDC_ETH(1 / priceUSDT_ETH);
 
-        const slot0UE = await uniswapV3PoolETH_USDC.slot0();
-        console.log("slot0UE: ", slot0UE);
+        // const slot0UE = await uniswapV3PoolETH_USDC.slot0();
+        // console.log("slot0UE: ", slot0UE);
         // setTickUSDT_ETH(slot0UE[1].toString());
-        const sqrtPriceX96UE = slot0UE[0].toString();
-        console.log("sqrtPriceX96UE: ", sqrtPriceX96UE);
+        // const sqrtPriceX96UE = slot0UE[0].toString();
+        // console.log("sqrtPriceX96UE: ", sqrtPriceX96UE);
         // setSqrtPriceX96USDT_ETH(sqrtPriceX96UE);
 
         //let mathPrice = Number(sqrtPriceX96USDT_ETH) ** 2 / 2 ** 192;
@@ -412,6 +369,7 @@ export default function Home() {
                     className="w-[187px]"
                     radius="lg"
                     size="sm"
+                    aria-label="coin"
                   >
                     <SelectItem key="ETH" value="ETH">
                       ETH
@@ -427,6 +385,7 @@ export default function Home() {
                     className="w-[187px]"
                     radius="lg"
                     size="sm"
+                    aria-label="deal"
                   >
                     <SelectItem key="BUY" value="BUY">
                       BUY

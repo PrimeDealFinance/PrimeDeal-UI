@@ -1,11 +1,6 @@
 import React from "react";
 import { Button } from "@nextui-org/react";
 import { useWalletStore } from "@/service/store";
-import abiContract from "@/app/abiContract";
-import abiUsdt from "@/app/abiContract";
-const {
-  abi: IUniswapV3PoolABI,
-} = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
 
 const ConnectButton = () => {
   const {
@@ -19,13 +14,7 @@ const ConnectButton = () => {
   return (
     <>
       {!isConnect ? (
-        <Button
-          color="danger"
-          size="lg"
-          onClick={() =>
-            handleIsConnected(abiContract, abiUsdt, IUniswapV3PoolABI)
-          }
-        >
+        <Button color="danger" size="lg" onClick={() => handleIsConnected()}>
           Connect
         </Button>
       ) : (

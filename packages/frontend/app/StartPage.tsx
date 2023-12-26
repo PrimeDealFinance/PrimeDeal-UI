@@ -1,11 +1,6 @@
 import React from "react";
 import { Card, CardFooter, Image, Button } from "@nextui-org/react";
 import { useWalletStore } from "@/service/store";
-const {
-  abi: IUniswapV3PoolABI,
-} = require("@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json");
-import abiContract from "./abiContract";
-import abiUsdt from "./abiUsdt";
 
 const StartPage = () => {
   const { handleIsConnected } = useWalletStore();
@@ -28,9 +23,7 @@ const StartPage = () => {
             color="default"
             radius="lg"
             size="md"
-            onClick={() =>
-              handleIsConnected(abiContract, abiUsdt, IUniswapV3PoolABI)
-            }
+            onClick={() => handleIsConnected()}
           >
             Connect
           </Button>

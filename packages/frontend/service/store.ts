@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { ethers } from "ethers";
+import ERC20abi from "../app/ERC20"; // TODO: move to common place
 
 interface WalletState {
   isConnect: boolean;
@@ -10,14 +11,13 @@ interface WalletState {
   isOpenCommonModal: boolean;
   contentCommonModal: string;
   isOpenModalConnect: boolean;
-  poolAddressUSDT_BTC: string;
-  addressContract: string;
-  addressUSDTContract: string;
-  uniswapV3PoolETH_USDC: ethers.Contract | any;
-  uniswapV3PoolUSDT_BTC: ethers.Contract | any;
+  positionManagerContractAddress: string;
+  USDTContractAddress: string;
+  ETHContractAddress: string;
   contractSigner: ethers.Contract | any;
   usdtSigner: ethers.Contract | any;
-  poolAddress: string;
+  positionManagerContractAbi: string;
+  USDTContractAbi: string[];
   setIsOpenModalConnect: (isOpen: boolean) => void;
   setIsOpenCommonModal: (isOpen: boolean) => void;
   setContentCommonModal: (content: string) => void;
@@ -26,15 +26,9 @@ interface WalletState {
   setProvider: (provider: ethers.BrowserProvider | null) => void;
   setSigner: (signer: ethers.Signer | null) => void;
   setNetwork: (network: ethers.Network | null) => void;
-  setUniswapV3PoolETH_USDC: (contract: ethers.Contract | any) => void;
-  setUniswapV3PoolUSDT_BTC: (contract: ethers.Contract | any) => void;
   setContractSigner: (signer: ethers.Contract | any) => void;
   setUsdtSigner: (signer: ethers.Contract | any) => void;
-  handleIsConnected: (
-    abiContract: any,
-    abiUsdt: any,
-    IUniswapV3PoolABI: any
-  ) => Promise<void>;
+  handleIsConnected: () => void;
   handleConnectNotice: () => void;
 }
 
@@ -46,14 +40,14 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   network: null,
   isOpenCommonModal: false,
   contentCommonModal: "Error",
-  uniswapV3PoolETH_USDC: "",
-  uniswapV3PoolUSDT_BTC: "",
   contractSigner: "",
   usdtSigner: "",
-  poolAddress: "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B",
-  poolAddressUSDT_BTC: "0x7E3DBB135BdFF8E3b72cFefa48da984F3bdB833a",
-  addressContract: "0x5ce832046e25fBAc5De4519f4d3b8052EDA5Fa86",
-  addressUSDTContract: "0x9efE3B3d2C516970B902364444411103d077160D",
+  positionManagerContractAddress: process.env
+    .NEXT_PUBLIC_POSITION_MANAGER_ADDRESS_MUMBAI!,
+  USDTContractAddress: process.env.NEXT_PUBLIC_USDT_ERC20_ADDRESS_MUMBAI!,
+  ETHContractAddress: process.env.NEXT_PUBLIC_ETH_ERC20_ADDRESS_MUMBAI!,
+  positionManagerContractAbi: process.env.NEXT_PUBLIC_POSITION_MANAGER_ABI!,
+  USDTContractAbi: ERC20abi,
   isOpenModalConnect: false,
   setIsOpenModalConnect: (isOpen) => set({ isOpenModalConnect: isOpen }),
   setIsConnect: (isConnect) => set(() => ({ isConnect })),
@@ -63,13 +57,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   setNetwork: (network) => set(() => ({ network })),
   setIsOpenCommonModal: (isOpen) => set({ isOpenCommonModal: isOpen }),
   setContentCommonModal: (content) => set({ contentCommonModal: content }),
-  setUniswapV3PoolETH_USDC: (contract) =>
-    set({ uniswapV3PoolETH_USDC: contract }),
-  setUniswapV3PoolUSDT_BTC: (contract) =>
-    set({ uniswapV3PoolUSDT_BTC: contract }),
   setContractSigner: (contract) => set({ contractSigner: contract }),
   setUsdtSigner: (contract) => set({ usdtSigner: contract }),
-  handleIsConnected: async (abiContract, abiUsdt, IUniswapV3PoolABI) => {
+  handleIsConnected: async () => {
+    console.log("handleIsConnected");
     if (window.ethereum == null) {
       console.log("MetaMask not installed; using read-only defaults");
     } else {
@@ -80,29 +71,21 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       const signer = await provider.getSigner();
       const network = await provider.getNetwork();
       const {
-        poolAddress,
-        poolAddressUSDT_BTC,
-        addressContract,
-        addressUSDTContract,
+        positionManagerContractAddress,
+        USDTContractAddress,
+        positionManagerContractAbi,
+        USDTContractAbi,
       } = get();
-      const uniswapV3PoolETH_USDC = new ethers.Contract(
-        poolAddress,
-        IUniswapV3PoolABI,
-        provider
-      );
-      const uniswapV3PoolUSDT_BTC = new ethers.Contract(
-        poolAddressUSDT_BTC,
-        IUniswapV3PoolABI,
-        provider
-      );
+
       const contractSigner = new ethers.Contract(
-        addressContract,
-        abiContract,
+        positionManagerContractAddress,
+        positionManagerContractAbi,
         signer
       );
+
       const usdtSigner = new ethers.Contract(
-        addressUSDTContract,
-        abiUsdt,
+        USDTContractAddress,
+        USDTContractAbi,
         signer
       );
 
@@ -122,8 +105,6 @@ export const useWalletStore = create<WalletState>((set, get) => ({
           network,
           isConnect: true,
           isOpenModalConnect: false,
-          uniswapV3PoolETH_USDC,
-          uniswapV3PoolUSDT_BTC,
           contractSigner,
           usdtSigner,
         });

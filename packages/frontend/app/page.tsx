@@ -19,6 +19,7 @@ import ModalWindowTx from "./ModalWindowTx";
 import ERC20abi from "./ERC20";
 import contractUsdtRead from "./provider/contractUsdtRead";
 import { useWalletStore } from "@/service/store";
+import contractEthRead from "./provider/contractEthRead";
 
 declare global {
   interface Window {
@@ -38,6 +39,7 @@ export default function Home() {
     provider,
     contractSigner,
     usdtSigner,
+    ethSigner,
     isOpenModalConnect,
     setIsOpenModalConnect,
     setIsOpenCommonModal,
@@ -86,25 +88,14 @@ export default function Home() {
 
       const allowanceToString = ethers.formatUnits(allowance, 0);
       const allowanceToNumber = +allowanceToString / 10 ** 18;
-
-      console.log({ allowance });
-      console.log({ allowanceToString });
-      console.log({ allowanceToNumber });
-
       const amountCoinBigint = ethers.parseUnits(amountCoin, 18);
       const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
       let targetPriceReady = BigInt(Math.sqrt(1 / +targetPrice) * 2 ** 96);
       let targetReady_ = targetPriceReady.toString();
 
-      const amountCoinToNumber = +amountCoin_;
-
-      console.log({ amountCoin });
-      console.log({ amountCoinBigint });
-      console.log({ amountCoin_ });
-      console.log({ amountCoinToNumber });
+      // const amountCoinToNumber = +amountCoin_;
 
       const maxUint256 = ethers.MaxInt256;
-      console.log({ maxUint256 });
 
       allowanceToNumber < +amountCoin
         ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
@@ -121,6 +112,56 @@ export default function Home() {
           gasLimit: 850000,
         }
       );
+
+      setTxhash(tx.hash);
+      setIsOpenModalTx(true);
+      const response = await tx.wait();
+      setIsOpenModalTx(false);
+      console.log("responseTxSwap1: ", response);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const getOpenSellPosition = async () => {
+    onOpenChange();
+    try {
+      const allowance = await contractEthRead.allowance(
+        account,
+        positionManagerContractAddress
+      );
+
+      const allowanceToString = ethers.formatUnits(allowance, 0);
+      const allowanceToNumber = +allowanceToString / 10 ** 18;
+      const amountCoinBigint = ethers.parseUnits(amountCoin, 18);
+      const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
+      let targetPriceReady = BigInt(Math.sqrt(1 / +targetPrice) * 2 ** 96);
+      let targetReady_ = targetPriceReady.toString();
+
+      // const amountCoinToNumber = +amountCoin_;
+
+      const maxUint256 = ethers.MaxInt256;
+
+      allowanceToNumber < +amountCoin
+        ? await ethSigner.approve(positionManagerContractAddress, maxUint256)
+        : null;
+
+      const tx = await contractSigner.openSellPosition(
+        USDTContractAddress,
+        ETHContractAddress,
+        "3000",
+        targetReady_,
+        amountCoin_,
+        "0",
+        {
+          gasLimit: 850000,
+        }
+      );
+
+      console.log({ USDTContractAddress });
+      console.log({ ETHContractAddress });
+      console.log({ targetReady_ });
+      console.log({ amountCoin_ });
 
       setTxhash(tx.hash);
       setIsOpenModalTx(true);
@@ -486,7 +527,11 @@ export default function Home() {
                                 </Button>
                                 <Button
                                   color="primary"
-                                  onPress={getOpenBuyPosition}
+                                  onPress={
+                                    deal == "BUY"
+                                      ? getOpenBuyPosition
+                                      : getOpenSellPosition
+                                  }
                                 >
                                   Confirm order
                                 </Button>

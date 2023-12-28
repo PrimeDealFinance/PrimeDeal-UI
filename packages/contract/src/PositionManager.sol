@@ -11,6 +11,7 @@ import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@abdk-libraries-solidity/ABDKMath64x64.sol";
+import "../interface/IWMATIC.sol";
 
 import {console2} from "forge-std/Test.sol";
 
@@ -20,8 +21,9 @@ contract PositionManager is
     Pausable,
     Ownable
 {
-    INonfungiblePositionManager private immutable _nonfungiblePositionManager;
+    INonfungiblePositionManager public immutable _nonfungiblePositionManager;
     IUniswapV3Factory public immutable _uniswapFactory;
+    IWMATIC public immutable _wmatic;
 
     // Mapping from PositionManager's Token ID to Positions
     mapping(uint256 => Position) private _positions;
@@ -76,12 +78,14 @@ contract PositionManager is
 
     constructor(
         address nonfungiblePositionManager_,
-        address uniswapFactory_
+        address uniswapFactory_,
+        address wmatic_
     ) ERC721("Chain-owls PositionManager NFT", "CHAIN-OWLS-POS") {
         _nonfungiblePositionManager = INonfungiblePositionManager(
             nonfungiblePositionManager_
         );
         _uniswapFactory = IUniswapV3Factory(uniswapFactory_);
+        _wmatic = IWMATIC(wmatic_);
     }
 
     // Function that sets pause state of the contract
@@ -89,39 +93,17 @@ contract PositionManager is
         state ? _pause() : _unpause();
     }
 
-    // Function that opens BUY (down-direction) position using ONLY tokenA
+    // Function that opens BUY (down-direction) position using ONLY tokenB
     function openBuyPosition(
-        address tokenA,
-        address tokenB,
-        uint24 fee,
-        uint160 stopSqrtPriceX96,
-        uint256 amountA,
-        uint256 amountAMin
-    ) public whenNotPaused {
-        _openPosition(
-            PositionDirection.BUY,
-            tokenA,
-            tokenB,
-            fee,
-            stopSqrtPriceX96,
-            amountA,
-            0,
-            amountAMin,
-            0
-        );
-    }
-
-    // Function that opens SELL (up-direction) position using ONLY tokenB
-    function openSellPosition(
         address tokenA,
         address tokenB,
         uint24 fee,
         uint160 stopSqrtPriceX96,
         uint256 amountB,
         uint256 amountBMin
-    ) public whenNotPaused {
+    ) public payable whenNotPaused {
         _openPosition(
-            PositionDirection.SELL,
+            PositionDirection.BUY,
             tokenA,
             tokenB,
             fee,
@@ -130,6 +112,28 @@ contract PositionManager is
             amountB,
             0,
             amountBMin
+        );
+    }
+
+    // Function that opens SELL (up-direction) position using ONLY tokenA
+    function openSellPosition(
+        address tokenA,
+        address tokenB,
+        uint24 fee,
+        uint160 stopSqrtPriceX96,
+        uint256 amountA,
+        uint256 amountAMin
+    ) public payable whenNotPaused {
+        _openPosition(
+            PositionDirection.SELL,
+            tokenA,
+            tokenB,
+            fee,
+            stopSqrtPriceX96,
+            amountA,
+            0,
+            amountAMin,
+            0
         );
     }
 
@@ -244,9 +248,23 @@ contract PositionManager is
         return this.onERC721Received.selector;
     }
 
-    //
+    // ========================================================================
     // PRIVATE FUNCTIONS:
-    //
+    // ========================================================================
+
+    // Function that check WMATIC balance and wrap native Matic if needed
+    function _checkAndWrapMATIC(
+        uint256 amount
+    ) private returns (bool useNative) {
+        if (_wmatic.balanceOf(msg.sender) < amount) {
+            require(
+                msg.value >= amount,
+                "PositionManager: Insufficient balance of MATIC"
+            );
+            IWMATIC(_wmatic).deposit{value: amount}();
+            return true;
+        }
+    }
 
     // Generic function that opens ANY (any-direction) position using tokenA AND|OR tokenB
     function _openPosition(
@@ -265,6 +283,7 @@ contract PositionManager is
         int24 startTick;
         int24 stopTick;
         int24 tickSpacing = IUniswapV3PoolImmutables(pool).tickSpacing();
+        bool useNative;
 
         (, currentTick, , , , , ) = IUniswapV3Pool(pool).slot0();
 
@@ -275,42 +294,16 @@ contract PositionManager is
         );
 
         if (positionDirection == PositionDirection.BUY) {
-            startTick += tickSpacing;
-
-            require(
-                startTick < stopTick,
-                "PositionManager: Stop price must be lower than the current"
-            );
-
-            _addLiquidity(
-                positionDirection,
-                tokenA,
-                tokenB,
-                fee,
-                startTick,
-                stopTick,
-                amountADesired,
-                amountBDesired,
-                amountAMin,
-                amountBMin,
-                true,
-                false
-            );
-
-            emit BuyPositionOpened(
-                _nextTokenId,
-                msg.sender,
-                stopTick,
-                pool,
-                _positions[_nextTokenId].amount
-            );
-        } else if (positionDirection == PositionDirection.SELL) {
             startTick -= tickSpacing;
 
             require(
                 startTick > stopTick,
-                "PositionManager: Stop price must be higher than the current"
+                "PositionManager: Stop price must be lower than the current"
             );
+
+            if (tokenB == address(_wmatic)) {
+                useNative = _checkAndWrapMATIC(amountBDesired);
+            }
 
             _addLiquidity(
                 positionDirection,
@@ -324,7 +317,43 @@ contract PositionManager is
                 amountAMin,
                 amountBMin,
                 false,
-                true
+                true,
+                useNative
+            );
+
+            emit BuyPositionOpened(
+                _nextTokenId,
+                msg.sender,
+                stopTick,
+                pool,
+                _positions[_nextTokenId].amount
+            );
+        } else if (positionDirection == PositionDirection.SELL) {
+            startTick += tickSpacing;
+
+            require(
+                startTick < stopTick,
+                "PositionManager: Stop price must be higher than the current"
+            );
+
+            if (tokenA == address(_wmatic)) {
+                useNative = _checkAndWrapMATIC(amountADesired);
+            }
+
+            _addLiquidity(
+                positionDirection,
+                tokenA,
+                tokenB,
+                fee,
+                startTick,
+                stopTick,
+                amountADesired,
+                amountBDesired,
+                amountAMin,
+                amountBMin,
+                true,
+                false,
+                useNative
             );
 
             emit SellPositionOpened(
@@ -350,10 +379,11 @@ contract PositionManager is
         uint256 amountAMin,
         uint256 amountBMin,
         bool useTokenA,
-        bool useTokenB
+        bool useTokenB,
+        bool isNative
     ) internal {
         // transfer tokens to the contract
-        if (useTokenA) {
+        if (useTokenA && !isNative) {
             TransferHelper.safeTransferFrom(
                 tokenA,
                 msg.sender,
@@ -361,7 +391,7 @@ contract PositionManager is
                 amountADesired
             );
         }
-        if (useTokenB) {
+        if (useTokenB && !isNative) {
             TransferHelper.safeTransferFrom(
                 tokenB,
                 msg.sender,
@@ -427,23 +457,23 @@ contract PositionManager is
         if (useTokenA) {
             if (amount0 < amountADesired) {
                 uint refund0 = amountADesired - amount0;
-                TransferHelper.safeApprove(
-                    tokenA,
-                    address(_nonfungiblePositionManager),
-                    refund0
-                );
-                TransferHelper.safeTransfer(tokenA, msg.sender, refund0);
+                if (isNative) {
+                    IWMATIC(_wmatic).withdraw(refund0);
+                    TransferHelper.safeTransferETH(msg.sender, refund0);
+                } else {
+                    TransferHelper.safeTransfer(tokenA, msg.sender, refund0);
+                }
             }
         }
         if (useTokenB) {
             if (amount1 < amountBDesired) {
                 uint refund1 = amountBDesired - amount1;
-                TransferHelper.safeApprove(
-                    tokenB,
-                    address(_nonfungiblePositionManager),
-                    refund1
-                );
-                TransferHelper.safeTransfer(tokenA, msg.sender, refund1);
+                if (isNative) {
+                    IWMATIC(_wmatic).withdraw(refund1);
+                    TransferHelper.safeTransferETH(msg.sender, refund1);
+                } else {
+                    TransferHelper.safeTransfer(tokenB, msg.sender, refund1);
+                }
             }
         }
     }
@@ -502,12 +532,49 @@ contract PositionManager is
         INonfungiblePositionManager.CollectParams memory params = INonfungiblePositionManager
             .CollectParams({
                 tokenId: _positions[tokenId].uniswapTokenId,
-                recipient: ERC721.ownerOf(tokenId), // send to user
+                // recipient: ERC721.ownerOf(tokenId), // send to user
+                recipient: address(this), // send to contract
                 amount0Max: type(uint128).max,
                 amount1Max: type(uint128).max
             });
 
-        _nonfungiblePositionManager.collect(params);
+        (uint256 amount0, uint256 amount1) = _nonfungiblePositionManager
+            .collect(params);
+
+        _sendToOwner(
+            _positions[tokenId].uniswapTokenId,
+            ERC721.ownerOf(tokenId),
+            amount0,
+            amount1
+        );
+    }
+
+    function _sendToOwner(
+        uint256 uniswapTokenId,
+        address owner,
+        uint256 amount0,
+        uint256 amount1
+    ) internal {
+        (
+            ,
+            ,
+            address token0,
+            address token1,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+
+        ) = _nonfungiblePositionManager.positions(uniswapTokenId);
+
+        console2.log(amount0);
+        console2.log(amount1);
+
+        if (amount0 > 0) TransferHelper.safeTransfer(token0, owner, amount0);
+        if (amount1 > 0) TransferHelper.safeTransfer(token1, owner, amount1);
     }
 
     // function that that burns the NFT

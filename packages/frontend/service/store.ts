@@ -16,8 +16,10 @@ interface WalletState {
   ETHContractAddress: string;
   contractSigner: ethers.Contract | any;
   usdtSigner: ethers.Contract | any;
+  ethSigner: ethers.Contract | any;
   positionManagerContractAbi: string;
   USDTContractAbi: string[];
+  ETHContractAbi: string[];
   setIsOpenModalConnect: (isOpen: boolean) => void;
   setIsOpenCommonModal: (isOpen: boolean) => void;
   setContentCommonModal: (content: string) => void;
@@ -28,6 +30,7 @@ interface WalletState {
   setNetwork: (network: ethers.Network | null) => void;
   setContractSigner: (signer: ethers.Contract | any) => void;
   setUsdtSigner: (signer: ethers.Contract | any) => void;
+  setEthSigner: (signer: ethers.Contract | any) => void;
   handleIsConnected: () => void;
   handleConnectNotice: () => void;
 }
@@ -42,12 +45,14 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   contentCommonModal: "Error",
   contractSigner: "",
   usdtSigner: "",
+  ethSigner: "",
   positionManagerContractAddress: process.env
     .NEXT_PUBLIC_POSITION_MANAGER_ADDRESS_MUMBAI!,
   USDTContractAddress: process.env.NEXT_PUBLIC_USDT_ERC20_ADDRESS_MUMBAI!,
   ETHContractAddress: process.env.NEXT_PUBLIC_ETH_ERC20_ADDRESS_MUMBAI!,
   positionManagerContractAbi: process.env.NEXT_PUBLIC_POSITION_MANAGER_ABI!,
   USDTContractAbi: ERC20abi,
+  ETHContractAbi: ERC20abi,
   isOpenModalConnect: false,
   setIsOpenModalConnect: (isOpen) => set({ isOpenModalConnect: isOpen }),
   setIsConnect: (isConnect) => set(() => ({ isConnect })),
@@ -59,6 +64,8 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   setContentCommonModal: (content) => set({ contentCommonModal: content }),
   setContractSigner: (contract) => set({ contractSigner: contract }),
   setUsdtSigner: (contract) => set({ usdtSigner: contract }),
+  setEthSigner: (contract) => set({ ethSigner: contract }),
+
   handleIsConnected: async () => {
     console.log("handleIsConnected");
     if (window.ethereum == null) {
@@ -73,8 +80,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       const {
         positionManagerContractAddress,
         USDTContractAddress,
+        ETHContractAddress,
         positionManagerContractAbi,
         USDTContractAbi,
+        ETHContractAbi,
       } = get();
 
       const contractSigner = new ethers.Contract(
@@ -86,6 +95,12 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       const usdtSigner = new ethers.Contract(
         USDTContractAddress,
         USDTContractAbi,
+        signer
+      );
+
+      const ethSigner = new ethers.Contract(
+        ETHContractAddress,
+        ETHContractAbi,
         signer
       );
 
@@ -107,6 +122,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
           isOpenModalConnect: false,
           contractSigner,
           usdtSigner,
+          ethSigner,
         });
       }
     }

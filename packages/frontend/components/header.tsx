@@ -15,6 +15,8 @@ import {
 } from "@nextui-org/dropdown";
 import ConnectButton from "./ConnectButton"; 
 import { useWalletStore } from "@/service/store";
+import SwitchNetworkDropdown from "./networkDropdown";
+
 
 const Header = () => {
 
@@ -74,7 +76,9 @@ const Header = () => {
           </DropdownMenu>
         </Dropdown>
       </div>
-
+      <div className="absolute right-[170px]">
+          <SwitchNetworkDropdown />
+      </div>
       <div className="absolute right-[17px]">
         <ConnectButton />
       </div>

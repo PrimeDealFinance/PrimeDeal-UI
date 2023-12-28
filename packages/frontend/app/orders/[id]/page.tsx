@@ -19,7 +19,7 @@ const {
   abi: INonfungiblePositionManagerABI,
 } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
 
-export default function orderPage({ params }: { params: { id: string } }) {
+export default function OrderPage({ params }: { params: { id: string } }) {
   const {
     account,
     positionManagerContractAddress,
@@ -39,12 +39,12 @@ export default function orderPage({ params }: { params: { id: string } }) {
   const [balanceDollars, setBalanceDollars] = useState<string>("");
   const [feeDollars, setFeeDollars] = useState<string>("");
   const [priceView, setPriceView] = useState<string>("");
-  const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
+  const nonfungiblePositionManager =
+    "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
   const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
   useEffect(() => {
     (async () => {
-
       const contractProvider = new ethers.Contract(
         positionManagerContractAddress,
         abiContract,
@@ -57,10 +57,8 @@ export default function orderPage({ params }: { params: { id: string } }) {
         defaultProvider
       );
 
-      const allPositions = await contractProvider.getOpenPositions(
-        account
-      );
-      
+      const allPositions = await contractProvider.getOpenPositions(account);
+
       const sqrtPriceX96EthUsdt = await contractProvider.getCurrentSqrtPriceX96(
         ETHContractAddress,
         USDTContractAddress,
@@ -201,7 +199,7 @@ export default function orderPage({ params }: { params: { id: string } }) {
         }
       }
     })();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-col h-full lg:h-screen flex flex-col items-center">

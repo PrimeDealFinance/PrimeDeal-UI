@@ -218,7 +218,7 @@ export default function Home() {
         // setPriceUSDT_BTC(priceUSDT_BTC);
       }
     })();
-  }, [isCoin, isDeal]);
+  }, [isCoin, isDeal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   //  user Choose Coin
 

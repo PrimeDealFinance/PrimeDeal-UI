@@ -77,6 +77,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
           method: 'wallet_switchEthereumChain',
           params: [{ chainId }],
         });
+        get().reinitializeContracts()
       } else {
         console.log('MetaMask is not installed!');
       }

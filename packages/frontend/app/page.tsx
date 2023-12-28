@@ -77,7 +77,7 @@ export default function Home() {
 
   const getOpenBuyPosition = async () => {
     onOpenChange();
-    console.log("start: ");
+
     try {
       const allowance = await usdtSigner.allowance(
         account,
@@ -194,9 +194,9 @@ export default function Home() {
           USDTContractAddress,
           "3000"
         );
-        console.log("sqrtPriceX96EthUsdt", sqrtPriceX96EthUsdt);
+        // console.log("sqrtPriceX96EthUsdt", sqrtPriceX96EthUsdt);
         const priceUSDT_ETH = Number(sqrtPriceX96EthUsdt) ** 2 / 2 ** 192;
-        console.log("priceUSDT_ETH: ", 1 / priceUSDT_ETH);
+        // console.log("priceUSDT_ETH: ", 1 / priceUSDT_ETH);
         setPriceUSDC_ETH(1 / priceUSDT_ETH);
 
         // const slot0UE = await uniswapV3PoolETH_USDC.slot0();
@@ -460,7 +460,7 @@ export default function Home() {
                     </div>
                     {coin == "ETH" ? (
                       <div className="mt-[5px]">
-                        Current ETH price, $: {priceUSDC_ETH.toFixed(6)}
+                        Current ETH price, $: {priceUSDC_ETH.toFixed(2)}
                       </div>
                     ) : (
                       <div className="mt-[5px]">

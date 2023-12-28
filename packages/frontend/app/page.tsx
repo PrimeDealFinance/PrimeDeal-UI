@@ -17,9 +17,7 @@ import StartPage from "./StartPage";
 import CommonModalWindow from "./CommonModalWindow";
 import ModalWindowTx from "./ModalWindowTx";
 import ERC20abi from "./ERC20";
-import contractUsdtRead from "./provider/contractUsdtRead";
 import { useWalletStore } from "@/service/store";
-import contractEthRead from "./provider/contractEthRead";
 
 declare global {
   interface Window {
@@ -81,7 +79,7 @@ export default function Home() {
     onOpenChange();
     console.log("start: ");
     try {
-      const allowance = await contractUsdtRead.allowance(
+      const allowance = await usdtSigner.allowance(
         account,
         positionManagerContractAddress
       );
@@ -126,7 +124,7 @@ export default function Home() {
   const getOpenSellPosition = async () => {
     onOpenChange();
     try {
-      const allowance = await contractEthRead.allowance(
+      const allowance = await ethSigner.allowance(
         account,
         positionManagerContractAddress
       );

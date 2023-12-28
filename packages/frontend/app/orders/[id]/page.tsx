@@ -14,11 +14,19 @@ import { Contract } from "ethers";
 import { maxUint128 } from "viem";
 import defaultProvider from "../../defaultProvider";
 import abiContract from "../../abiContract";
+import { useWalletStore } from "@/service/store";
 const {
   abi: INonfungiblePositionManagerABI,
 } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
 
 export default function orderPage({ params }: { params: { id: string } }) {
+  const {
+    account,
+    positionManagerContractAddress,
+    USDTContractAddress,
+    ETHContractAddress,
+  } = useWalletStore();
+
   const [nameOrder, setNameOrder] = useState<string>("");
   const [inRange, setInRange] = useState<string>("");
   const [colorRange, setColorRange] = useState<string>("");
@@ -31,24 +39,17 @@ export default function orderPage({ params }: { params: { id: string } }) {
   const [balanceDollars, setBalanceDollars] = useState<string>("");
   const [feeDollars, setFeeDollars] = useState<string>("");
   const [priceView, setPriceView] = useState<string>("");
-  const addressContract = "0x5ce832046e25fBAc5De4519f4d3b8052EDA5Fa86";
-  const nonfungiblePositionManager =
-    "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
+  const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
   const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
-  const toketETH = "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9";
-  const tokenUSDC = "0x9EC3c43006145f5701d4FD527e826131778cA122";
 
   useEffect(() => {
     (async () => {
-      const balance: bigint = await defaultProvider.getBalance(
-        "0xF687212015A7DD203741CAe1b7f5aB5A846a4023"
-      );
 
-      const contractView = new Contract(
-        addressContract,
+      const contractProvider = new ethers.Contract(
+        positionManagerContractAddress,
         abiContract,
         defaultProvider
-      );
+      ); // это можно сделать в глобале
 
       const contractNonfungiblePositionManager: any = new Contract(
         nonfungiblePositionManager,
@@ -56,17 +57,13 @@ export default function orderPage({ params }: { params: { id: string } }) {
         defaultProvider
       );
 
-      const allPositions = await contractView.getOpenPositions(
-        "0xF687212015A7DD203741CAe1b7f5aB5A846a4023"
+      const allPositions = await contractProvider.getOpenPositions(
+        account
       );
-      const contractProvider = new ethers.Contract(
-        addressContract,
-        abiContract,
-        defaultProvider
-      ); // это можно взять из глобала
+      
       const sqrtPriceX96EthUsdt = await contractProvider.getCurrentSqrtPriceX96(
-        toketETH,
-        tokenUSDC,
+        ETHContractAddress,
+        USDTContractAddress,
         "3000"
       );
       const priceUSDC_ETH = 1 / (Number(sqrtPriceX96EthUsdt) ** 2 / 2 ** 192);
@@ -82,25 +79,25 @@ export default function orderPage({ params }: { params: { id: string } }) {
         const addr = first[4].toString();
         //установка заголовка ордера
         if (tokenIdPosition == params.id) {
-          if (buySellString == "0" && addr == toketETH) {
+          if (buySellString == "0" && addr == ETHContractAddress) {
             setNameOrder("BUY ETH / USDC"); // заполнение ордера
             setETH_WBTC("ETH ");
             setIconETH_WBTC(ETH);
-          } else if (buySellString == "1" && addr == toketETH) {
+          } else if (buySellString == "1" && addr == ETHContractAddress) {
             setNameOrder("SELL ETH / USDC"); // заполнение ордера
             setETH_WBTC("ETH ");
             setIconETH_WBTC(ETH);
-          } else if (buySellString == "0" && addr != toketETH) {
+          } else if (buySellString == "0" && addr != ETHContractAddress) {
             setNameOrder("BUY WBTC / USDC");
             setETH_WBTC("WBTC ");
             setIconETH_WBTC(WBTC);
-          } else if (buySellString == "1" && addr != toketETH) {
+          } else if (buySellString == "1" && addr != ETHContractAddress) {
             setNameOrder("SELL WBTC / USDC");
             setETH_WBTC("WBTC ");
             setIconETH_WBTC(WBTC);
           }
           //установка в рэнже или нет
-          let currentTick = await contractView.getCurrentTick(
+          let currentTick = await contractProvider.getCurrentTick(
             poolAddressETH_USDC
           );
           const tickLower = first[6];
@@ -119,7 +116,7 @@ export default function orderPage({ params }: { params: { id: string } }) {
             amount1: unclaimedFee1Wei,
           } = await contractNonfungiblePositionManager.collect.staticCall({
             tokenId: tokenIdPosition,
-            recipient: addressContract,
+            recipient: positionManagerContractAddress,
             amount0Max: maxUint128,
             amount1Max: maxUint128,
           });
@@ -132,7 +129,7 @@ export default function orderPage({ params }: { params: { id: string } }) {
           setFeeUSDC(unclaimedFee0);
           setFeeETH_WBTC(unclaimedFee1);
           // считает баланс комиссий в долларах
-          if (addr == toketETH) {
+          if (addr == ETHContractAddress) {
             setFeeDollars(
               (Number(unclaimedFee1) * priceUSDC_ETH + Number(unclaimedFee0))
                 .toFixed(2)
@@ -185,7 +182,7 @@ export default function orderPage({ params }: { params: { id: string } }) {
           setAmountUSDC(amount0);
           setAmountETH_WBTC(amount1);
           // считает баланс токенов в долларах
-          if (addr == toketETH) {
+          if (addr == ETHContractAddress) {
             setBalanceDollars(
               (Number(amount1) * priceUSDC_ETH + Number(amount0))
                 .toFixed(2)

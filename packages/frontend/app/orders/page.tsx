@@ -2,15 +2,15 @@
 import React, {useEffect, useState} from "react"
 import { Contract } from "ethers";
 import { Tabs, Tab } from "@nextui-org/tabs"
-import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, getKeyValue} from "@nextui-org/table";
+import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell} from "@nextui-org/table";
 import { User } from "@nextui-org/user";
 import  Link  from "next/link";
 import { columns } from "@/app/orders/data"
-import HeaderNotConnect from "./headerNotConnect";
 import { maxUint128 } from "viem";
 import defaultProvider from "../defaultProvider";
 import abiContract from "../abiContract";
 const { abi: INonfungiblePositionManagerABI } = require('@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json');
+import { useWalletStore } from "@/service/store";
 
 interface Positions {
     [key: number]: UserPosition;
@@ -28,6 +28,11 @@ interface Positions {
   };
 
 export default function Orders() {
+  const {
+    account,
+    positionManagerContractAddress,
+    ETHContractAddress,
+  } = useWalletStore();
     
    const [dataOrders, setDataOrders] = useState ([
     { 
@@ -44,21 +49,16 @@ export default function Orders() {
    ]);
    type Order = typeof dataOrders[0];
 
-    const addressContract = "0x5ce832046e25fBAc5De4519f4d3b8052EDA5Fa86";
     const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
     const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
-    const toketETH = "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9";
 
 
    useEffect(() => {
      (async () => {
         dataOrders.length = 0;
-        const balance: bigint = await defaultProvider.getBalance(
-          "0xF687212015A7DD203741CAe1b7f5aB5A846a4023"
-        );
 
         const contractView = new Contract(
-          addressContract,
+          positionManagerContractAddress,
           abiContract,
           defaultProvider
         );
@@ -69,7 +69,7 @@ export default function Orders() {
             defaultProvider
         )
 
-        const allPositions = await contractView.getOpenPositions("0xF687212015A7DD203741CAe1b7f5aB5A846a4023");
+        const allPositions = await contractView.getOpenPositions(account);
       
       var userOrders: Positions = []
       var newOrder: UserPosition = {
@@ -110,7 +110,7 @@ export default function Orders() {
             amount1: unclaimedFee1Wei,
           } = await contractNonfungiblePositionManager.collect.staticCall({
             tokenId: tokenIdPosition,
-            recipient: addressContract,
+            recipient: positionManagerContractAddress,
             amount0Max: maxUint128,
             amount1Max: maxUint128,
           });
@@ -157,7 +157,7 @@ export default function Orders() {
           const amountETHUSDC = amount1 + " ETH / " + amount0 + " USDC";
           const amountWBTCUSDC = amount1 + " WBTC / " + amount0 + " USDC";
  // заполнение ордера
-          if(addr == toketETH) {    
+          if(addr == ETHContractAddress) {    
             newOrder.asset = "ETH / USDC";
             newOrder.avatar = "/eth.svg";
             newOrder.feeBalance = unclaimedFeeETHUSDC;

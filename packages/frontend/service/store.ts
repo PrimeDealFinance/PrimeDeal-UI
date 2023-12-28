@@ -28,6 +28,7 @@ interface WalletState {
   setNetwork: (network: ethers.Network | null) => void;
   setContractSigner: (signer: ethers.Contract | any) => void;
   setUsdtSigner: (signer: ethers.Contract | any) => void;
+  reinitializeContracts: () => void;
   handleIsConnected: () => void;
   handleConnectNotice: () => void;
 }
@@ -59,58 +60,116 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   setContentCommonModal: (content) => set({ contentCommonModal: content }),
   setContractSigner: (contract) => set({ contractSigner: contract }),
   setUsdtSigner: (contract) => set({ usdtSigner: contract }),
+  reinitializeContracts: async () => {
+    if (typeof window.ethereum !== 'undefined') {
+    const accounts = (await window.ethereum.request({
+      method: "eth_requestAccounts",
+    })) as string[];
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const network = await provider.getNetwork();
+    const {
+      positionManagerContractAddress,
+      USDTContractAddress,
+      positionManagerContractAbi,
+      USDTContractAbi,
+    } = get();
+
+    const newContractSigner = new ethers.Contract(
+      positionManagerContractAddress,
+      positionManagerContractAbi,
+      signer
+    );
+
+    const newUsdtSigner = new ethers.Contract(
+      USDTContractAddress,
+      USDTContractAbi,
+      signer
+    );
+
+    set({
+      account: accounts[0],
+      provider,
+      signer,
+      network,
+      isConnect: true,
+      isOpenModalConnect: false,
+      contractSigner: newContractSigner,
+      usdtSigner: newUsdtSigner,
+    });
+  }
+  },
   handleIsConnected: async () => {
     console.log("handleIsConnected");
     if (window.ethereum == null) {
       console.log("MetaMask not installed; using read-only defaults");
     } else {
-      const accounts = (await window.ethereum.request({
-        method: "eth_requestAccounts",
-      })) as string[];
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const network = await provider.getNetwork();
-      const {
-        positionManagerContractAddress,
-        USDTContractAddress,
-        positionManagerContractAbi,
-        USDTContractAbi,
-      } = get();
-
-      const contractSigner = new ethers.Contract(
-        positionManagerContractAddress,
-        positionManagerContractAbi,
-        signer
-      );
-
-      const usdtSigner = new ethers.Contract(
-        USDTContractAddress,
-        USDTContractAbi,
-        signer
-      );
-
+      await get().reinitializeContracts()
+      const { network } = get()
+    if (network) {
       if (Number(network.chainId) !== 80001) {
         console.log("Wrong network. Need POL");
         // Обновите состояние, используя методы set
-        set({
-          isOpenCommonModal: true,
-          contentCommonModal: "Wrong network. Please connect to Polygon!",
-        });
+
+        try {
+          await window.ethereum.request({
+            "method": "wallet_switchEthereumChain",
+            "params": [
+              {
+                "chainId": "0x13881"
+              }
+            ]
+          });
+        } catch (switchError:any) {
+            if (switchError.code === 4902) {
+              try {
+
+                      await window.ethereum.request({
+                        "method": "wallet_addEthereumChain",
+                        "params": [
+                          {
+                            "chainId": "0x13881",
+                            "chainName": "Mumbai",
+                            "rpcUrls": [
+                                "https://rpc-mumbai.maticvigil.com/"
+                            ],
+                            "nativeCurrency": {
+                                "name": "MATIC",
+                                "symbol": "MATIC",
+                                "decimals": 18
+                            },
+                            "blockExplorerUrls": [
+                                "https://mumbai.polygonscan.com/"
+                            ]
+                          }
+                        ]
+                      });
+                }
+              catch(addError) {
+                console.error("Failed to add the network", addError);
+              }
+
+              finally {
+                await get().reinitializeContracts()
+              }
+
+            }
+
+            else {
+              // Обработка других ошибок
+              console.error("Failed to switch the network", switchError);
+            }
+          } 
+        finally {
+         await get().reinitializeContracts()
+        }
+
       } else {
-        // Обновите все соответствующие состояния
-        set({
-          account: accounts[0],
-          provider,
-          signer,
-          network,
-          isConnect: true,
-          isOpenModalConnect: false,
-          contractSigner,
-          usdtSigner,
-        });
+       await get().reinitializeContracts()
       }
     }
-  },
+  }
+},
   handleConnectNotice: () => {
     set({
       isOpenCommonModal: true,

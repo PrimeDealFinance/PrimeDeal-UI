@@ -71,7 +71,7 @@ export default function Home() {
   const hashLink = "https://mumbai.polygonscan.com/tx/";
   const hashLinkPlus = hashLink + txhash;
 
-  const addressContract = "0x854C54515190581ED6D5c0Bd08645E3F2a7114cA";
+  const addressContract = "0x5ce832046e25fBAc5De4519f4d3b8052EDA5Fa86";
 
   //const addressETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"; // arb ETH
   const addressETH = "0xE26D5DBB28bB4A7107aeCD84d5976A06f21d8Da9"; // mumbai ETH
@@ -136,13 +136,10 @@ export default function Home() {
 
   const getOpenBuyPosition = async () => {
     onOpenChange();
-    console.log("start: ");
+
     try {
       const amountCoinBigint = ethers.parseUnits(amountCoin, 18);
-      // const targetPriceBigint = ethers.parseUnits(targetPrice, 18);
       const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
-      // const targetPrice_ = ethers.formatUnits(targetPriceBigint, 0);
-      // const targetPriceInt = parseInt(targetPrice_);
       let targetPriceReady = BigInt(Math.sqrt(1 / +targetPrice) * 2 ** 96);
 
       let targetReady_ = targetPriceReady.toString();
@@ -195,16 +192,16 @@ export default function Home() {
           addressUSDC,
           "3000"
         );
-        console.log("sqrtPriceX96EthUsdt", sqrtPriceX96EthUsdt);
+       // console.log("sqrtPriceX96EthUsdt", sqrtPriceX96EthUsdt);
         const priceUSDT_ETH = Number(sqrtPriceX96EthUsdt) ** 2 / 2 ** 192;
-        console.log("priceUSDT_ETH: ", 1 / priceUSDT_ETH);
+       // console.log("priceUSDT_ETH: ", 1 / priceUSDT_ETH);
         setPriceUSDC_ETH(1 / priceUSDT_ETH);
 
         const slot0UE = await uniswapV3PoolETH_USDC.slot0();
-        console.log("slot0UE: ", slot0UE);
+        //console.log("slot0UE: ", slot0UE);
         // setTickUSDT_ETH(slot0UE[1].toString());
         const sqrtPriceX96UE = slot0UE[0].toString();
-        console.log("sqrtPriceX96UE: ", sqrtPriceX96UE);
+        //console.log("sqrtPriceX96UE: ", sqrtPriceX96UE);
         // setSqrtPriceX96USDT_ETH(sqrtPriceX96UE);
 
         //let mathPrice = Number(sqrtPriceX96USDT_ETH) ** 2 / 2 ** 192;
@@ -465,7 +462,7 @@ export default function Home() {
                     </div>
                     {coin == "ETH" ? (
                       <div className="mt-[5px]">
-                        Current ETH price, $: {priceUSDC_ETH.toFixed(6)}
+                        Current ETH price, $: {priceUSDC_ETH.toFixed(2)}
                       </div>
                     ) : (
                       <div className="mt-[5px]">

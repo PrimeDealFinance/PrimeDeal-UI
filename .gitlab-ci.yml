@@ -70,12 +70,12 @@ setup:
     - npm install
     - du -sh node_modules/
     - du -sh $FRONTEND_PATH/node_modules
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_REF_NAME == "main"
-      changes:
-        - package.json
-        - $CONTRACT_PATH/package.json
-        - $FRONTEND_PATH/package.json
+  # rules:
+  #   - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_REF_NAME == "main"
+  #     changes:
+  #       - package.json
+  #       - $CONTRACT_PATH/package.json
+  #       - $FRONTEND_PATH/package.json
 
 contract-test:
   cache:
@@ -84,10 +84,10 @@ contract-test:
   stage: test
   script:
     - npx nx test contract
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      changes:
-        - $CONTRACT_PATH/*
+  # rules:
+  #   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  #     changes:
+  #       - $CONTRACT_PATH/*
 
 frontend-test-build:
   cache:
@@ -98,10 +98,10 @@ frontend-test-build:
   stage: test
   script:
     - npx nx build frontend
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      changes:
-        - $FRONTEND_PATH/*
+  # rules:
+  #   - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  #     changes:
+  #       - $FRONTEND_PATH/*
 
 contract-deploy:
   cache:

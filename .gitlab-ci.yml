@@ -71,7 +71,7 @@ setup:
     - du -sh node_modules/
     - du -sh $FRONTEND_PATH/node_modules
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_REF_NAME == "main"
       changes:
         - package.json
         - $CONTRACT_PATH/package.json
@@ -117,7 +117,7 @@ contract-deploy:
   script:
     - npx nx deploy contract
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_REF_NAME == "main"
       changes:
         - $CONTRACT_PATH/src/PositionManager.sol
 
@@ -131,7 +131,7 @@ contract-export-cached-address:
     reports:
       dotenv: $CONTRACT_PATH/script/deploy.env
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_REF_NAME == "main"
       changes:
         - $FRONTEND_PATH/*
 
@@ -157,6 +157,6 @@ frontend-deploy:
     - docker login registry.digitalocean.com
     - docker push registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend:latest
   rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_REF_NAME == "main"
       changes:
         - $FRONTEND_PATH/*

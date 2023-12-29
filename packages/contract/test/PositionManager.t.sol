@@ -11,8 +11,16 @@ contract PositionManagerHarness is PositionManager, Constants {
     constructor(
         address _nonfungiblePositionManager,
         address _uniswapFactory,
-        address _wmatic
-    ) PositionManager(_nonfungiblePositionManager, _uniswapFactory, _wmatic) {}
+        address _wmatic,
+        address _matic
+    )
+        PositionManager(
+            _nonfungiblePositionManager,
+            _uniswapFactory,
+            _wmatic,
+            _matic
+        )
+    {}
 
     function exposed_addLiquidity(
         PositionDirection positionDirection,
@@ -27,7 +35,8 @@ contract PositionManagerHarness is PositionManager, Constants {
         uint256 amountBMin,
         bool useTokenA,
         bool useTokenB,
-        bool isNative
+        bool isNativeA,
+        bool isNativeB
     ) external {
         return
             _addLiquidity(
@@ -43,7 +52,8 @@ contract PositionManagerHarness is PositionManager, Constants {
                 amountBMin,
                 useTokenA,
                 useTokenB,
-                isNative
+                isNativeA,
+                isNativeB
             );
     }
 }
@@ -61,13 +71,15 @@ contract PositionManagerTest is Test, Constants {
         positionManager = new PositionManager(
             UNISWAP_V3_NPM,
             UNISWAP_V3_FACTORY,
-            WMATIC
+            WMATIC,
+            MATIC
         );
 
         positionManagerHarness = new PositionManagerHarness(
             UNISWAP_V3_NPM,
             UNISWAP_V3_FACTORY,
-            WMATIC
+            WMATIC,
+            MATIC
         );
     }
 
@@ -111,6 +123,7 @@ contract PositionManagerTest is Test, Constants {
             AMOUNT_B_MIN,
             true,
             true,
+            false,
             false
         );
 
@@ -186,7 +199,9 @@ contract PositionManagerTest is Test, Constants {
         if (positionDirection == PositionManager.PositionDirection.BUY) {
             IERC20(tokenB).approve(address(positionManager), amountB);
         } else {
-            IERC20(tokenA).approve(address(positionManager), amountA);
+            if (!useNative) {
+                IERC20(tokenA).approve(address(positionManager), amountA);
+            }
         }
 
         showTokensInfo(address(positionManager));
@@ -353,6 +368,7 @@ contract PositionManagerTest is Test, Constants {
         uint256 tokenId = uint256(entries[eventId].topics[1]);
         console2.log(tokenId);
 
+        vm.prank(alice);
         positionManager.closePosition(tokenId);
         entries = vm.getRecordedLogs();
 
@@ -384,15 +400,25 @@ contract PositionManagerTest is Test, Constants {
         showTokensInfo(address(positionManager));
     }
 
+    function test_ownerCanClosePosition() public {
+        openBuyPosition(alice, WMATIC, MY_USDT);
+        vm.prank(alice);
+        positionManager.closePosition(1);
+    }
+
     function test_nativeToken() public {
         openPosition(
             alice,
             PositionManager.PositionDirection.SELL,
-            WMATIC,
+            MATIC,
             MY_USDT,
             true
         );
+        vm.prank(alice);
         positionManager.closePosition(1);
+
+        assertApproxEqAbs(alice.balance, AMOUNT_A_DESIRED, 50);
+
         showTokensInfo(address(positionManager));
     }
 

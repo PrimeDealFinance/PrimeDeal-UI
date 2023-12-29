@@ -5,13 +5,13 @@ import "@uniswap-v3-periphery/contracts/interfaces/INonfungiblePositionManager.s
 import "@uniswap-v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap-v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@uniswap-v3-core/contracts/interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@abdk-libraries-solidity/ABDKMath64x64.sol";
-import "../interface/IWMATIC.sol";
+import "../interface/IWETH9.sol";
 
 import {console2} from "forge-std/Test.sol";
 
@@ -23,7 +23,8 @@ contract PositionManager is
 {
     INonfungiblePositionManager public immutable _nonfungiblePositionManager;
     IUniswapV3Factory public immutable _uniswapFactory;
-    IWMATIC public immutable _wmatic;
+    IWETH9 public immutable _WETH9;
+    address public immutable _ETH;
 
     // Mapping from PositionManager's Token ID to Positions
     mapping(uint256 => Position) private _positions;
@@ -31,12 +32,16 @@ contract PositionManager is
     // PositionManager's NFT token id
     uint256 private _nextTokenId;
 
+    // Position structure (on-chain storage)
     struct Position {
         PositionDirection positionDirection;
         uint256 amount;
         uint256 uniswapTokenId;
+        bool isNativeA;
+        bool isNativeB;
     }
 
+    // Extended position structure (not stored on-chain)
     struct PositionExtended {
         Position pos;
         uint96 nonce;
@@ -79,13 +84,15 @@ contract PositionManager is
     constructor(
         address nonfungiblePositionManager_,
         address uniswapFactory_,
-        address wmatic_
+        address WETH_,
+        address ETH_
     ) ERC721("Chain-owls PositionManager NFT", "CHAIN-OWLS-POS") {
         _nonfungiblePositionManager = INonfungiblePositionManager(
             nonfungiblePositionManager_
         );
         _uniswapFactory = IUniswapV3Factory(uniswapFactory_);
-        _wmatic = IWMATIC(wmatic_);
+        _WETH9 = IWETH9(WETH_);
+        _ETH = ETH_;
     }
 
     // Function that sets pause state of the contract
@@ -162,24 +169,30 @@ contract PositionManager is
         );
         address pool = getPoolAddress(token0, token1, fee);
         int24 currentTick = getCurrentTick(pool);
-        return currentTick > tickUpper || currentTick < tickLower;
+        PositionDirection dir = _positions[tokenId].positionDirection;
+
+        if (dir == PositionDirection.BUY) {
+            return currentTick < tickLower;
+        } else {
+            return currentTick > tickUpper;
+        }
     }
 
     // Function that closes the position
     function closePosition(uint256 tokenId) public {
+        // keep address before burning the token
+        address owner = ERC721.ownerOf(tokenId);
+
         require(
-            canClosePosition(tokenId),
+            msg.sender == owner || canClosePosition(tokenId),
             "PositionManager: position can't be closed"
         );
 
-        // keep address before burning token
-        address user = ERC721.ownerOf(tokenId);
-
         _decreaseLiquidity(tokenId);
-        _collect(tokenId);
+        collect(tokenId);
         _burnPosition(tokenId);
 
-        emit PositionClosed(tokenId, user);
+        emit PositionClosed(tokenId, owner);
     }
 
     // Function that provides the current price of pool in SqrtX96 format
@@ -248,22 +261,40 @@ contract PositionManager is
         return this.onERC721Received.selector;
     }
 
+    // Function that collects the position funds
+    function collect(uint256 tokenId) public {
+        INonfungiblePositionManager.CollectParams memory params = INonfungiblePositionManager
+            .CollectParams({
+                tokenId: _positions[tokenId].uniswapTokenId,
+                recipient: address(this), // send to contract
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            });
+
+        (uint256 amount0, uint256 amount1) = _nonfungiblePositionManager
+            .collect(params);
+
+        _sendToOwner(
+            _positions[tokenId].uniswapTokenId,
+            ERC721.ownerOf(tokenId),
+            amount0,
+            amount1,
+            _positions[tokenId].isNativeA,
+            _positions[tokenId].isNativeB
+        );
+    }
+
     // ========================================================================
     // PRIVATE FUNCTIONS:
     // ========================================================================
 
-    // Function that check WMATIC balance and wrap native Matic if needed
-    function _checkAndWrapMATIC(
-        uint256 amount
-    ) private returns (bool useNative) {
-        if (_wmatic.balanceOf(msg.sender) < amount) {
-            require(
-                msg.value >= amount,
-                "PositionManager: Insufficient balance of MATIC"
-            );
-            IWMATIC(_wmatic).deposit{value: amount}();
-            return true;
-        }
+    // Function that check native balance and wrap native if needed
+    function _wrap(uint256 amount) private {
+        require(
+            msg.value >= amount,
+            "PositionManager: Insufficient balance of MATIC"
+        );
+        _WETH9.deposit{value: amount}();
     }
 
     // Generic function that opens ANY (any-direction) position using tokenA AND|OR tokenB
@@ -278,13 +309,26 @@ contract PositionManager is
         uint256 amountAMin,
         uint256 amountBMin
     ) private whenNotPaused {
-        address pool = getPoolAddress(tokenA, tokenB, fee);
+        address pool;
         int24 currentTick;
         int24 startTick;
         int24 stopTick;
-        int24 tickSpacing = IUniswapV3PoolImmutables(pool).tickSpacing();
-        bool useNative;
+        int24 tickSpacing;
+        bool isNativeA;
+        bool isNativeB;
 
+        if (tokenA == _ETH) {
+            _wrap(amountADesired);
+            tokenA = address(_WETH9);
+            isNativeA = true;
+        } else if (tokenB == _ETH) {
+            _wrap(amountBDesired);
+            tokenB = address(_WETH9);
+            isNativeB = true;
+        }
+
+        pool = getPoolAddress(tokenA, tokenB, fee);
+        tickSpacing = IUniswapV3PoolImmutables(pool).tickSpacing();
         (, currentTick, , , , , ) = IUniswapV3Pool(pool).slot0();
 
         startTick = _nearestUsableTick(currentTick, tickSpacing);
@@ -301,10 +345,6 @@ contract PositionManager is
                 "PositionManager: Stop price must be lower than the current"
             );
 
-            if (tokenB == address(_wmatic)) {
-                useNative = _checkAndWrapMATIC(amountBDesired);
-            }
-
             _addLiquidity(
                 positionDirection,
                 tokenA,
@@ -318,7 +358,8 @@ contract PositionManager is
                 amountBMin,
                 false,
                 true,
-                useNative
+                isNativeA,
+                isNativeB
             );
 
             emit BuyPositionOpened(
@@ -336,10 +377,6 @@ contract PositionManager is
                 "PositionManager: Stop price must be higher than the current"
             );
 
-            if (tokenA == address(_wmatic)) {
-                useNative = _checkAndWrapMATIC(amountADesired);
-            }
-
             _addLiquidity(
                 positionDirection,
                 tokenA,
@@ -353,7 +390,8 @@ contract PositionManager is
                 amountBMin,
                 true,
                 false,
-                useNative
+                isNativeA,
+                isNativeB
             );
 
             emit SellPositionOpened(
@@ -380,10 +418,11 @@ contract PositionManager is
         uint256 amountBMin,
         bool useTokenA,
         bool useTokenB,
-        bool isNative
+        bool isNativeA,
+        bool isNativeB
     ) internal {
         // transfer tokens to the contract
-        if (useTokenA && !isNative) {
+        if (useTokenA && !isNativeA) {
             TransferHelper.safeTransferFrom(
                 tokenA,
                 msg.sender,
@@ -391,7 +430,7 @@ contract PositionManager is
                 amountADesired
             );
         }
-        if (useTokenB && !isNative) {
+        if (useTokenB && !isNativeB) {
             TransferHelper.safeTransferFrom(
                 tokenB,
                 msg.sender,
@@ -447,7 +486,9 @@ contract PositionManager is
             amount: (positionDirection == PositionDirection.BUY)
                 ? amount0
                 : amount1,
-            uniswapTokenId: uniswapTokenId
+            uniswapTokenId: uniswapTokenId,
+            isNativeA: isNativeA,
+            isNativeB: isNativeB
         });
 
         // mint NFT & store to mapping
@@ -457,9 +498,9 @@ contract PositionManager is
         if (useTokenA) {
             if (amount0 < amountADesired) {
                 uint refund0 = amountADesired - amount0;
-                if (isNative) {
-                    IWMATIC(_wmatic).withdraw(refund0);
-                    TransferHelper.safeTransferETH(msg.sender, refund0);
+                if (isNativeA) {
+                    _WETH9.withdraw(refund0);
+                    payable(msg.sender).transfer(refund0);
                 } else {
                     TransferHelper.safeTransfer(tokenA, msg.sender, refund0);
                 }
@@ -468,9 +509,9 @@ contract PositionManager is
         if (useTokenB) {
             if (amount1 < amountBDesired) {
                 uint refund1 = amountBDesired - amount1;
-                if (isNative) {
-                    IWMATIC(_wmatic).withdraw(refund1);
-                    TransferHelper.safeTransferETH(msg.sender, refund1);
+                if (isNativeB) {
+                    _WETH9.withdraw(refund1);
+                    payable(msg.sender).transfer(refund1);
                 } else {
                     TransferHelper.safeTransfer(tokenB, msg.sender, refund1);
                 }
@@ -527,33 +568,14 @@ contract PositionManager is
         _nonfungiblePositionManager.decreaseLiquidity(params);
     }
 
-    // function that collects the position funds
-    function _collect(uint256 tokenId) internal {
-        INonfungiblePositionManager.CollectParams memory params = INonfungiblePositionManager
-            .CollectParams({
-                tokenId: _positions[tokenId].uniswapTokenId,
-                // recipient: ERC721.ownerOf(tokenId), // send to user
-                recipient: address(this), // send to contract
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
-            });
-
-        (uint256 amount0, uint256 amount1) = _nonfungiblePositionManager
-            .collect(params);
-
-        _sendToOwner(
-            _positions[tokenId].uniswapTokenId,
-            ERC721.ownerOf(tokenId),
-            amount0,
-            amount1
-        );
-    }
-
+    // Function that sends the tokens back to owner
     function _sendToOwner(
         uint256 uniswapTokenId,
         address owner,
         uint256 amount0,
-        uint256 amount1
+        uint256 amount1,
+        bool isNative0,
+        bool isNative1
     ) internal {
         (
             ,
@@ -570,17 +592,34 @@ contract PositionManager is
 
         ) = _nonfungiblePositionManager.positions(uniswapTokenId);
 
-        console2.log(amount0);
-        console2.log(amount1);
-
-        if (amount0 > 0) TransferHelper.safeTransfer(token0, owner, amount0);
-        if (amount1 > 0) TransferHelper.safeTransfer(token1, owner, amount1);
+        if (amount0 > 0) {
+            if (isNative0) {
+                _WETH9.withdraw(amount0);
+                payable(owner).transfer(amount0);
+            } else {
+                TransferHelper.safeTransfer(token0, owner, amount0);
+            }
+        }
+        if (amount1 > 0) {
+            if (isNative1) {
+                _WETH9.withdraw(amount1);
+                payable(owner).transfer(amount1);
+            } else {
+                TransferHelper.safeTransfer(token1, owner, amount1);
+            }
+        }
     }
 
-    // function that that burns the NFT
+    // Function that that burns the NFT
     function _burnPosition(uint256 tokenId) internal {
         _nonfungiblePositionManager.burn(_positions[tokenId].uniswapTokenId);
         delete _positions[tokenId];
         ERC721._burn(tokenId);
     }
+
+    // Function that just recieves plain native token
+    receive() external payable {}
+
+    // Fallback function
+    fallback() external payable {}
 }

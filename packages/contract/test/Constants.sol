@@ -10,6 +10,8 @@ contract Constants {
         0x1F98431c8aD98523631AE4a59f267346ea31F984;
     address internal constant WMATIC =
         0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889;
+    address internal constant MATIC =
+        0x0000000000000000000000000000000000001010;
     address internal constant MY_EOA =
         0x42d8C4BA2f3E2c90D0a7045c25f36D67445f96b2;
     address internal constant MY_USDT =

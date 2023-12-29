@@ -123,27 +123,28 @@ export default function Home() {
 
   const getOpenSellPosition = async () => {
     onOpenChange();
+    console.log("here")
     try {
       const allowance = await ethSigner.allowance(
         account,
         positionManagerContractAddress
       );
 
-      const allowanceToString = ethers.formatUnits(allowance, 0);
-      const allowanceToNumber = +allowanceToString / 10 ** 18;
+     const allowanceToString = ethers.formatUnits(allowance, 0);
+     const allowanceToNumber = +allowanceToString / 10 ** 18;
       const amountCoinBigint = ethers.parseUnits(amountCoin, 18);
       const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
       let targetPriceReady = BigInt(Math.sqrt(1 / +targetPrice) * 2 ** 96);
       let targetReady_ = targetPriceReady.toString();
 
-      // const amountCoinToNumber = +amountCoin_;
+               // const amountCoinToNumber = +amountCoin_;
 
-      const maxUint256 = ethers.MaxInt256;
+     const maxUint256 = ethers.MaxInt256;
 
       allowanceToNumber < +amountCoin
         ? await ethSigner.approve(positionManagerContractAddress, maxUint256)
         : null;
-
+      console.log("here2")
       const tx = await contractSigner.openSellPosition(
         USDTContractAddress,
         ETHContractAddress,

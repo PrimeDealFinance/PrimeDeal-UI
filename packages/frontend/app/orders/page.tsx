@@ -98,6 +98,8 @@ export default function Orders() {
         var first: any = nums[i];
         newOrder.id = Number(i); // заполнение ордера
         const struct0 = first[0];
+        const id721 = await contractView.tokenOfOwnerByIndex(account, i);
+
         const buySellString = struct0[0].toString();
 
         if (buySellString == "0") {
@@ -109,7 +111,7 @@ export default function Orders() {
         const amountStartView = (Number(amountStart) / 10 ** 18).toFixed(2);
         newOrder.usdBalance = amountStartView; // заполнение ордера
         const addr = first[4].toString();
-        const tokenIdPosition: string = struct0[2].toString();
+        const tokenIdPosition: string = id721.toString();
         const linkOrder = "/orders/" + tokenIdPosition;
 
         // // Calculate fee

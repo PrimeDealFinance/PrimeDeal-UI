@@ -77,8 +77,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       const {
         positionManagerContractAddress,
         USDTContractAddress,
+        ETHContractAddress,
         positionManagerContractAbi,
         USDTContractAbi,
+        ETHContractAbi
       } = get();
 
       const newContractSigner = new ethers.Contract(
@@ -93,6 +95,12 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         signer
       );
 
+      const newEthSigner = new ethers.Contract(
+        ETHContractAddress,
+        ETHContractAbi,
+        signer
+      );
+
       set({
         account: accounts[0],
         provider,
@@ -102,6 +110,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         isOpenModalConnect: false,
         contractSigner: newContractSigner,
         usdtSigner: newUsdtSigner,
+        ethSigner: newEthSigner,
       });
     }
   },

@@ -20,6 +20,7 @@ interface WalletState {
   positionManagerContractAbi: string;
   USDTContractAbi: string[];
   ETHContractAbi: string[];
+  networks: any[];
   setIsOpenModalConnect: (isOpen: boolean) => void;
   setIsOpenCommonModal: (isOpen: boolean) => void;
   setContentCommonModal: (content: string) => void;
@@ -34,6 +35,8 @@ interface WalletState {
   reinitializeContracts: () => void;
   handleIsConnected: () => void;
   handleConnectNotice: () => void;
+  switchNetwork: (chainID: any) => void;
+  disconnectWallet: () => void;
 }
 
 export const useWalletStore = create<WalletState>((set, get) => ({
@@ -55,6 +58,40 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   USDTContractAbi: ERC20abi,
   ETHContractAbi: ERC20abi,
   isOpenModalConnect: false,
+  networks: [
+    {
+      name: "Polygon",
+      chainId: "0x89",
+    },
+    {
+      name: "Polygon Mumbai",
+      chainId: "0x13881",
+    },
+  ],
+  switchNetwork: async (chainId) => {
+    try {
+      if (window.ethereum) {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId }],
+        });
+        get().reinitializeContracts();
+      } else {
+        console.log("MetaMask is not installed!");
+      }
+    } catch (error) {
+      console.error("Failed to switch network", error);
+    }
+  },
+  disconnectWallet: () => {
+    set({
+      isConnect: false,
+      account: "",
+      provider: null,
+      signer: null,
+      network: null,
+    });
+  },
   setIsOpenModalConnect: (isOpen) => set({ isOpenModalConnect: isOpen }),
   setIsConnect: (isConnect) => set(() => ({ isConnect })),
   setAccount: (account) => set(() => ({ account })),
@@ -80,7 +117,7 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         ETHContractAddress,
         positionManagerContractAbi,
         USDTContractAbi,
-        ETHContractAbi
+        ETHContractAbi,
       } = get();
 
       const newContractSigner = new ethers.Contract(

@@ -7,22 +7,22 @@ const ConnectButton = () => {
     handleIsConnected,
     isConnect,
     account,
-    handleConnectNotice,
+    disconnectWallet,
   } = useWalletStore();
-  const miniText = account.substring(0, 4) + "..." + account.slice(38);
+  const miniText = account ? account.substring(0, 4) + "..." + account.slice(38) : ""; // Убедитесь, что account существует
+
+  const handleButtonClick = () => {
+    if (isConnect) {
+      disconnectWallet(); // Вызывает функцию отключения, если уже подключен
+    } else {
+      handleIsConnected(); // Пытается подключиться, если не подключен
+    }
+  };
 
   return (
-    <>
-      {!isConnect ? (
-        <Button color="danger" size="lg" onClick={() => handleIsConnected()}>
-          Connect
-        </Button>
-      ) : (
-        <Button color="danger" size="lg">
-          {miniText}
-        </Button>
-      )}
-    </>
+    <Button color="danger" size="lg" onClick={handleButtonClick}>
+      {isConnect ? miniText : "Connect"} {/* Изменяет текст в зависимости от состояния */}
+    </Button>
   );
 };
 

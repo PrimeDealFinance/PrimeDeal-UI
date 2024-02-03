@@ -15,6 +15,7 @@ import { maxUint128 } from "viem";
 import defaultProvider from "../../defaultProvider";
 import abiContract from "../../abiContract";
 import { useWalletStore } from "@/service/store";
+import TradingViewWidget from "../../../service/TradingView";
 const {
   abi: INonfungiblePositionManagerABI,
 } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
@@ -25,6 +26,7 @@ export default function OrderPage({ params }: { params: { id: string } }) {
     positionManagerContractAddress,
     USDTContractAddress,
     ETHContractAddress,
+    contractSigner
   } = useWalletStore();
 
   const [nameOrder, setNameOrder] = useState<string>("");
@@ -42,9 +44,26 @@ export default function OrderPage({ params }: { params: { id: string } }) {
   const nonfungiblePositionManager =
     "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
   const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
+  const [paramsId, setParamsId] = useState<string>("");
+
+  const closePositionId = async() => {
+    try {
+    const tx = await contractSigner.closePosition(params.id,
+      {
+        gasLimit: 850000,
+      });
+    
+    console.log("Tx: ", tx.hash);
+    const response = await tx.wait();
+    console.log("responseTxSwap1: ", response);
+  } catch (error) {
+    console.error(error);
+    }
+  }
 
   useEffect(() => {
     (async () => {
+      setParamsId(params.id);
       const contractProvider = new ethers.Contract(
         positionManagerContractAddress,
         abiContract,
@@ -72,9 +91,11 @@ export default function OrderPage({ params }: { params: { id: string } }) {
       for (let i = 0; i < allPositions.length; i++) {
         var first: any = nums[i];
         const struct0 = first[0];
-        const tokenIdPosition = struct0[2].toString();
+        const tokenIdPositionForCount = struct0[2].toString();
         const buySellString = struct0[0].toString();
         const addr = first[4].toString();
+        const id721 = await contractProvider.tokenOfOwnerByIndex(account, i);
+        const tokenIdPosition: string = id721.toString();
         //установка заголовка ордера
         if (tokenIdPosition == params.id) {
           if (buySellString == "0" && addr == ETHContractAddress) {
@@ -113,7 +134,7 @@ export default function OrderPage({ params }: { params: { id: string } }) {
             amount0: unclaimedFee0Wei,
             amount1: unclaimedFee1Wei,
           } = await contractNonfungiblePositionManager.collect.staticCall({
-            tokenId: tokenIdPosition,
+            tokenId: tokenIdPositionForCount,
             recipient: positionManagerContractAddress,
             amount0Max: maxUint128,
             amount1Max: maxUint128,
@@ -232,7 +253,8 @@ export default function OrderPage({ params }: { params: { id: string } }) {
           <Divider className="bg-white" />
           <CardBody className="grid grid-cols-1 lg:grid-cols-2 gap-[18px]">
             <div className="flex flex-col justify-center content-center ">
-              <Chart />
+              <TradingViewWidget />
+              {/* <Chart /> */}
             </div>
             <div className="flex flex-col item-center justify-center gap-[22px]">
               <div className="flex flex-col">
@@ -261,7 +283,9 @@ export default function OrderPage({ params }: { params: { id: string } }) {
                     </div>
                   </div>
                   <div className="flex flex-col justify-center">
-                    <Button className="bg-[#6078F9] w-[120px] min-[419px]:w-[172px] rounded-[6px] text-[#FFFFFF] font-semibold text-[16px] font-inter">
+                    <Button
+                    onPress={closePositionId}
+                     className="bg-[#6078F9] w-[120px] min-[419px]:w-[172px] rounded-[6px] text-[#FFFFFF] font-semibold text-[16px] font-inter">
                       Close order
                     </Button>
                   </div>

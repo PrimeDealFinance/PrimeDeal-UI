@@ -1,0 +1,13 @@
+{
+  "name": "contract",
+  "version": "0.0.0",
+  "main": "src/PositionManager.sol",
+  "devDependencies": {},
+  "scripts": {
+    "build": "forge build",
+    "test": "forge test --gas-report",
+    "test3": "forge test --gas-report -vvv",
+    "test4": "forge test --gas-report -vvvv",
+    "deploy": "script/deploy.sh"
+  }
+}

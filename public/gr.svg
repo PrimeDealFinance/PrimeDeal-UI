@@ -1,0 +1,32 @@
+<svg width="1440" height="800" viewBox="0 0 1440 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_f_1_166)">
+<ellipse cx="541" cy="265.451" rx="541" ry="265.451" transform="matrix(-1 0 0 1 1233 103)" fill="url(#paint0_radial_1_166)"/>
+</g>
+<g filter="url(#filter1_f_1_166)">
+<ellipse cx="274.06" cy="137.662" rx="274.06" ry="137.662" transform="matrix(-0.966848 0.255353 0.255353 0.966848 898.263 176.338)" fill="white"/>
+</g>
+<g filter="url(#filter2_f_1_166)">
+<ellipse cx="156.529" cy="78.6253" rx="156.529" ry="78.6253" transform="matrix(-0.966848 0.255353 0.255353 0.966848 653.68 389.853)" fill="white"/>
+</g>
+<defs>
+<filter id="filter0_f_1_166" x="-154.845" y="-202.845" width="1693.69" height="1142.59" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="152.923" result="effect1_foregroundBlur_1_166"/>
+</filter>
+<filter id="filter1_f_1_166" x="168.122" y="-3.97745" width="1000.64" height="766.792" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="116.495" result="effect1_foregroundBlur_1_166"/>
+</filter>
+<filter id="filter2_f_1_166" x="251.342" y="301.547" width="542.151" height="408.591" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="59.1959" result="effect1_foregroundBlur_1_166"/>
+</filter>
+<radialGradient id="paint0_radial_1_166" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(541 265.451) rotate(90) scale(265.451 541)">
+<stop offset="0.713948" stop-color="#3144EF"/>
+<stop offset="0.814858" stop-color="#3D0DFF"/>
+</radialGradient>
+</defs>
+</svg>

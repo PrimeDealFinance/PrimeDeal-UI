@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Providers } from "@/app/providers";
-import Header from "@/components/header";
-import { Rainbow } from "@/service/rainbow-kit-provider";
-import Footer from "@/components/footer";
 import Image from "next/image";
 import bitcoinRight from "@/public/bitcoinRight.png"
 import blurCoinRight from "@/public/blurCoinRight.svg"
@@ -12,6 +8,9 @@ import coinGroup from "@/public/coinGroup.png"
 import bitcoinLeft from "@/public/bitcoinLeft.png"
 import ConnectButton from "@/components/ConnectButton";
 import logo from "@/public/PrimeDeal.svg"
+import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry';
+
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,49 +27,52 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={inter.className}>
-        <Rainbow>
-          <Providers>
-            <main className="dark h-screen flex flex-col relative text-foreground bg-[#010306]">
+        <ThemeRegistry>
+            <main className="dark h-screen flex flex-col relative text-foreground bg-[#010306] z-[0]">
               <Image
                   src={logo}
                   alt=""
                   width={88}
                   height={14}
                   className="absolute top-[45.07px] left-[70.34px]"/>
-              <div className="absolute top-[35px] right-[70px]">  
+              <div className="absolute z-0 top-[35px] right-[70px]">  
                   <ConnectButton/>
               </div>
               <div style={{position: 'absolute',
                   width: '1082px',
                   height: '530.9px',
-                  right: '207px',
+                  right: '50%',
                   top: '103px',
+                  margin: '0 -541px 0 0',
                   background: 'radial-gradient(50% 50% at 50% 50%, #3144EF 71.39%, #3D0DFF 81.49%)',
                   borderRadius: '50%',
                   filter: 'blur(152.923px)',
-                  transform: 'matrix(-1, 0, 0, 1, 0, 0)'
+                  transform: 'matrix(-1, 0, 0, 1, 0, 0)',
+                  zIndex:'-1'
                   }}></div>
               <div style={{
                   position: 'absolute',
                   width: '548.12px',
                   height: '275.32px',
-                  right: '473.14px',
+                  right: '35%',
                   top: '176.34px',
                   borderRadius: '50%',
                   background: '#FFFFFF',
                   transform: 'matrix(-0.97, 0.26, 0.26, 0.97, 0, 0)',
-                  filter: 'blur(116.495px)'
+                  filter: 'blur(116.495px)',
+                  zIndex:'-1'
                   }}></div>
               <div style={{
                   position: 'absolute',
                   width: '313.06px',
                   height: '157.25px',
-                  right: '746.68px',
+                  right: '52%',
                   top: '389.85px',
                   borderRadius: '50%',
                   background: '#FFFFFF',
                   transform: 'matrix(-0.97, 0.26, 0.26, 0.97, 0, 0)',
-                  filter: 'blur(59.1959px)'
+                  filter: 'blur(59.1959px)',
+                  zIndex:'-1'
                   }}></div>
               <Image 
                   src={bitcoinRight} 
@@ -97,10 +99,8 @@ export default function RootLayout({
                   height={355}
                   className="absolute left-0 top-[328px]"/>
               {children}
-              <Footer />
             </main>
-          </Providers>
-        </Rainbow>
+          </ThemeRegistry>
       </body>
     </html>
   );

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { ethers } from "ethers";
-import ERC20abi from "../app/ERC20"; // TODO: move to common place
+import ERC20abi from "@/components/ERC20"; // TODO: move to common place
 
 interface WalletState {
   isConnect: boolean;

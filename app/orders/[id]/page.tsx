@@ -2,9 +2,7 @@
 import React, { useEffect, useState } from "react";
 
 const OrderIdPage = () => {
-    return (
-        <div></div>
-    )
-}
+  return <div>Приветик</div>;
+};
 
-export default OrderIdPage
+export default OrderIdPage;

@@ -47,7 +47,7 @@ const SellCard = () => {
                     {options.map((option, index) => (
                         <React.Fragment key={option.value}>
                         {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
-                            <Option value={option.value} label={option.label} sx={{borderRadius:'100px'}}>
+                            <Option value={option.value} label={option.label} sx={{borderRadius:'100px', width:'456px', marginLeft:'10px'}}>
                                 <ListItemDecorator>
                                     <Avatar size="sm" src={option.src} />
                                 </ListItemDecorator>
@@ -116,7 +116,7 @@ const SellCard = () => {
                                 </React.Fragment>
                             }
                         >
-                            <Option value="usdc" sx={{borderRadius:'100px'}}>
+                            <Option value="usdc" sx={{borderRadius:'100px', width:'115px', marginLeft:'5px'}}>
                                 <Avatar size="sm" src="/usdc.svg" />
                                 USDC
                             </Option>

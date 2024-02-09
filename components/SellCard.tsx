@@ -16,14 +16,12 @@ import FormLabel from '@mui/joy/FormLabel';
 
 
 
-
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
     { value: 'matic', label: 'MATIC', src: '/matic.svg' },
   ];
 
- 
-const BuyCard = () => {
+const SellCard = () => {
     return (
         <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
            
@@ -60,12 +58,12 @@ const BuyCard = () => {
             </Select>
             <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
                 <div style={{
-                    borderTop: '1px solid #6FEE8E',
-                    borderBottom: '1px solid #433F72',
+                    borderTop: '1px solid #433F72',
+                    borderBottom: '1px solid #6FEE8E',
                     backgroundPosition: 'center',
-                    backgroundSize: '100%'
+                    backgroundSize: '100%',
                 }}
-                className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
+                className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
                 >
                 </div>
                 <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
@@ -189,4 +187,4 @@ const BuyCard = () => {
     )
 }
 
-export default BuyCard
+export default SellCard

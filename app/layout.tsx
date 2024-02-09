@@ -35,7 +35,7 @@ export default function RootLayout({
                   width={88}
                   height={14}
                   className="absolute top-[45.07px] left-[70.34px]"/>
-              <div className="absolute z-0 top-[35px] right-[70px]">  
+              <div className="absolute z-[2] top-[35px] right-[70px]">  
                   <ConnectButton/>
               </div>
               <div style={{position: 'absolute',

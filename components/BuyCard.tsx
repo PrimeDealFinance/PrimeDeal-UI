@@ -1,18 +1,19 @@
-import React, { useState } from "react"
-import Avatar from '@mui/joy/Avatar';
-import ListItemDecorator from '@mui/joy/ListItemDecorator';
-import ListDivider from '@mui/joy/ListDivider';
-import Select, { SelectOption } from '@mui/joy/Select';
-import Option from '@mui/joy/Option';
-import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
-import Input from '@mui/joy/Input';
-import Button from '@mui/joy/Button';
-import ButtonGroup from '@mui/joy/ButtonGroup';
-import Plus from '@mui/icons-material/AddCircleOutline';
-import Minus from "@mui/icons-material/RemoveCircleOutline"
-import IconButton from '@mui/joy/IconButton';
-import FormControl from '@mui/joy/FormControl';
-import FormLabel from '@mui/joy/FormLabel';
+import React, { useState } from "react";
+import {
+    Avatar,
+    ListItemDecorator,
+    ListDivider,
+    Select,
+    Option,
+    Input,
+    Button,
+    ButtonGroup,
+    IconButton,
+    FormControl,
+    FormLabel
+} from '@mui/joy';
+import { SelectOption } from '@mui/joy/Select';
+import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
@@ -21,15 +22,27 @@ const options = [
 
 const BuyCard = () => {
     const [count, setCount] = useState(0)
+
     const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const newValue = parseInt(event.target.value);
-        if (!isNaN(newValue)) {
-            setCount(newValue)
+        const parseValue = parseInt(event.target.value);
+        if (!isNaN(parseValue)) {
+            setCount(parseValue)
         }
     }
+
+    function renderValue(option: SelectOption<string> | null) {
+        return option ? (
+            <>
+                <ListItemDecorator>
+                    <Avatar size="sm" src={options.find((o) => o.value === option.value)?.src} />
+                </ListItemDecorator>
+                <span className="ml-2">{option.label}</span>
+            </>
+        ) : null;
+    }
+
     return (
         <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
-
             <Select
                 indicator={<KeyboardArrowDown />}
                 defaultValue='eth'
@@ -47,12 +60,15 @@ const BuyCard = () => {
                     marginTop: '38px',
                     backgroundColor: '#0A0914'
                 }}
-
+                renderValue={renderValue}
             >
                 {options.map((option, index) => (
                     <React.Fragment key={option.value}>
                         {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
-                        <Option value={option.value} label={option.label} sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px' }}>
+                        <Option
+                            value={option.value}
+                            label={option.label}
+                            sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px' }}>
                             <ListItemDecorator>
                                 <Avatar size="sm" src={option.src} />
                             </ListItemDecorator>

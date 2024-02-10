@@ -26,8 +26,9 @@ const SellCard = () => {
         <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
            
             <Select
+                
                 indicator={<KeyboardArrowDown />}
-                defaultValue='eth'
+                defaultValue='usdc'
                 slotProps={{
                     listbox: {
                       sx: {
@@ -42,19 +43,17 @@ const SellCard = () => {
                     marginTop:'38px',
                     backgroundColor:'#0A0914'
                 }}
+                startDecorator= {
+                    <React.Fragment>
+                        <Avatar size="sm" src="/usdc.svg"/>
+                    </React.Fragment>
+                }
               
                 >
-                    {options.map((option, index) => (
-                        <React.Fragment key={option.value}>
-                        {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
-                            <Option value={option.value} label={option.label} sx={{borderRadius:'100px', width:'456px', marginLeft:'10px'}}>
-                                <ListItemDecorator>
-                                    <Avatar size="sm" src={option.src} />
-                                </ListItemDecorator>
-                                {option.label}
-                            </Option>
-                        </React.Fragment>
-                    ))}
+                    <Option value="usdc" sx={{borderRadius:'100px', width:'456px', marginLeft:'10px'}}>
+                        <Avatar size="sm" src="/usdc.svg" />
+                        USDC
+                    </Option>
             </Select>
             <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
                 <div style={{
@@ -100,7 +99,7 @@ const SellCard = () => {
                     <React.Fragment>
                         <Select
                             indicator={<KeyboardArrowDown />}
-                            defaultValue='usdc'
+                            defaultValue='eth'
                             variant="plain"
                             slotProps={{
                                 listbox: {
@@ -110,16 +109,18 @@ const SellCard = () => {
                                   },
                                 },
                               }}
-                            startDecorator= {
-                                <React.Fragment>
-                                    <Avatar size="sm" src="/usdc.svg"/>
-                                </React.Fragment>
-                            }
                         >
-                            <Option value="usdc" sx={{borderRadius:'100px', width:'115px', marginLeft:'5px'}}>
-                                <Avatar size="sm" src="/usdc.svg" />
-                                USDC
-                            </Option>
+                            {options.map((option, index) => (
+                                <React.Fragment key={option.value}>
+                                {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
+                                    <Option value={option.value} label={option.label} sx={{borderRadius:'100px', width:'115px', marginLeft:'5px'}}>
+                                        <ListItemDecorator>
+                                            <Avatar size="sm" src={option.src} />
+                                        </ListItemDecorator>
+                                        {option.label}
+                                    </Option>
+                                </React.Fragment>
+                            ))}
                         </Select>
                     </React.Fragment>
                 }

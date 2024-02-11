@@ -9,15 +9,15 @@ import { useEffect, useState } from 'react';
 import abiContract from '@/components/abiContract';
 import defaultProvider from "../provider/defaultProvider";
 import { Contract, parseEther, formatEther, ethers } from "ethers";
+import { maxUint128 } from "viem";
 
-// const nonfungiblePositionManager  = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
-const nonfungiblePositionManager = "0x42d8C4BA2f3E2c90D0a7045c25f36D67445f96b2";
+const nonfungiblePositionManager  = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
 
-// const {
-//   abi: INonfungiblePositionManagerABI,
-// } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
+const {
+  abi: INonfungiblePositionManagerABI,
+} = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
 
 type Balance = string; // TODO - rebuild to bigint
 interface IBalance {
@@ -79,7 +79,6 @@ export default function Orders() {
     positionManagerContractAddress,
     ETHContractAddress,
   } = useWalletStore();
-
   
   const [dataOrders, setDataOrders] = useState<IUserPosition[]>([{
     id: 1,
@@ -91,10 +90,6 @@ export default function Orders() {
   }]);
   type Order = typeof dataOrders[0];
 
-
-  /// @dev - userAddress - placeholder. Delete after tests
-  /// @notify!
-  const userAddress = "0xecF5E76947Dfb0fe0b23c04E1f3112DD636d1ae7";
   useEffect(() => {
     return () => {
       (async () => {
@@ -108,11 +103,13 @@ export default function Orders() {
 
         const contractNonfungiblePositionManager: any = new Contract(
           nonfungiblePositionManager,
-          abiContract,
+          INonfungiblePositionManagerABI,
           defaultProvider
         );
         
-        const allPositions = await contractView.getOpenPositions(userAddress);
+     
+
+        const allPositions = await contractView.getOpenPositions(account);
         const userOrders: Positions = [];
         
         allPositions.forEach(async (position: IUserPosition[], index: Key) => {
@@ -134,82 +131,86 @@ export default function Orders() {
             (Number(positionInfo.amount) / 10 ** 18).toFixed(2)
           );
           
-          const id721: string = await contractView.tokenOfOwnerByIndex(userAddress, index);
+          const id721: string = await contractView.tokenOfOwnerByIndex(account, index);
           const linkOrder = "/orders/" + id721;
+          const tokenIdPosition = id721.toString();
           
+          const {
+            amount0: unclaimedFee0Wei,
+            amount1: unclaimedFee1Wei,
+          } = await contractNonfungiblePositionManager.collect.staticCall({
+            tokenId: tokenIdPosition,
+            recipient: positionManagerContractAddress,
+            amount0Max: maxUint128,
+            amount1Max: maxUint128,
+          });
 
-          // TODO - add math of the fee. 
-          // const {
-          //   amount0,
-          //   amount1
-          // } = await contractNonfungiblePositionManager.collect.staticCall({
-          //   id721,
-          //   recipient: positionManagerContractAddress,
-          //   amount0Max: ethers.MaxUint256,
-          //   amount1Max: ethers.MaxUint256,
-          // });
-
-          const unclaimedFee0 = (Number(/*TODO replace placeholer*/ 3000) / 10 ** 18)
-            .toFixed(2)
-            .toString();
-          const unclaimedFee1 = (Number(/*TODO replace placeholer*/ 3000) / 10 ** 18)
-            .toFixed(6)
-            .toString();
+          const unclaimedFee0 = (Number(unclaimedFee0Wei) / 10 ** 18)
+          .toFixed(2)
+          .toString();
+          const unclaimedFee1 = (Number(unclaimedFee1Wei) / 10 ** 18)
+          .toFixed(6)
+          .toString();
           const unclaimedFeeETHUSDC = unclaimedFee1 + " ETH / " + unclaimedFee0 + " USDC";
           const unclaimedFeeWBTCUSDC = unclaimedFee1 + " WBTC / " + unclaimedFee0 + " USDC";
-
-
           
-          /// TODO - fee on position request
-          /**
-           * 
+          const tickLower = position['tickLower'];
+          const tickUpper = position['tickUpper'];
+          const liquidity = position['liquidity'];
+          
+          const sqrtRatioA = Math.sqrt(1.0001 ** Number(tickLower)).toFixed(18); // (18)нужно вытаскивать десималс из токена
+          const sqrtRatioB = Math.sqrt(1.0001 ** Number(tickUpper)).toFixed(18); // (18)нужно вытаскивать десималс из токена
+          const currentTick = await contractView.getCurrentTick(poolAddressETH_USDC);
+
+          let currentRatio = Math.sqrt(1.0001 ** Number(currentTick)).toFixed(18);
+          let amount0wei = 0;
+          let amount1wei = 0;
+
           if (currentTick <= tickLower) {
             amount0wei = Math.floor(
-              Number(liquidity) *
+            Number(liquidity) *
               ((Number(sqrtRatioB) - Number(sqrtRatioA)) /
-              (Number(sqrtRatioA) * Number(sqrtRatioB)))
+                (Number(sqrtRatioA) * Number(sqrtRatioB)))
             );
           }
+
           if (currentTick > tickUpper) {
             amount1wei = Math.floor(
               Number(liquidity) * (Number(sqrtRatioB) - Number(sqrtRatioA))
-          );
-          }
-          if (currentTick >= tickLower && currentTick < tickUpper) {
-            amount0wei = Math.floor(
-            Number(liquidity) *
-              ((Number(sqrtRatioB) - Number(currentRatio)) /
-                (Number(currentRatio) * Number(sqrtRatioB)))
-          );
-          amount1wei = Math.floor(
-              Number(liquidity) * (Number(currentRatio) - Number(sqrtRatioA))
             );
           }
-          */
+
+          if (currentTick >= tickLower && currentTick < tickUpper) {
+            amount0wei = Math.floor(
+              Number(liquidity) *
+                ((Number(sqrtRatioB) - Number(currentRatio)) /
+                (Number(currentRatio) * Number(sqrtRatioB)))
+            );
+
+            amount1wei = Math.floor( Number(liquidity) * (Number(currentRatio) - Number(sqrtRatioA)));
+          }
           
-          /// Placeholder. Delete after test.
-          const amount0 = (3000 / 10 ** 18).toFixed(2).toString();
-          const amount1 = (3000 / 10 ** 18).toFixed(6).toString();
+          const amount0 = (amount0wei / 10 ** 18).toFixed(2).toString();
+          const amount1 = (amount1wei / 10 ** 18).toFixed(6).toString();
           const amountETHUSDC = amount1 + " ETH / " + amount0 + " USDC";
           const amountWBTCUSDC = amount1 + " WBTC / " + amount0 + " USDC";
 
           // TODO describe position!!!!
-        //   if (positionItem['token0'] === ETHContractAddress) {
-        //     positionItem.asset = "ETH / USDC";
-        //     positionItem.avatar = "/eth.svg";
-        //     positionItem.balance.feeBalance = unclaimedFeeETHUSDC;
-        //     positionItem.orderBalance = amountETHUSDC;
-        //     positionItem.link = linkOrder;
-        // } else {
-        //     positionItem.asset = "WBTC / USDC";
-        //     positionItem.avatar = "/btc.svg";
-        //     positionItem.feeBalance = unclaimedFeeWBTCUSDC;
-        //     positionItem.orderBalance = amountWBTCUSDC;
-        //     positionItem.link = linkOrder;
-        //   }
+          if (Array(positionItem)['token0'] === ETHContractAddress) {
+            positionItem.asset = "ETH / USDC";
+            positionItem.avatar = "/eth.svg";
+            positionItem.balance.feeBalance = unclaimedFeeETHUSDC;
+            positionItem.balance.orderBalance = amountETHUSDC;
+            positionItem.link = linkOrder;
+        } else {
+            positionItem.asset = "WBTC / USDC";
+            positionItem.avatar = "/btc.svg";
+            positionItem.balance.feeBalance = unclaimedFeeWBTCUSDC;
+            positionItem.balance.orderBalance = amountWBTCUSDC;
+            positionItem.link = linkOrder;
+          }
           
           dataOrders.push(positionItem);
-          console.log(positionItem);
           setDataOrders([...dataOrders]);
 
         })          

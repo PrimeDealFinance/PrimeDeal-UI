@@ -14,7 +14,6 @@ import { maxUint128 } from "viem";
 const nonfungiblePositionManager  = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
-
 const {
   abi: INonfungiblePositionManagerABI,
 } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
@@ -49,26 +48,6 @@ interface Positions {
   [key: number]: IUserPosition;
 }
 
-/////////////////////////////////////////
-/// Placeholder start
-/////////////////////////////////////////
-const balance: IBalance = {
-  feeBalance:   "0.270000 ETH / 0.00 USDC",
-  orderBalance: "0.000000 ETH / 1.00 USDC",
-  usdBalance:   "5 690 USDC"
-}
-const DATA_FOR_TEST: IUserPosition[] = Array.from({ length: 6 }, (_, index) => ({
-  id: index + 1,
-  avatar: "/solidity.svg",
-  asset: "ETH",
-  type: index % 2 === 0 ? "Buy" : "Sell",
-  balance,
-  link: "#",
-}));
-/////////////////////////////////////////
-/// Placeholder end
-/////////////////////////////////////////
-
 const TEXT_ORDERS = {
   title: 'My orders'
 }
@@ -91,7 +70,6 @@ export default function Orders() {
   type Order = typeof dataOrders[0];
 
   useEffect(() => {
-    return () => {
       (async () => {
         dataOrders.length = 0;
 
@@ -106,10 +84,9 @@ export default function Orders() {
           INonfungiblePositionManagerABI,
           defaultProvider
         );
-        
-     
-
+       
         const allPositions = await contractView.getOpenPositions(account);
+
         const userOrders: Positions = [];
         
         allPositions.forEach(async (position: IUserPosition[], index: Key) => {
@@ -192,10 +169,10 @@ export default function Orders() {
           
           const amount0 = (amount0wei / 10 ** 18).toFixed(2).toString();
           const amount1 = (amount1wei / 10 ** 18).toFixed(6).toString();
+
           const amountETHUSDC = amount1 + " ETH / " + amount0 + " USDC";
           const amountWBTCUSDC = amount1 + " WBTC / " + amount0 + " USDC";
-
-          // TODO describe position!!!!
+                                                        
           if (Array(positionItem)['token0'] === ETHContractAddress) {
             positionItem.asset = "ETH / USDC";
             positionItem.avatar = "/eth.svg";
@@ -215,7 +192,6 @@ export default function Orders() {
 
         })          
        })();
-    };
   }, [])
 
   return (

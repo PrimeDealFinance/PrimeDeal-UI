@@ -5,6 +5,7 @@ import ListDivider from '@mui/joy/ListDivider';
 import Select, { SelectOption } from '@mui/joy/Select';
 import Option from '@mui/joy/Option';
 import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
+import Link from 'next/link';
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
@@ -15,7 +16,7 @@ const options = [
 const BuyCard = () => {
     return (
         <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
-           
+            <Link href="/orders">orders</Link>
             <Select
                 indicator={<KeyboardArrowDown />}
                 defaultValue='eth'

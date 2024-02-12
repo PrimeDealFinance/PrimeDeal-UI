@@ -5,12 +5,16 @@ import Image from "next/image";
 import bitcoinRight from "@/public/bitcoinRight.png"
 import blurCoinRight from "@/public/blurCoinRight.svg"
 import coinGroup from "@/public/coinGroup.png"
+import smallCoinLeft from "@/public/smallCoinLeft.png"
 import bitcoinLeft from "@/public/bitcoinLeft.png"
 import ConnectButton from "@/components/ConnectButton";
 import logo from "@/public/PrimeDeal.svg"
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry';
+import coinLeft from "@/public/coinLeft.png"
+import downCoin from "@/public/downCoin.png"
 import Button from "@mui/joy/Button";
 import Link from "next/link";
+
 
 
 
@@ -134,17 +138,27 @@ export default function RootLayout({
                   height={200}
                   className="absolute right-[33.88px] top-[601.04px]"/>
                <Image 
-                  src={coinGroup} 
+                  src={smallCoinLeft} 
                   alt="" 
-                  width={465} 
-                  height={713}
-                  className="absolute left-0 bottom-0"/>
+                  width={80} 
+                  className="absolute left-0 top-[261px]"/>
+                <Image 
+                  src={coinLeft} 
+                  alt="" 
+                  width={51.3}
+                  height={79.5}
+                  className="absolute left-[70px] top-[639px]"/>
                <Image 
                   src={bitcoinLeft} 
                   alt="" 
                   width={250} 
                   height={355}
-                  className="absolute left-0 top-[328px]"/>
+                  className="absolute left-0 top-[335px]"/>
+                <Image 
+                  src={downCoin} 
+                  alt="" 
+                  width={264} 
+                  className="absolute left-[279px] bottom-0"/>
               {children}
             </main>
           </ThemeRegistry>

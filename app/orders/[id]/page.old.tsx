@@ -12,7 +12,7 @@ import React, { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { Contract } from "ethers";
 import { maxUint128 } from "viem";
-import defaultProvider from "../../defaultProvider";
+import defaultProvider from "../../provider/defaultProvider";
 import abiContract from "../../../components/abiContract";
 import { useWalletStore } from "@/service/store";
 import TradingViewWidget from "../../../service/TradingView";

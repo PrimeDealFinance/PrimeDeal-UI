@@ -8,66 +8,47 @@ import { useWalletStore } from '@/service/store';
 import { useEffect, useState } from 'react';
 import abiContract from '@/components/abiContract';
 import defaultProvider from "../provider/defaultProvider";
-import { Contract, parseEther, formatEther, ethers } from "ethers";
+import { Contract } from "ethers";
+import { maxUint128 } from "viem";
 
-// const nonfungiblePositionManager  = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
-const nonfungiblePositionManager = "0x42d8C4BA2f3E2c90D0a7045c25f36D67445f96b2";
+const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
+const {
+  abi: INonfungiblePositionManagerABI,
+} = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
 
-// const {
-//   abi: INonfungiblePositionManagerABI,
-// } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
-
-type Balance = string; // TODO - rebuild to bigint
-interface IBalance {
-  feeBalance: Balance;
-  orderBalance: Balance;
-  usdBalance: Balance;
-}
-
-type Key = number | string;
 interface IUserPosition {
-  id: Key;
+  id: number | string;
   avatar: string;
   asset: string;
   type: string;
-  balance: IBalance;
   link: string;
+  feeBalance: string;
+  orderBalance: string;
+  usdBalance: string;
 };
-
-type TPositionDirection = BigInt | boolean; // This is a parameter need make as bool!
-type TAmount = BigInt;
-type TUniswapTokenId = BigInt;
-interface IPositionInfo {
-  positionDirection: TPositionDirection;
-  amount: TAmount;
-  uniswapTokenId: TUniswapTokenId;
+interface PositionInfo {
+  positionDirection: BigInt | boolean;
+  amount: BigInt;
+  uniswapTokenId: BigInt;
 }
 
 interface Positions {
-  [key: number]: IUserPosition;
+  pos: PositionInfo;
+  nonce: BigInt;
+  operator: string;
+  token0: string;
+  token1: string;
+  fee: BigInt;
+  tickLower: BigInt;
+  tickUpper: BigInt;
+  liquidity: BigInt;
+  feeGrowthInside0LastX128: BigInt;
+  feeGrowthInside1LastX128: BigInt;
+  tokensOwed0: BigInt;
+  tokensOwed1: BigInt;
 }
-
-/////////////////////////////////////////
-/// Placeholder start
-/////////////////////////////////////////
-const balance: IBalance = {
-  feeBalance:   "0.270000 ETH / 0.00 USDC",
-  orderBalance: "0.000000 ETH / 1.00 USDC",
-  usdBalance:   "5 690 USDC"
-}
-const DATA_FOR_TEST: IUserPosition[] = Array.from({ length: 6 }, (_, index) => ({
-  id: index + 1,
-  avatar: "/solidity.svg",
-  asset: "ETH",
-  type: index % 2 === 0 ? "Buy" : "Sell",
-  balance,
-  link: "#",
-}));
-/////////////////////////////////////////
-/// Placeholder end
-/////////////////////////////////////////
 
 const TEXT_ORDERS = {
   title: 'My orders'
@@ -80,141 +61,138 @@ export default function Orders() {
     ETHContractAddress,
   } = useWalletStore();
 
-  
   const [dataOrders, setDataOrders] = useState<IUserPosition[]>([{
     id: 1,
     avatar: "/sovaOrder.jpeg",
     asset: "",
     type: "",
-    balance: { feeBalance: "", orderBalance: "", usdBalance: "" },
+    feeBalance: "",
+    orderBalance: "",
+    usdBalance: "",
     link: ""
   }]);
   type Order = typeof dataOrders[0];
 
-
-  /// @dev - userAddress - placeholder. Delete after tests
-  /// @notify!
-  const userAddress = "0x1AFaF7463894656662E6BdcbDC77522775E6acbB";
   useEffect(() => {
-    return () => {
-      (async () => {
-        dataOrders.length = 0;
+    (async () => {
+      dataOrders.length = 0;
 
-        const contractView = new Contract(
-          positionManagerContractAddress,
-          abiContract,
-          defaultProvider
+      const contractView = new Contract(
+        positionManagerContractAddress,
+        abiContract,
+        defaultProvider
+      );
+
+      const contractNonfungiblePositionManager: any = new Contract(
+        nonfungiblePositionManager,
+        INonfungiblePositionManagerABI,
+        defaultProvider
+      );
+
+      const allPositions: Positions[] = await contractView.getOpenPositions(account);
+
+      allPositions.forEach(async (position: Positions, index: number) => {
+        const positionItem: IUserPosition = {
+          id: index,
+          avatar: "",
+          asset: "",
+          type: "",
+          feeBalance: "",
+          orderBalance: "",
+          usdBalance: "",
+          link: ""
+        }
+        positionItem.id = index;
+        const positionInfo: PositionInfo = position.pos; // returned object {Buy\sel amount token-id}
+        positionItem.type = positionInfo.positionDirection.toString() === "0" ? "Buy" : "Sell";
+        positionItem.usdBalance = (
+          (Number(positionInfo.amount) / 10 ** 18).toFixed(2)
         );
 
-        const contractNonfungiblePositionManager: any = new Contract(
-          nonfungiblePositionManager,
-          abiContract,
-          defaultProvider
-        );
-        
-        const allPositions = await contractView.getOpenPositions(userAddress);
-        const userOrders: Positions = [];
-        
-        allPositions.forEach(async (position: IUserPosition[], index: Key) => {
-          const positionItem: IUserPosition = {
-            id: 0,
-            avatar: "",
-            asset: "",
-            type: "",
-            balance: { feeBalance: "", orderBalance: "", usdBalance: "" },
-            link: ""
-          }
-          
-          positionItem.id = index;
+        const id721: string = await contractView.tokenOfOwnerByIndex(account, index);
+        const linkOrder = "/orders/" + id721;
+        const tokenIdPosition = id721.toString();
 
-          const positionInfo: IPositionInfo = position['pos']; // returned object {Buy\sel amount token-id}
+        const {
+          amount0: unclaimedFee0Wei,
+          amount1: unclaimedFee1Wei,
+        } = await contractNonfungiblePositionManager.collect.staticCall({
+          tokenId: tokenIdPosition,
+          recipient: positionManagerContractAddress,
+          amount0Max: maxUint128,
+          amount1Max: maxUint128,
+        });
 
-          positionItem.type = positionInfo.positionDirection.toString() === "0" ? "Buy" : "Sell";
-          positionItem.balance.usdBalance = (
-            (Number(positionInfo.amount) / 10 ** 18).toFixed(2)
-          );
-          
-          const id721: string = await contractView.tokenOfOwnerByIndex(userAddress, index);
-          const linkOrder = "/orders/" + id721;
-          
+        const unclaimedFee0 = (Number(unclaimedFee0Wei) / 10 ** 18)
+          .toFixed(2)
+          .toString();
+        const unclaimedFee1 = (Number(unclaimedFee1Wei) / 10 ** 18)
+          .toFixed(6)
+          .toString();
+        const unclaimedFeeETHUSDC = unclaimedFee1 + " ETH / " + unclaimedFee0 + " USDC";
+        const unclaimedFeeWBTCUSDC = unclaimedFee1 + " WBTC / " + unclaimedFee0 + " USDC";
 
-          // TODO - add math of the fee. 
-          // const {
-          //   amount0,
-          //   amount1
-          // } = await contractNonfungiblePositionManager.collect.staticCall({
-          //   id721,
-          //   recipient: positionManagerContractAddress,
-          //   amount0Max: ethers.MaxUint256,
-          //   amount1Max: ethers.MaxUint256,
-          // });
+        const tickLower = position.tickLower;
+        const tickUpper = position.tickUpper;
+        const liquidity = position.liquidity;
 
-          const unclaimedFee0 = (Number(/*TODO replace placeholer*/ 3000) / 10 ** 18)
-            .toFixed(2)
-            .toString();
-          const unclaimedFee1 = (Number(/*TODO replace placeholer*/ 3000) / 10 ** 18)
-            .toFixed(6)
-            .toString();
-          const unclaimedFeeETHUSDC = unclaimedFee1 + " ETH / " + unclaimedFee0 + " USDC";
-          const unclaimedFeeWBTCUSDC = unclaimedFee1 + " WBTC / " + unclaimedFee0 + " USDC";
+        const sqrtRatioA = Math.sqrt(1.0001 ** Number(tickLower)).toFixed(18); // (18)нужно вытаскивать десималс из токена
+        const sqrtRatioB = Math.sqrt(1.0001 ** Number(tickUpper)).toFixed(18); // (18)нужно вытаскивать десималс из токена
+        const currentTick = await contractView.getCurrentTick(poolAddressETH_USDC);
 
+        let currentRatio = Math.sqrt(1.0001 ** Number(currentTick)).toFixed(18);
+        let amount0wei = 0;
+        let amount1wei = 0;
 
-          
-          /// TODO - fee on position request
-          /**
-           * 
-          if (currentTick <= tickLower) {
-            amount0wei = Math.floor(
-              Number(liquidity) *
-              ((Number(sqrtRatioB) - Number(sqrtRatioA)) /
-              (Number(sqrtRatioA) * Number(sqrtRatioB)))
-            );
-          }
-          if (currentTick > tickUpper) {
-            amount1wei = Math.floor(
-              Number(liquidity) * (Number(sqrtRatioB) - Number(sqrtRatioA))
-          );
-          }
-          if (currentTick >= tickLower && currentTick < tickUpper) {
-            amount0wei = Math.floor(
+        if (currentTick <= tickLower) {
+          amount0wei = Math.floor(
             Number(liquidity) *
-              ((Number(sqrtRatioB) - Number(currentRatio)) /
-                (Number(currentRatio) * Number(sqrtRatioB)))
+            ((Number(sqrtRatioB) - Number(sqrtRatioA)) /
+              (Number(sqrtRatioA) * Number(sqrtRatioB)))
           );
+        }
+
+        if (currentTick > tickUpper) {
           amount1wei = Math.floor(
-              Number(liquidity) * (Number(currentRatio) - Number(sqrtRatioA))
-            );
-          }
-          */
-          
-          /// Placeholder. Delete after test.
-          const amount0 = (3000 / 10 ** 18).toFixed(2).toString();
-          const amount1 = (3000 / 10 ** 18).toFixed(6).toString();
-          const amountETHUSDC = amount1 + " ETH / " + amount0 + " USDC";
-          const amountWBTCUSDC = amount1 + " WBTC / " + amount0 + " USDC";
+            Number(liquidity) * (Number(sqrtRatioB) - Number(sqrtRatioA))
+          );
+        }
 
-          // TODO describe position!!!!
-        //   if (positionItem['token0'] === ETHContractAddress) {
-        //     positionItem.asset = "ETH / USDC";
-        //     positionItem.avatar = "/eth.svg";
-        //     positionItem.balance.feeBalance = unclaimedFeeETHUSDC;
-        //     positionItem.orderBalance = amountETHUSDC;
-        //     positionItem.link = linkOrder;
-        // } else {
-        //     positionItem.asset = "WBTC / USDC";
-        //     positionItem.avatar = "/btc.svg";
-        //     positionItem.feeBalance = unclaimedFeeWBTCUSDC;
-        //     positionItem.orderBalance = amountWBTCUSDC;
-        //     positionItem.link = linkOrder;
-        //   }
-          
-          dataOrders.push(positionItem);
-          console.log(positionItem);
-          setDataOrders([...dataOrders]);
+        if (currentTick >= tickLower && currentTick < tickUpper) {
+          amount0wei = Math.floor(
+            Number(liquidity) *
+            ((Number(sqrtRatioB) - Number(currentRatio)) /
+              (Number(currentRatio) * Number(sqrtRatioB)))
+          );
 
-        })          
-       })();
-    };
+          amount1wei = Math.floor(Number(liquidity) * (Number(currentRatio) - Number(sqrtRatioA)));
+        }
+
+        const amount0 = (amount0wei / 10 ** 18).toFixed(2).toString();
+        const amount1 = (amount1wei / 10 ** 18).toFixed(6).toString();
+
+        const amountETHUSDC = amount1 + " ETH / " + amount0 + " USDC";
+        const amountWBTCUSDC = amount1 + " WBTC / " + amount0 + " USDC";
+
+        if (position.token0 === ETHContractAddress) {
+          positionItem.asset = "ETH / USDC";
+          positionItem.avatar = "/eth.svg";
+          positionItem.feeBalance = unclaimedFeeETHUSDC;
+          positionItem.orderBalance = amountETHUSDC;
+          positionItem.link = linkOrder;
+        } else {
+          positionItem.asset = "WBTC / USDC";
+          positionItem.avatar = "/btc.svg";
+          positionItem.feeBalance = unclaimedFeeWBTCUSDC;
+          positionItem.orderBalance = amountWBTCUSDC;
+          positionItem.link = linkOrder;
+        }
+
+        dataOrders.push(positionItem);
+        setDataOrders([...dataOrders]);
+
+      })
+    })();
   }, [])
 
   return (
@@ -233,19 +211,19 @@ export default function Orders() {
             <tbody>
               {
                 dataOrders.map((row) => (
-                <tr key={row.id} >
-                  <td>
-                    <Link href={row.link} className="flex items-center">
-                      <Avatar alt="Avatar" src={row.avatar} className="mr-3" />
-                      <span>{row.asset}</span>
-                    </Link>
-                  </td>
-                  <td className={row.type === 'Sell' ? 'text-[#EF3131]' : 'text-[#6FEE8E]'}>{row.type}</td>
-                  <td>{row.balance.feeBalance}</td>
-                  <td>{row.balance.orderBalance}</td>
-                  <td>{row.balance.usdBalance}</td>
-                </tr>
-              ))}
+                  <tr key={row.id} >
+                    <td>
+                      <Link href={row.link} className="flex items-center">
+                        <Avatar alt="Avatar" src={row.avatar} className="mr-3" />
+                        <span>{row.asset}</span>
+                      </Link>
+                    </td>
+                    <td className={row.type === 'Sell' ? 'text-[#EF3131]' : 'text-[#6FEE8E]'}>{row.type}</td>
+                    <td>{row.feeBalance}</td>
+                    <td>{row.orderBalance}</td>
+                    <td>{row.usdBalance}</td>
+                  </tr>
+                ))}
             </tbody>
           </Table>
         </Sheet>

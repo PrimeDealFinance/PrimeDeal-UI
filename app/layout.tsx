@@ -12,6 +12,9 @@ import logo from "@/public/PrimeDeal.svg"
 import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry';
 import coinLeft from "@/public/coinLeft.png"
 import downCoin from "@/public/downCoin.png"
+import Button from "@mui/joy/Button";
+import Link from "next/link";
+
 
 
 
@@ -32,14 +35,59 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeRegistry>
             <main className="dark h-full flex flex-col relative text-foreground bg-[#010306] z-[0]">
-              <Image
-                  src={logo}
-                  alt=""
-                  width={88}
-                  height={14}
-                  className="absolute top-[45.07px] left-[70.34px]"/>
-              <div className="absolute z-0 top-[35px] right-[70px]">  
+              <div className="z-[2]">
+                <Link href={'/'}>
+                  <Image
+                      src={logo}
+                      alt=""
+                      width={88}
+                      height={14}
+                      className="absolute top-[45.07px] left-[70.34px]"/>
+                </Link>
+              </div>
+              <div className="absolute z-[2] top-[35px] right-[70px]">  
                   <ConnectButton/>
+              </div>
+              <div className="absolute z-[2] top-[100px] right-[70px]">
+              <Link href={'/orders'}>
+                <Button variant="outlined" 
+                  sx={{
+                    borderRadius: '1000px',
+                    boxShadow: 'none',
+                    textTransform: 'none',
+                    fontSize: '12px',
+                    fontStyle: 'normal',
+                    fontWeight: '400',
+                    color: '#FFFFFF',
+                    letterSpacing: '-0.54px',
+                    width: '160px',
+                    height: '48px',
+                    border: '1px solid',
+                    lineHeight: 1.5,
+                    backgroundColor: '#010306',
+                    borderColor: '#5606FF',
+                    fontFamily: [
+                      'Gotham',
+                      '-apple-system',
+                      'BlinkMacSystemFont',
+                      '"Segoe UI"',
+                      'Roboto',
+                      '"Helvetica Neue"',
+                      'Arial',
+                      'sans-serif',
+                      '"Apple Color Emoji"',
+                      '"Segoe UI Emoji"',
+                      '"Segoe UI Symbol"',
+                    ].join(','),
+                    '&:hover': {
+                      backgroundColor: '#5606FF',
+                      borderColor: '#010306',
+                      boxShadow: 'none',
+                    },
+                  }}>
+                  MY ORDERS
+                </Button>
+              </Link>
               </div>
               <div style={{position: 'absolute',
                   width: '1082px',

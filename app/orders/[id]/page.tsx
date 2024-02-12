@@ -271,7 +271,7 @@ const OrderIdPage = () => {
                                     $253.45
                                 </p>
                                 <p className="opacity-50 text-[14px] tracking-[0.14px]">
-                                    Мин. цена
+                                    Макс. цена
                                 </p>
                             </div>
                         </div>

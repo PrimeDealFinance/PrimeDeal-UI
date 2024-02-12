@@ -34,7 +34,7 @@
     "@uniswap/v3-periphery": "^1.4.4",
     "@uniswap/v3-sdk": "^3.10.0",
     "chart.js": "^4.4.1",
-    "ethers": "^6.9.1",
+    "ethers": "^6.11.0",
     "framer-motion": "^10.16.16",
     "next": "14.0.4",
     "punycode": "^2.3.1",

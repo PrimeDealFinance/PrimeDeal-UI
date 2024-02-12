@@ -30,7 +30,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={inter.className}>
         <ThemeRegistry>
-            <main className="dark h-screen flex flex-col relative text-foreground bg-[#010306] z-[0]">
+            <main className="dark h-full flex flex-col relative text-foreground bg-[#010306] z-[0]">
               <div className="z-[2]">
                 <Link href={'/'}>
                   <Image

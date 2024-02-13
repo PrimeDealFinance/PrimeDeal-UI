@@ -48,7 +48,7 @@ const OrderIdPage = () => {
                 </div>
                 <div className="flex justify-between items-center w-[1120px] h-[425px] mt-[50px]">
                     <div className="flex flex-col items-center justify-center w-[489px] h-[368px] bg-[#5706FF]">
-                        Сюда график
+                        <TradingViewWidget />
                     </div>
                     <div className="flex flex-col item-center justify-between">
                         <div className="flex flex-col items-center w-[568px] h-[206px] rounded-[13px] bg-[#141320]">

@@ -19,6 +19,7 @@ import {
 } from '@mui/joy';
 import { SelectOption } from '@mui/joy/Select';
 import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
+import { useWalletStore } from "@/service/store";
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
@@ -188,8 +189,6 @@ const SellCard = () => {
                             </IconButton>
                         </ButtonGroup>
                     }
-                    value={count}
-                    onChange={handleCountChange}
                     sx={{
                         width: '476px',
                         height: '50px',

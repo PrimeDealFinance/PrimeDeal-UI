@@ -2,14 +2,13 @@
 import React, { useEffect, useState } from "react";
 import Button from "@mui/joy/Button";
 import Chip from '@mui/joy/Chip';
-import TradingViewWidget from "../../../service/TradingView";
+import TradingViewWidget from "@/service/TradingView";
 import ETH from "@/public/eth.svg";
 import USDC from "@/public/usdc.svg";
 import Image from "next/image";
 import Avatar from "@mui/joy/Avatar";
 import greenDot from "@/public/greenDot.svg"
-
-
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const OrderIdPage = () => {
     return (
@@ -282,4 +281,4 @@ const OrderIdPage = () => {
     )
 }
 
-export default OrderIdPage
+export default ProtectedRoute(OrderIdPage);

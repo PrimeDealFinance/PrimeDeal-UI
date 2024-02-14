@@ -14,14 +14,21 @@ import {
 } from '@mui/joy';
 import { SelectOption } from '@mui/joy/Select';
 import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
-
+import { useWalletStore } from "@/service/store";
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
     { value: 'matic', label: 'MATIC', src: '/matic.svg' },
 ];
 
+const TEXT_BUY_CARD = {
+    btn: 'Create Order'
+}
+
 const BuyCard = () => {
+    const {
+        isConnect,
+    } = useWalletStore();
     const [count, setCount] = useState(0)
 
     const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,6 +195,7 @@ const BuyCard = () => {
                 />
             </FormControl>
             <Button
+                disabled={!isConnect}
                 sx={{
                     color: '#FFF',
                     textAlign: 'center',
@@ -205,7 +213,7 @@ const BuyCard = () => {
                     marginTop: '28px'
                 }}
             >
-                Create Order
+                {TEXT_BUY_CARD.btn}
             </Button>
         </div>
     )

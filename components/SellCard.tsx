@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import Avatar from '@mui/joy/Avatar';
 import ListItemDecorator from '@mui/joy/ListItemDecorator';
 import ListDivider from '@mui/joy/ListDivider';
@@ -13,47 +13,59 @@ import Minus from "@mui/icons-material/RemoveCircleOutline"
 import IconButton from '@mui/joy/IconButton';
 import FormControl from '@mui/joy/FormControl';
 import FormLabel from '@mui/joy/FormLabel';
-
-
+import { useWalletStore } from "@/service/store";
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
     { value: 'matic', label: 'MATIC', src: '/matic.svg' },
-  ];
+];
+
+const TEXT_CELL_CARD = {
+    btn: 'Create Order'
+}
 
 const SellCard = () => {
+    const {
+        isConnect,
+    } = useWalletStore();
+    const [count, setCount] = useState(0)
+
+    const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const parseValue = parseInt(event.target.value);
+        if (!isNaN(parseValue)) {
+            setCount(parseValue)
+        }
+    }
+
     return (
         <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
-           
             <Select
-                
                 indicator={<KeyboardArrowDown />}
                 defaultValue='usdc'
                 slotProps={{
                     listbox: {
-                      sx: {
-                        borderRadius: '12px'
-                      },
+                        sx: {
+                            borderRadius: '12px'
+                        },
                     },
-                  }}
+                }}
                 sx={{
                     width: '476px',
                     height: '50px',
                     borderRadius: '100px',
-                    marginTop:'38px',
-                    backgroundColor:'#0A0914'
+                    marginTop: '38px',
+                    backgroundColor: '#0A0914'
                 }}
-                startDecorator= {
+                startDecorator={
                     <React.Fragment>
-                        <Avatar size="sm" src="/usdc.svg"/>
+                        <Avatar size="sm" src="/usdc.svg" />
                     </React.Fragment>
                 }
-              
-                >
-                    <Option value="usdc" sx={{borderRadius:'100px', width:'456px', marginLeft:'10px'}}>
-                        <Avatar size="sm" src="/usdc.svg" />
-                        USDC
-                    </Option>
+            >
+                <Option value="usdc" sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px' }}>
+                    <Avatar size="sm" src="/usdc.svg" />
+                    USDC
+                </Option>
             </Select>
             <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
                 <div style={{
@@ -62,7 +74,7 @@ const SellCard = () => {
                     backgroundPosition: 'center',
                     backgroundSize: '100%',
                 }}
-                className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
+                    className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
                 >
                 </div>
                 <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
@@ -92,7 +104,7 @@ const SellCard = () => {
                     </div>
                 </div>
             </div>
-            <Input 
+            <Input
                 placeholder="Amount"
                 variant="outlined"
                 endDecorator={
@@ -103,17 +115,17 @@ const SellCard = () => {
                             variant="plain"
                             slotProps={{
                                 listbox: {
-                                  variant: 'outlined',
-                                  sx: {
-                                    borderRadius:'12px',
-                                  },
+                                    variant: 'outlined',
+                                    sx: {
+                                        borderRadius: '12px',
+                                    },
                                 },
-                              }}
+                            }}
                         >
                             {options.map((option, index) => (
                                 <React.Fragment key={option.value}>
-                                {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
-                                    <Option value={option.value} label={option.label} sx={{borderRadius:'100px', width:'115px', marginLeft:'5px'}}>
+                                    {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
+                                    <Option value={option.value} label={option.label} sx={{ borderRadius: '100px', width: '115px', marginLeft: '5px' }}>
                                         <ListItemDecorator>
                                             <Avatar size="sm" src={option.src} />
                                         </ListItemDecorator>
@@ -129,11 +141,11 @@ const SellCard = () => {
                     height: '50px',
                     borderRadius: '100px',
                     marginTop: '59px',
-                    backgroundColor:'#0A0914'
+                    backgroundColor: '#0A0914'
                 }}
             />
-            <FormControl sx={{marginTop:'21px'}}>
-                <FormLabel 
+            <FormControl sx={{ marginTop: '21px' }}>
+                <FormLabel
                     sx={{
                         color: "#8A8997",
                         fontSize: "12px",
@@ -143,28 +155,31 @@ const SellCard = () => {
                 >
                     Верхняя граница
                 </FormLabel>
-                <Input 
+                <Input
                     placeholder=""
                     variant="outlined"
                     endDecorator={
-                        <ButtonGroup spacing='9px' sx={{borderRadius:'100%'}} variant="plain">
-                            <IconButton variant="plain">
-                                <Plus/>
+                        <ButtonGroup spacing='9px' sx={{ borderRadius: '100%' }} variant="plain">
+                            <IconButton onClick={() => setCount(count + 1)} variant="plain">
+                                <Plus />
                             </IconButton>
-                            <IconButton variant='plain'>
-                                <Minus/>
+                            <IconButton onClick={() => setCount(count - 1)} variant='plain'>
+                                <Minus />
                             </IconButton>
                         </ButtonGroup>
                     }
+                    value={count}
+                    onChange={handleCountChange}
                     sx={{
                         width: '476px',
                         height: '50px',
                         borderRadius: '100px',
-                        backgroundColor:'#0A0914'
+                        backgroundColor: '#0A0914'
                     }}
                 />
             </FormControl>
             <Button
+                disabled={!isConnect}
                 sx={{
                     color: '#FFF',
                     textAlign: 'center',
@@ -182,7 +197,7 @@ const SellCard = () => {
                     marginTop: '28px'
                 }}
             >
-                Create Order
+                {TEXT_CELL_CARD.btn}
             </Button>
         </div>
     )

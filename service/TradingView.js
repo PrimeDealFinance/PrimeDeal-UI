@@ -21,6 +21,9 @@ function TradingViewWidget() {
           "locale": "en",
           "enable_publishing": false,
           "allow_symbol_change": true,
+          "hide_top_toolbar": true,
+          "hide_legend": true,
+          "hide_volume": true,
           "support_host": "https://www.tradingview.com"
         }`;
       container.current.appendChild(script);

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Button from "@mui/joy/Button";
 import Chip from '@mui/joy/Chip';
-import TradingViewWidget from "../../../service/TradingView";
+import TradingViewWidget from "@/service/TradingView";
 import ETH from "@/public/eth.svg";
 import WBTC from "@/public/btc.svg";
 import USDC from "@/public/usdc.svg";
@@ -13,11 +13,12 @@ import defaultProvider from "../../provider/defaultProvider";
 import abiContract from "../../../components/abiContract";
 import { maxUint128 } from "viem";
 import greenDot from "@/public/greenDot.svg"
+import ProtectedRoute from "@/components/ProtectedRoute";
+
 import { useWalletStore } from "@/service/store";
 const {
     abi: INonfungiblePositionManagerABI,
   } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
-
 
 
 export default function OrderIdPage({ params }: { params: { id: string } }) {
@@ -529,3 +530,6 @@ export default function OrderIdPage({ params }: { params: { id: string } }) {
         </div>
     )
 }
+
+export default ProtectedRoute(OrderIdPage);
+

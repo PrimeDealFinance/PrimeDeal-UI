@@ -15,7 +15,7 @@ import { maxUint128 } from "viem";
 import defaultProvider from "../../provider/defaultProvider";
 import abiContract from "../../../components/abiContract";
 import { useWalletStore } from "@/service/store";
-import TradingViewWidget from "../../../service/TradingView";
+import TradingViewWidget from "@/service/TradingView";
 const {
   abi: INonfungiblePositionManagerABI,
 } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");

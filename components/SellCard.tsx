@@ -1,19 +1,24 @@
-import React, { useState } from "react"
-import Avatar from '@mui/joy/Avatar';
-import ListItemDecorator from '@mui/joy/ListItemDecorator';
-import ListDivider from '@mui/joy/ListDivider';
-import Select, { SelectOption } from '@mui/joy/Select';
-import Option from '@mui/joy/Option';
-import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
-import Input from '@mui/joy/Input';
-import Button from '@mui/joy/Button';
-import ButtonGroup from '@mui/joy/ButtonGroup';
-import Plus from '@mui/icons-material/AddCircleOutline';
-import Minus from "@mui/icons-material/RemoveCircleOutline"
-import IconButton from '@mui/joy/IconButton';
-import FormControl from '@mui/joy/FormControl';
-import FormLabel from '@mui/joy/FormLabel';
-import { useWalletStore } from "@/service/store";
+import React, { useState } from "react";
+import {
+    Avatar,
+    ListItemDecorator,
+    ListDivider,
+    Select,
+    Option,
+    Input,
+    Button,
+    ButtonGroup,
+    IconButton,
+    FormControl,
+    FormLabel,
+    Modal,
+    ModalDialog,
+    ModalClose,
+    DialogTitle,
+    DialogContent
+} from '@mui/joy';
+import { SelectOption } from '@mui/joy/Select';
+import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
@@ -28,6 +33,7 @@ const SellCard = () => {
     const {
         isConnect,
     } = useWalletStore();
+
     const [count, setCount] = useState(0)
 
     const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,6 +41,19 @@ const SellCard = () => {
         if (!isNaN(parseValue)) {
             setCount(parseValue)
         }
+    }
+
+    const [open, setOpen] = React.useState<boolean>(false);
+
+    function renderValue(option: SelectOption<string> | null) {
+        return option ? (
+            <>
+                <ListItemDecorator>
+                    <Avatar size="sm" src={options.find((o) => o.value === option.value)?.src} />
+                </ListItemDecorator>
+                <span className="ml-2">{option.label}</span>
+            </>
+        ) : null;
     }
 
     return (
@@ -110,6 +129,7 @@ const SellCard = () => {
                 endDecorator={
                     <React.Fragment>
                         <Select
+                            renderValue={renderValue}
                             indicator={<KeyboardArrowDown />}
                             defaultValue='eth'
                             variant="plain"
@@ -176,8 +196,11 @@ const SellCard = () => {
                         borderRadius: '100px',
                         backgroundColor: '#0A0914'
                     }}
+                    value={count}
+                    onChange={handleCountChange}
                 />
             </FormControl>
+            <React.Fragment>
             <Button
                 disabled={!isConnect}
                 sx={{
@@ -199,6 +222,114 @@ const SellCard = () => {
             >
                 {TEXT_CELL_CARD.btn}
             </Button>
+                <Modal 
+                    open={open} 
+                    onClose={() => setOpen(false)}
+                >
+                    <ModalDialog
+                        variant="plain" 
+                        sx={{
+                            width: "500px",
+                            position: "relative",
+                            borderRadius: "12px"
+                        }}
+                    >
+                        <ModalClose sx={{position:'absolute', top:'-40px', right:'0', opacity:'0.3'}}/>
+                        <DialogTitle>
+                            Confirmation
+                        </DialogTitle>
+                        <DialogContent sx={{display:'flex', flexDirection:'column', alignItems:"center"}}>
+                            <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
+                                <div className="absolute left-0 top-[-23px]">
+                                   <p className="text-[14px]">
+                                        From
+                                    </p> 
+                                </div>
+                                <div className="flex items-center">
+                                   <Avatar size="sm" src="/eth.svg"/>
+                                   <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
+                                        ETH
+                                    </p>
+                                </div>
+                                <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
+                                    Amount
+                                </p>
+                            </div>
+                            <div className="relative flex items-center w-[455px] justify-between mt-[30px]">
+                                <div className="absolute left-0 top-[-23px]">
+                                   <p className="text-[14px]">
+                                        To
+                                    </p> 
+                                </div>
+                                <div className="flex items-center">
+                                   <Avatar size="sm" src="/usdc.svg"/>
+                                   <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
+                                        USDC
+                                    </p>
+                                </div>
+                                <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
+                                    Amount
+                                </p>
+                            </div>
+                            <div className="flex flex-col items-center w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
+                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
+                                    <p className="text-[16px]">
+                                        Нижняя граница
+                                    </p>
+                                    <p className="text-[16px] text-[#FFF]">
+                                        Цена
+                                    </p>
+                                </div>
+                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
+                                    <p className="text-[16px]">
+                                        Награды за день
+                                    </p>
+                                    <p className="text-[16px] text-[#FFF]">
+                                        Кол-во
+                                    </p>
+                                </div>
+                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
+                                    <p className="text-[16px]">
+                                        Награды за неделю
+                                    </p>
+                                    <p className="text-[16px] text-[#FFF]">
+                                        Кол-во
+                                    </p>
+                                </div>
+                                <div className="flex items-center justify-between w-[415px] my-[10px]">
+                                    <p className="text-[16px]">
+                                        Награды за месяц
+                                    </p>
+                                    <p className="text-[16px] text-[#FFF]">
+                                        Кол-во
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                sx={{
+                                    color: '#FFF',
+                                    textAlign: 'center',
+                                    fontSize: '12px',
+                                    fontStyle: 'normal',
+                                    fontWeight: '700',
+                                    lineHeight: '18.264px',
+                                    letterSpacing: '0.24px',
+                                    textTransform: 'uppercase',
+                                    width: '210px',
+                                    height: '55px',
+                                    backgroundColor: '#5706FF',
+                                    borderRadius: '1000px',
+                                    boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
+                                    marginTop: '28px'
+                                }}
+                                onClick={() => setOpen(true)}
+                            >
+                            Подтвердить
+                        </Button>
+                        </DialogContent>
+                    </ModalDialog>
+                </Modal>
+            </React.Fragment>
         </div>
     )
 }

@@ -5,6 +5,7 @@ import MainButton from "@/components/MainButton";
 import logo from "@/public/PrimeDeal.svg"
 import Link from "next/link";
 import { Background } from "@/components/Background";
+import { useRouter } from "next/navigation";
 
 export default function MainPage({
   children,
@@ -17,12 +18,13 @@ export default function MainPage({
     account,
     disconnectWallet,
   } = useWalletStore();
-
+  const router = useRouter()
   const miniText = account ? account.substring(0, 4) + "..." + account.slice(38) : "";
 
   const handleConnectClick = () => {
     if (isConnect) {
       disconnectWallet();
+      router.push('/')
     } else {
       handleIsConnected();
     }

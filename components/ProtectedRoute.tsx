@@ -1,22 +1,29 @@
 
 import { useEffect } from "react";
 import { redirect } from "next/navigation";
-import { useWalletStore } from "@/service/store";
+import { getLocalStorage } from "@/utils/getLocalStorage";
 
-export default function ProtectedRoute<T extends Record<string, T>>(Component: React.ComponentType<T>) {
+type ProtectedRouteProps = {
+  params?: {
+    id: string;
+  };
+};
+
+const ProtectedRoute = <T extends ProtectedRouteProps>(Component: React.ComponentType<T>) => {
   return (props: T) =>  {
-    const { isConnect } = useWalletStore();
-
+    const isAuth = getLocalStorage();
+    console.log(isAuth)
     useEffect(() => {
-      if (!isConnect) {
+      if (!isAuth) {
         return redirect("/");
       }
     }, []);
 
-    if (!isConnect) {
+    if (!isAuth) {
       return null;
     }
 
     return <Component {...props} />;
   };
 }
+export default  ProtectedRoute

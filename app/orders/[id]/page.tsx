@@ -21,7 +21,7 @@ const {
   } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
 
 
-export default function OrderIdPage({ params }: { params: { id: string } }) {
+function OrderIdPage({ params }: { params: { id: string } }) {
     const {
       account,
       positionManagerContractAddress,

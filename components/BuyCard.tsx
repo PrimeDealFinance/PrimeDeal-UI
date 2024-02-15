@@ -20,14 +20,21 @@ import {
 import ModalCheck50 from "./ModalCheck50";
 import { SelectOption } from '@mui/joy/Select';
 import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
-
+import { useWalletStore } from "@/service/store";
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
     { value: 'matic', label: 'MATIC', src: '/matic.svg' },
 ];
 
+const TEXT_BUY_CARD = {
+    btn: 'Create Order'
+}
+
 const BuyCard = () => {
+    const {
+        isConnect,
+    } = useWalletStore();
     const [count, setCount] = useState(0)
 
     const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -208,27 +215,29 @@ const BuyCard = () => {
                 />
             </FormControl>
             <React.Fragment>
-                <Button
-                    sx={{
-                        color: '#FFF',
-                        textAlign: 'center',
-                        fontSize: '12px',
-                        fontStyle: 'normal',
-                        fontWeight: '700',
-                        lineHeight: '18.264px',
-                        letterSpacing: '0.24px',
-                        textTransform: 'uppercase',
-                        width: '210px',
-                        height: '55px',
-                        backgroundColor: '#5706FF',
-                        borderRadius: '1000px',
-                        boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
-                        marginTop: '28px'
-                    }}
-                    onClick={checkAmount50}
-                >
-                    Create Order
-                </Button>
+
+            <Button
+                disabled={!isConnect}
+                sx={{
+                    color: '#FFF',
+                    textAlign: 'center',
+                    fontSize: '12px',
+                    fontStyle: 'normal',
+                    fontWeight: '700',
+                    lineHeight: '18.264px',
+                    letterSpacing: '0.24px',
+                    textTransform: 'uppercase',
+                    width: '210px',
+                    height: '55px',
+                    backgroundColor: '#5706FF',
+                    borderRadius: '1000px',
+                    boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
+                    marginTop: '28px'
+                }}
+                onClick={checkAmount50}
+            >
+                {TEXT_BUY_CARD.btn}
+            </Button>
                 <Modal 
                     open={open} 
                     onClose={() => setOpen(false)}

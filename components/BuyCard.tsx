@@ -67,17 +67,17 @@ const BuyCard = () => {
         ) : null;
     }
 
-    // const checkAmount50 = () => {
-    //     if(count > 50) {
-    //         setOpenModal50(true);
-    //     } else {
-    //      setOpen(true);
-    //     }
-    // }
+    const checkAmount50 = () => {
+        if(count > 50) {
+            setOpenModal50(true);
+        } else {
+         setOpen(true);
+        }
+    }
 
   /// @dev Disable buttons if amount out of range
   const handleChangeAmount = (event: React.ChangeEvent<HTMLInputElement>) => {
-    (Number(event.target.value) > 5 || event.target.value === '') ? setAmountDisable(true) : setAmountDisable(false);
+    (Number(event.target.value) > 50 || event.target.value === '') ? setAmountDisable(true) : setAmountDisable(false);
   }
 
     const handleOpenModal50 = async () => {

@@ -6,6 +6,7 @@ import Tabs from '@mui/joy/Tabs';
 import TabList from '@mui/joy/TabList';
 import Tab, { tabClasses } from '@mui/joy/Tab';
 import TabPanel from '@mui/joy/TabPanel';
+import "@/app/font.css";
 
 const CreateOrderPage = () => {
     return (
@@ -15,6 +16,7 @@ const CreateOrderPage = () => {
             <TabList
               disableUnderline
               sx={{
+                fontFamily: 'GothamPro',
                 margin: '0 -88px 0 0',
                 top:'65px',
                 position: 'absolute',

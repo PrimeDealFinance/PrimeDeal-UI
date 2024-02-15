@@ -1,5 +1,6 @@
 'use client'
 import Button from "@mui/joy/Button";
+import "@/app/font.css"
 
 interface Props {
   text?: string;
@@ -26,7 +27,7 @@ const MainButton = ({ text, handleConnectClick }: Props): React.ReactNode => {
           backgroundColor: '#010306',
           borderColor: '#5606FF',
           fontFamily: [
-            'Gotham',
+            'GothamPro',
             '-apple-system',
             'BlinkMacSystemFont',
             '"Segoe UI"',

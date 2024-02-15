@@ -14,6 +14,8 @@ import abiContract from "../../../components/abiContract";
 import { maxUint128 } from "viem";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useWalletStore } from "@/service/store";
+import "@/app/font.css";
+
 const {
     abi: INonfungiblePositionManagerABI,
   } = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
@@ -281,7 +283,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
-        <div className="flex flex-col h-full flex flex-col items-center">
+        <div className="flex flex-col h-full flex flex-col items-center font-['GothamPro']">
             <div className="flex flex-col items-center w-[1211px] relative h-[788px] rounded-[22px] bg-[#0A0914] z-[2] mt-[188px] mb-[123px]">
                 <div className="absolute flex justify-between items-center top-[-58px] left-[0] w-[378px]">
                     <div className="flex">
@@ -298,7 +300,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                     <Chip
                         variant="plain"
                         size="lg"
-                        sx={{color: colorRange, background:'transparent'}}
+                        sx={{color: colorRange, background:'transparent', fontFamily: 'GothamPro'}}
                         startDecorator={
                             <Avatar 
                                 src={colorDot}
@@ -340,7 +342,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                                     fontStyle: 'normal',
                                     fontWeight: '700',
                                     lineHeight: '152.2%',
-                                    letterSpacing: '0.24px'
+                                    letterSpacing: '0.24px',
                                 }}
                                 onClick={closePositionId}>
                                     CLOSE ORDER

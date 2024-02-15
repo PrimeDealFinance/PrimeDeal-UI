@@ -6,6 +6,8 @@ import logo from "@/public/PrimeDeal.svg"
 import Link from "next/link";
 import { Background } from "@/components/Background";
 import { useRouter } from "next/navigation";
+import "@/app/font.css";
+
 
 export default function MainPage({
   children,
@@ -45,7 +47,7 @@ export default function MainPage({
       <div className="absolute top-[35px] z-[2] right-[70px]">
         <MainButton text={isConnect ? miniText : "CONNECT WALLET"} handleConnectClick={handleConnectClick} />
       </div>
-      <div className="absolute top-[100px] z-[2] right-[70px]">
+      <div className="absolute top-[100px] z-[2] right-[70px] font-['GothamPro']">
         {isConnect &&
           <Link href={'/orders'}>
             <MainButton text={"MY ORDERS"} />

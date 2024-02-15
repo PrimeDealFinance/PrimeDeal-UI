@@ -1,59 +1,91 @@
-import React from "react"
-import Avatar from '@mui/joy/Avatar';
-import ListItemDecorator from '@mui/joy/ListItemDecorator';
-import ListDivider from '@mui/joy/ListDivider';
-import Select, { SelectOption } from '@mui/joy/Select';
-import Option from '@mui/joy/Option';
-import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
-import Input from '@mui/joy/Input';
-import Button from '@mui/joy/Button';
-import ButtonGroup from '@mui/joy/ButtonGroup';
-import Plus from '@mui/icons-material/AddCircleOutline';
-import Minus from "@mui/icons-material/RemoveCircleOutline"
-import IconButton from '@mui/joy/IconButton';
-import FormControl from '@mui/joy/FormControl';
-import FormLabel from '@mui/joy/FormLabel';
-
-
+import React, { useState } from "react";
+import {
+    Avatar,
+    ListItemDecorator,
+    ListDivider,
+    Select,
+    Option,
+    Input,
+    Button,
+    ButtonGroup,
+    IconButton,
+    FormControl,
+    FormLabel,
+    Modal,
+    ModalDialog,
+    ModalClose,
+    DialogTitle,
+    DialogContent
+} from '@mui/joy';
+import { SelectOption } from '@mui/joy/Select';
+import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
+import { useWalletStore } from "@/service/store";
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
     { value: 'matic', label: 'MATIC', src: '/matic.svg' },
-  ];
+];
+
+const TEXT_CELL_CARD = {
+    btn: 'Create Order'
+}
 
 const SellCard = () => {
+    const {
+        isConnect,
+    } = useWalletStore();
+
+    const [count, setCount] = useState(0)
+
+    const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const parseValue = parseInt(event.target.value);
+        if (!isNaN(parseValue)) {
+            setCount(parseValue)
+        }
+    }
+
+    const [open, setOpen] = React.useState<boolean>(false);
+
+    function renderValue(option: SelectOption<string> | null) {
+        return option ? (
+            <>
+                <ListItemDecorator>
+                    <Avatar size="sm" src={options.find((o) => o.value === option.value)?.src} />
+                </ListItemDecorator>
+                <span className="ml-2">{option.label}</span>
+            </>
+        ) : null;
+    }
+
     return (
         <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
-           
             <Select
-                
                 indicator={<KeyboardArrowDown />}
                 defaultValue='usdc'
                 slotProps={{
                     listbox: {
-                      sx: {
-                        borderRadius: '12px'
-                      },
+                        sx: {
+                            borderRadius: '12px'
+                        },
                     },
-                  }}
+                }}
                 sx={{
                     width: '476px',
                     height: '50px',
                     borderRadius: '100px',
-                    marginTop:'38px',
-                    backgroundColor:'#0A0914'
+                    marginTop: '38px',
+                    backgroundColor: '#0A0914'
                 }}
-                startDecorator= {
+                startDecorator={
                     <React.Fragment>
-                        <Avatar size="sm" src="/usdc.svg"/>
+                        <Avatar size="sm" src="/usdc.svg" />
                     </React.Fragment>
                 }
-              
-                >
-                    <Option value="usdc" sx={{borderRadius:'100px', width:'456px', marginLeft:'10px'}}>
-                        <Avatar size="sm" src="/usdc.svg" />
-                        USDC
-                    </Option>
+            >
+                <Option value="usdc" sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px' }}>
+                    <Avatar size="sm" src="/usdc.svg" />
+                    USDC
+                </Option>
             </Select>
             <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
                 <div style={{
@@ -62,7 +94,7 @@ const SellCard = () => {
                     backgroundPosition: 'center',
                     backgroundSize: '100%',
                 }}
-                className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
+                    className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
                 >
                 </div>
                 <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
@@ -92,28 +124,29 @@ const SellCard = () => {
                     </div>
                 </div>
             </div>
-            <Input 
+            <Input
                 placeholder="Amount"
                 variant="outlined"
                 endDecorator={
                     <React.Fragment>
                         <Select
+                            renderValue={renderValue}
                             indicator={<KeyboardArrowDown />}
                             defaultValue='eth'
                             variant="plain"
                             slotProps={{
                                 listbox: {
-                                  variant: 'outlined',
-                                  sx: {
-                                    borderRadius:'12px',
-                                  },
+                                    variant: 'outlined',
+                                    sx: {
+                                        borderRadius: '12px',
+                                    },
                                 },
-                              }}
+                            }}
                         >
                             {options.map((option, index) => (
                                 <React.Fragment key={option.value}>
-                                {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
-                                    <Option value={option.value} label={option.label} sx={{borderRadius:'100px', width:'115px', marginLeft:'5px'}}>
+                                    {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
+                                    <Option value={option.value} label={option.label} sx={{ borderRadius: '100px', width: '115px', marginLeft: '5px' }}>
                                         <ListItemDecorator>
                                             <Avatar size="sm" src={option.src} />
                                         </ListItemDecorator>
@@ -129,11 +162,11 @@ const SellCard = () => {
                     height: '50px',
                     borderRadius: '100px',
                     marginTop: '59px',
-                    backgroundColor:'#0A0914'
+                    backgroundColor: '#0A0914'
                 }}
             />
-            <FormControl sx={{marginTop:'21px'}}>
-                <FormLabel 
+            <FormControl sx={{ marginTop: '21px' }}>
+                <FormLabel
                     sx={{
                         color: "#8A8997",
                         fontSize: "12px",
@@ -143,16 +176,16 @@ const SellCard = () => {
                 >
                     Верхняя граница
                 </FormLabel>
-                <Input 
+                <Input
                     placeholder=""
                     variant="outlined"
                     endDecorator={
-                        <ButtonGroup spacing='9px' sx={{borderRadius:'100%'}} variant="plain">
-                            <IconButton variant="plain">
-                                <Plus/>
+                        <ButtonGroup spacing='9px' sx={{ borderRadius: '100%' }} variant="plain">
+                            <IconButton onClick={() => setCount(count + 1)} variant="plain">
+                                <Plus />
                             </IconButton>
-                            <IconButton variant='plain'>
-                                <Minus/>
+                            <IconButton onClick={() => setCount(count - 1)} variant='plain'>
+                                <Minus />
                             </IconButton>
                         </ButtonGroup>
                     }
@@ -160,11 +193,15 @@ const SellCard = () => {
                         width: '476px',
                         height: '50px',
                         borderRadius: '100px',
-                        backgroundColor:'#0A0914'
+                        backgroundColor: '#0A0914'
                     }}
+                    value={count}
+                    onChange={handleCountChange}
                 />
             </FormControl>
+            <React.Fragment>
             <Button
+                disabled={!isConnect}
                 sx={{
                     color: '#FFF',
                     textAlign: 'center',
@@ -182,8 +219,116 @@ const SellCard = () => {
                     marginTop: '28px'
                 }}
             >
-                Create Order
+                {TEXT_CELL_CARD.btn}
             </Button>
+                <Modal 
+                    open={open} 
+                    onClose={() => setOpen(false)}
+                >
+                    <ModalDialog
+                        variant="plain" 
+                        sx={{
+                            width: "500px",
+                            position: "relative",
+                            borderRadius: "12px"
+                        }}
+                    >
+                        <ModalClose sx={{position:'absolute', top:'-40px', right:'0', opacity:'0.3'}}/>
+                        <DialogTitle>
+                            Confirmation
+                        </DialogTitle>
+                        <DialogContent sx={{display:'flex', flexDirection:'column', alignItems:"center"}}>
+                            <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
+                                <div className="absolute left-0 top-[-23px]">
+                                   <p className="text-[14px]">
+                                        From
+                                    </p> 
+                                </div>
+                                <div className="flex items-center">
+                                   <Avatar size="sm" src="/eth.svg"/>
+                                   <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
+                                        ETH
+                                    </p>
+                                </div>
+                                <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
+                                    Amount
+                                </p>
+                            </div>
+                            <div className="relative flex items-center w-[455px] justify-between mt-[30px]">
+                                <div className="absolute left-0 top-[-23px]">
+                                   <p className="text-[14px]">
+                                        To
+                                    </p> 
+                                </div>
+                                <div className="flex items-center">
+                                   <Avatar size="sm" src="/usdc.svg"/>
+                                   <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
+                                        USDC
+                                    </p>
+                                </div>
+                                <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
+                                    Amount
+                                </p>
+                            </div>
+                            <div className="flex flex-col items-center w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
+                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
+                                    <p className="text-[16px]">
+                                        Нижняя граница
+                                    </p>
+                                    <p className="text-[16px] text-[#FFF]">
+                                        Цена
+                                    </p>
+                                </div>
+                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
+                                    <p className="text-[16px]">
+                                        Награды за день
+                                    </p>
+                                    <p className="text-[16px] text-[#FFF]">
+                                        Кол-во
+                                    </p>
+                                </div>
+                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
+                                    <p className="text-[16px]">
+                                        Награды за неделю
+                                    </p>
+                                    <p className="text-[16px] text-[#FFF]">
+                                        Кол-во
+                                    </p>
+                                </div>
+                                <div className="flex items-center justify-between w-[415px] my-[10px]">
+                                    <p className="text-[16px]">
+                                        Награды за месяц
+                                    </p>
+                                    <p className="text-[16px] text-[#FFF]">
+                                        Кол-во
+                                    </p>
+                                </div>
+                            </div>
+                            <Button
+                                sx={{
+                                    color: '#FFF',
+                                    textAlign: 'center',
+                                    fontSize: '12px',
+                                    fontStyle: 'normal',
+                                    fontWeight: '700',
+                                    lineHeight: '18.264px',
+                                    letterSpacing: '0.24px',
+                                    textTransform: 'uppercase',
+                                    width: '210px',
+                                    height: '55px',
+                                    backgroundColor: '#5706FF',
+                                    borderRadius: '1000px',
+                                    boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
+                                    marginTop: '28px'
+                                }}
+                                onClick={() => setOpen(true)}
+                            >
+                            Подтвердить
+                        </Button>
+                        </DialogContent>
+                    </ModalDialog>
+                </Modal>
+            </React.Fragment>
         </div>
     )
 }

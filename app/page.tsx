@@ -7,14 +7,12 @@ import TabList from '@mui/joy/TabList';
 import Tab, { tabClasses } from '@mui/joy/Tab';
 import TabPanel from '@mui/joy/TabPanel';
 
-
 const CreateOrderPage = () => {
     return (
        <div className='flex relative h-screen flex-col items-center'> 
         <div>
           <Tabs aria-label="tabs" defaultValue={0} sx={{ bgcolor: 'transparent'}}>
             <TabList
-      
               disableUnderline
               sx={{
                 margin: '0 -88px 0 0',

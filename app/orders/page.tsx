@@ -10,6 +10,7 @@ import abiContract from '@/components/abiContract';
 import defaultProvider from "../provider/defaultProvider";
 import { Contract, ethers } from "ethers";
 import { maxUint128 } from "viem";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
@@ -61,7 +62,7 @@ const TEXT_ORDERS = {
   title: 'My orders'
 }
 
-export default function Orders() {
+function Orders() {
   const {
     account,
     positionManagerContractAddress,
@@ -239,3 +240,5 @@ export default function Orders() {
     </div>
   );
 }
+
+export default ProtectedRoute(Orders)

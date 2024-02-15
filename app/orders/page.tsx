@@ -8,15 +8,22 @@ import { useWalletStore } from '@/service/store';
 import { useEffect, useState } from 'react';
 import abiContract from '@/components/abiContract';
 import defaultProvider from "../provider/defaultProvider";
-import { Contract } from "ethers";
+import { Contract, ethers } from "ethers";
 import { maxUint128 } from "viem";
 
 const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
-const {
-  abi: INonfungiblePositionManagerABI,
-} = require("@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json");
+
+// TODO - config path for get assets from github
+const PATH_TO_ASSETS = 'https://raw.githubusercontent.com/PrimeDealFinance/PrimeDeal-UI/main/public';
+// const PATH_TO_ASSETS = '';
+
+const ERC20_ABI = [
+  "function name() public view returns (string)",
+];
+
+import { abi as INonfungiblePositionManagerABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 
 interface IUserPosition {
   id: number | string;
@@ -71,10 +78,19 @@ export default function Orders() {
     usdBalance: "",
     link: ""
   }]);
-  type Order = typeof dataOrders[0];
+  // type Order = typeof dataOrders[0];
 
   useEffect(() => {
     (async () => {
+
+      
+      async function getTickerForAddress(
+        address: string,
+        abi: string[],
+        provider: ethers.JsonRpcApiProvider,) {
+          return await (new Contract(address, abi, defaultProvider)).name();
+      }
+
       dataOrders.length = 0;
 
       const contractView = new Contract(
@@ -102,8 +118,15 @@ export default function Orders() {
           usdBalance: "",
           link: ""
         }
+        
+        /// @dev Get ticker from contract ERC-20 address
+        const tickerForToken0: string = await getTickerForAddress(position.token0, ERC20_ABI, defaultProvider);
+        const tickerForToken1: string = await getTickerForAddress(position.token1, ERC20_ABI, defaultProvider);
+        
         positionItem.id = index;
-        const positionInfo: PositionInfo = position.pos; // returned object {Buy\sel amount token-id}
+
+        /// @dev - return tupple from contract data. { positionDirection, amount, uniswapTokenId: }
+        const positionInfo: PositionInfo = position.pos;
         positionItem.type = positionInfo.positionDirection.toString() === "0" ? "Buy" : "Sell";
         positionItem.usdBalance = (
           (Number(positionInfo.amount) / 10 ** 18).toFixed(2)
@@ -113,14 +136,16 @@ export default function Orders() {
         const linkOrder = "/orders/" + id721;
         const tokenIdPosition = id721.toString();
 
+        // ?
         const {
           amount0: unclaimedFee0Wei,
           amount1: unclaimedFee1Wei,
-        } = await contractNonfungiblePositionManager.collect.staticCall({
-          tokenId: tokenIdPosition,
-          recipient: positionManagerContractAddress,
-          amount0Max: maxUint128,
-          amount1Max: maxUint128,
+        } =
+          await contractNonfungiblePositionManager.collect.staticCall({
+            tokenId: tokenIdPosition,
+            recipient: positionManagerContractAddress,
+            amount0Max: maxUint128,
+            amount1Max: maxUint128,
         });
 
         const unclaimedFee0 = (Number(unclaimedFee0Wei) / 10 ** 18)
@@ -129,69 +154,52 @@ export default function Orders() {
         const unclaimedFee1 = (Number(unclaimedFee1Wei) / 10 ** 18)
           .toFixed(6)
           .toString();
-        const unclaimedFeeETHUSDC = unclaimedFee1 + " ETH / " + unclaimedFee0 + " USDC";
-        const unclaimedFeeWBTCUSDC = unclaimedFee1 + " WBTC / " + unclaimedFee0 + " USDC";
+        
+        // format: ETH / USDT
+        const unclaimedTokensText = `${unclaimedFee1} ${tickerForToken1.toLocaleUpperCase()} / ${unclaimedFee0} ${tickerForToken0.toLocaleUpperCase()}`;
 
-        const tickLower = position.tickLower;
-        const tickUpper = position.tickUpper;
-        const liquidity = position.liquidity;
+        const tickLower = Number(position.tickLower);
+        const tickUpper = Number(position.tickUpper);
+        const liquidity = Number(position.liquidity);
 
-        const sqrtRatioA = Math.sqrt(1.0001 ** Number(tickLower)).toFixed(18); // (18)нужно вытаскивать десималс из токена
-        const sqrtRatioB = Math.sqrt(1.0001 ** Number(tickUpper)).toFixed(18); // (18)нужно вытаскивать десималс из токена
+        const sqrtRatioA = Number(Math.sqrt(1.0001 ** Number(tickLower)).toFixed(18)); // (18)нужно вытаскивать десималс из токена
+        const sqrtRatioB = Number(Math.sqrt(1.0001 ** Number(tickUpper)).toFixed(18)); // (18)нужно вытаскивать десималс из токена
         const currentTick = await contractView.getCurrentTick(poolAddressETH_USDC);
 
-        let currentRatio = Math.sqrt(1.0001 ** Number(currentTick)).toFixed(18);
+        let currentRatio = Number(Math.sqrt(1.0001 ** Number(currentTick)).toFixed(18));
+        
         let amount0wei = 0;
         let amount1wei = 0;
-
         if (currentTick <= tickLower) {
-          amount0wei = Math.floor(
-            Number(liquidity) *
-            ((Number(sqrtRatioB) - Number(sqrtRatioA)) /
-              (Number(sqrtRatioA) * Number(sqrtRatioB)))
-          );
+          amount0wei = Math.floor(liquidity * ((sqrtRatioB - sqrtRatioA) / (sqrtRatioA * sqrtRatioB)));
         }
 
         if (currentTick > tickUpper) {
-          amount1wei = Math.floor(
-            Number(liquidity) * (Number(sqrtRatioB) - Number(sqrtRatioA))
-          );
+          amount1wei = Math.floor(liquidity * (sqrtRatioB - sqrtRatioA));
         }
 
         if (currentTick >= tickLower && currentTick < tickUpper) {
-          amount0wei = Math.floor(
-            Number(liquidity) *
-            ((Number(sqrtRatioB) - Number(currentRatio)) /
-              (Number(currentRatio) * Number(sqrtRatioB)))
-          );
-
-          amount1wei = Math.floor(Number(liquidity) * (Number(currentRatio) - Number(sqrtRatioA)));
+          amount0wei = Math.floor(liquidity * ((sqrtRatioB - currentRatio) / (currentRatio * sqrtRatioB)));
+          amount1wei = Math.floor(liquidity * (currentRatio - sqrtRatioA));
         }
 
         const amount0 = (amount0wei / 10 ** 18).toFixed(2).toString();
         const amount1 = (amount1wei / 10 ** 18).toFixed(6).toString();
 
-        const amountETHUSDC = amount1 + " ETH / " + amount0 + " USDC";
-        const amountWBTCUSDC = amount1 + " WBTC / " + amount0 + " USDC";
+        const amountTicker1divTicker0 = `${amount1} ${tickerForToken1} / ${amount0} ${tickerForToken0}`;
 
-        if (position.token0 === ETHContractAddress) {
-          positionItem.asset = "ETH / USDC";
-          positionItem.avatar = "/eth.svg";
-          positionItem.feeBalance = unclaimedFeeETHUSDC;
-          positionItem.orderBalance = amountETHUSDC;
-          positionItem.link = linkOrder;
-        } else {
-          positionItem.asset = "WBTC / USDC";
-          positionItem.avatar = "/btc.svg";
-          positionItem.feeBalance = unclaimedFeeWBTCUSDC;
-          positionItem.orderBalance = amountWBTCUSDC;
-          positionItem.link = linkOrder;
-        }
+      
+        positionItem.asset = `${tickerForToken1.toUpperCase()}/${tickerForToken0.toUpperCase()}`;
+        positionItem.avatar = `${PATH_TO_ASSETS}/${tickerForToken1.toLowerCase()}.svg`;
+
+        positionItem.feeBalance = unclaimedTokensText;
+        positionItem.orderBalance = amountTicker1divTicker0;
+        positionItem.link = linkOrder;
 
         dataOrders.push(positionItem);
         setDataOrders([...dataOrders]);
-
-      })
+      }) //forech
+      
     })();
   }, [])
 

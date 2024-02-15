@@ -19,7 +19,7 @@ const SwitchNetworkDropdown = () => {
             </DropdownTrigger>
         <DropdownMenu
           aria-label="Static Actions"
-          onAction={(key) => switchNetwork(key)}
+          onAction={(key: any) => switchNetwork(key)}
         >
           {networks.map((network) => (
             <DropdownItem key={network.chainId}>

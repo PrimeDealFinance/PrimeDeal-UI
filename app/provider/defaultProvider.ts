@@ -1,5 +1,5 @@
 import { AlchemyProvider } from "ethers";
-import { InfuraProvider, JsonRpcProvider } from "ethers/providers";
+import { InfuraProvider, JsonRpcProvider } from "ethers";
 
 const defaultProvider = new InfuraProvider("matic-mumbai");
 

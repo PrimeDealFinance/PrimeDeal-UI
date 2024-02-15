@@ -21,6 +21,8 @@ import ModalCheck50 from "./ModalCheck50";
 import { SelectOption } from '@mui/joy/Select';
 import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
 import { useWalletStore } from "@/service/store";
+import "@/app/font.css"
+
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
@@ -70,14 +72,15 @@ const BuyCard = () => {
           };
 
     return (
-        <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
+        <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px] font-['GothamPro']">
             <Select
                 indicator={<KeyboardArrowDown />}
                 defaultValue='eth'
                 slotProps={{
                     listbox: {
                         sx: {
-                            borderRadius: '12px'
+                            borderRadius: '12px',
+                            fontFamily: 'GothamPro'
                         },
                     },
                 }}
@@ -86,7 +89,8 @@ const BuyCard = () => {
                     height: '50px',
                     borderRadius: '100px',
                     marginTop: '38px',
-                    backgroundColor: '#0A0914'
+                    backgroundColor: '#0A0914',
+                    fontFamily: 'GothamPro'
                 }}
                 renderValue={renderValue}
             >
@@ -96,7 +100,7 @@ const BuyCard = () => {
                         <Option
                             value={option.value}
                             label={option.label}
-                            sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px' }}>
+                            sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px', fontFamily: 'GothamPro' }}>
                             <ListItemDecorator>
                                 <Avatar size="sm" src={option.src} />
                             </ListItemDecorator>
@@ -117,26 +121,26 @@ const BuyCard = () => {
                 </div>
                 <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
                     <div>
-                        <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                        <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]" style={{fontFamily: 'GothamPro'}}>
                             Текущая цена
                         </div>
-                        <div className="text-[16px] font-normal leading-[24.32px]">
+                        <div className="text-[16px] font-normal leading-[24.32px]" style={{fontFamily: 'GothamPro'}}>
                             74280.88
                         </div>
                     </div>
                     <div>
-                        <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                        <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]" style={{fontFamily: 'GothamPro'}}>
                             Средняя цена покупки
                         </div>
-                        <div className="text-[16px] font-normal leading-[24.32px]">
+                        <div className="text-[16px] font-normal leading-[24.32px]" style={{fontFamily: 'GothamPro'}}>
                             74280.88
                         </div>
                     </div>
                     <div>
-                        <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                        <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]" style={{fontFamily: 'GothamPro'}}>
                             Всего получено
                         </div>
-                        <div className="text-[16px] font-normal leading-[24.32px]">
+                        <div className="text-[16px] font-normal leading-[24.32px]" style={{fontFamily: 'GothamPro'}}>
                             74280.88
                         </div>
                     </div>
@@ -148,6 +152,10 @@ const BuyCard = () => {
                 endDecorator={
                     <React.Fragment>
                         <Select
+                            sx={{
+                                fontFamily: 'GothamPro',
+                                width: '130px'
+                            }}
                             indicator={<KeyboardArrowDown />}
                             defaultValue='usdc'
                             variant="plain"
@@ -156,6 +164,7 @@ const BuyCard = () => {
                                     variant: 'outlined',
                                     sx: {
                                         borderRadius: '12px',
+                                        fontFamily: 'GothamPro'
                                     },
                                 },
                             }}
@@ -165,7 +174,7 @@ const BuyCard = () => {
                                 </React.Fragment>
                             }
                         >
-                            <Option value="usdc" sx={{ borderRadius: '100px', width: '115px', marginLeft: '5px' }}>
+                            <Option value="usdc" sx={{ borderRadius: '100px', width: '120px', marginLeft: '5px', fontFamily: 'GothamPro'}}>
                                 <Avatar size="sm" src="/usdc.svg" />
                                 USDC
                             </Option>
@@ -173,6 +182,7 @@ const BuyCard = () => {
                     </React.Fragment>
                 }
                 sx={{
+                    fontFamily: 'GothamPro',
                     width: '476px',
                     height: '50px',
                     borderRadius: '100px',
@@ -186,7 +196,8 @@ const BuyCard = () => {
                         color: "#8A8997",
                         fontSize: "12px",
                         fontWeight: "normal",
-                        letterSpacing: "0.12px"
+                        letterSpacing: "0.12px",
+                        fontFamily: 'GothamPro'
                     }}
                 >
                     Верхняя граница
@@ -210,7 +221,8 @@ const BuyCard = () => {
                         width: '476px',
                         height: '50px',
                         borderRadius: '100px',
-                        backgroundColor: '#0A0914'
+                        backgroundColor: '#0A0914',
+                        fontFamily: 'GothamPro'
                     }}
                 />
             </FormControl>
@@ -232,7 +244,8 @@ const BuyCard = () => {
                     backgroundColor: '#5706FF',
                     borderRadius: '1000px',
                     boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
-                    marginTop: '28px'
+                    marginTop: '28px',
+                    fontFamily: 'GothamPro'
                 }}
                 onClick={checkAmount50}
             >
@@ -247,14 +260,15 @@ const BuyCard = () => {
                         sx={{
                             width: "500px",
                             position: "relative",
-                            borderRadius: "12px"
+                            borderRadius: "12px",
+                            fontFamily: 'GothamPro'
                         }}
                     >
-                        <ModalClose sx={{position:'absolute', top:'-40px', right:'0', opacity:'0.3'}}/>
-                        <DialogTitle>
+                        <ModalClose sx={{position:'absolute', top:'0px', right:'0', opacity:'0.5'}}/>
+                        <DialogTitle sx={{fontFamily: 'GothamPro'}}>
                             Confirmation
                         </DialogTitle>
-                        <DialogContent sx={{display:'flex', flexDirection:'column', alignItems:"center"}}>
+                        <DialogContent sx={{display:'flex', flexDirection:'column', alignItems:"center", fontFamily: 'GothamPro'}}>
                             <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
                                 <div className="absolute left-0 top-[-23px]">
                                    <p className="text-[14px]">
@@ -336,7 +350,8 @@ const BuyCard = () => {
                                     backgroundColor: '#5706FF',
                                     borderRadius: '1000px',
                                     boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
-                                    marginTop: '28px'
+                                    marginTop: '28px',
+                                    fontFamily: 'GothamPro'
                                 }}
                                 onClick={() => setOpen(true)}
                             >

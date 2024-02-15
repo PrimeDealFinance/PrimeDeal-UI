@@ -11,6 +11,7 @@ import defaultProvider from "../provider/defaultProvider";
 import { Contract, ethers } from "ethers";
 import { maxUint128 } from "viem";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import "@/app/font.css";
 
 const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
@@ -207,9 +208,9 @@ function Orders() {
   return (
     <div className="mt-[180px] h-screen flex flex-col items-center z-10 mb-20">
       <div className="xl:w-[1200px] w-11/12">
-        <h1 className="self-start text-3xl font-bold">{TEXT_ORDERS.title}</h1>
+        <h1 className="self-start text-3xl font-bold font-['GothamPro']">{TEXT_ORDERS.title}</h1>
         <Sheet color="primary" className="p-5 mt-5 rounded-3xl">
-          <Table variant="plain">
+          <Table variant="plain" sx={{fontFamily: 'GothamPro'}}>
             <thead>
               <tr>
                 {COLUMNS.map((column) => (

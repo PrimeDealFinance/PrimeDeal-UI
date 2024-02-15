@@ -20,6 +20,7 @@ import {
 import { SelectOption } from '@mui/joy/Select';
 import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
 import { useWalletStore } from "@/service/store";
+import "@/app/font.css";
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
@@ -58,14 +59,15 @@ const SellCard = () => {
     }
 
     return (
-        <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
+        <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px] font-['GothamPro']">
             <Select
                 indicator={<KeyboardArrowDown />}
                 defaultValue='usdc'
                 slotProps={{
                     listbox: {
                         sx: {
-                            borderRadius: '12px'
+                            borderRadius: '12px',
+                            fontFamily: 'GothamPro'
                         },
                     },
                 }}
@@ -74,7 +76,8 @@ const SellCard = () => {
                     height: '50px',
                     borderRadius: '100px',
                     marginTop: '38px',
-                    backgroundColor: '#0A0914'
+                    backgroundColor: '#0A0914',
+                    fontFamily: 'GothamPro'
                 }}
                 startDecorator={
                     <React.Fragment>
@@ -82,7 +85,7 @@ const SellCard = () => {
                     </React.Fragment>
                 }
             >
-                <Option value="usdc" sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px' }}>
+                <Option value="usdc" sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px', fontFamily: 'GothamPro' }}>
                     <Avatar size="sm" src="/usdc.svg" />
                     USDC
                 </Option>
@@ -130,6 +133,10 @@ const SellCard = () => {
                 endDecorator={
                     <React.Fragment>
                         <Select
+                            sx={{
+                                fontFamily: 'GothamPro',
+                                width: '130px'
+                            }}
                             renderValue={renderValue}
                             indicator={<KeyboardArrowDown />}
                             defaultValue='eth'
@@ -139,6 +146,7 @@ const SellCard = () => {
                                     variant: 'outlined',
                                     sx: {
                                         borderRadius: '12px',
+                                        fontFamily: 'GothamPro'
                                     },
                                 },
                             }}
@@ -146,7 +154,7 @@ const SellCard = () => {
                             {options.map((option, index) => (
                                 <React.Fragment key={option.value}>
                                     {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
-                                    <Option value={option.value} label={option.label} sx={{ borderRadius: '100px', width: '115px', marginLeft: '5px' }}>
+                                    <Option value={option.value} label={option.label} sx={{ borderRadius: '100px', width: '120px', marginLeft: '5px', fontFamily: 'GothamPro' }}>
                                         <ListItemDecorator>
                                             <Avatar size="sm" src={option.src} />
                                         </ListItemDecorator>
@@ -162,7 +170,8 @@ const SellCard = () => {
                     height: '50px',
                     borderRadius: '100px',
                     marginTop: '59px',
-                    backgroundColor: '#0A0914'
+                    backgroundColor: '#0A0914',
+                    fontFamily: 'GothamPro'
                 }}
             />
             <FormControl sx={{ marginTop: '21px' }}>
@@ -171,7 +180,8 @@ const SellCard = () => {
                         color: "#8A8997",
                         fontSize: "12px",
                         fontWeight: "normal",
-                        letterSpacing: "0.12px"
+                        letterSpacing: "0.12px",
+                        fontFamily: 'GothamPro'
                     }}
                 >
                     Верхняя граница
@@ -193,7 +203,8 @@ const SellCard = () => {
                         width: '476px',
                         height: '50px',
                         borderRadius: '100px',
-                        backgroundColor: '#0A0914'
+                        backgroundColor: '#0A0914',
+                        fontFamily: 'GothamPro'
                     }}
                     value={count}
                     onChange={handleCountChange}
@@ -216,7 +227,8 @@ const SellCard = () => {
                     backgroundColor: '#5706FF',
                     borderRadius: '1000px',
                     boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
-                    marginTop: '28px'
+                    marginTop: '28px',
+                    fontFamily: 'GothamPro'
                 }}
             >
                 {TEXT_CELL_CARD.btn}
@@ -230,14 +242,15 @@ const SellCard = () => {
                         sx={{
                             width: "500px",
                             position: "relative",
-                            borderRadius: "12px"
+                            borderRadius: "12px",
+                            fontFamily: 'GothamPro'
                         }}
                     >
-                        <ModalClose sx={{position:'absolute', top:'-40px', right:'0', opacity:'0.3'}}/>
-                        <DialogTitle>
+                        <ModalClose sx={{position:'absolute', top:'0', right:'0', opacity:'0.5'}}/>
+                        <DialogTitle sx={{fontFamily: 'GothamPro'}}>
                             Confirmation
                         </DialogTitle>
-                        <DialogContent sx={{display:'flex', flexDirection:'column', alignItems:"center"}}>
+                        <DialogContent sx={{display:'flex', flexDirection:'column', alignItems:"center", fontFamily: 'GothamPro'}}>
                             <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
                                 <div className="absolute left-0 top-[-23px]">
                                    <p className="text-[14px]">
@@ -319,7 +332,8 @@ const SellCard = () => {
                                     backgroundColor: '#5706FF',
                                     borderRadius: '1000px',
                                     boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
-                                    marginTop: '28px'
+                                    marginTop: '28px',
+                                    fontFamily: 'GothamPro'
                                 }}
                                 onClick={() => setOpen(true)}
                             >

@@ -17,6 +17,7 @@ import {
     DialogTitle,
     DialogContent
 } from '@mui/joy';
+import ModalCheck50 from "./ModalCheck50";
 import { SelectOption } from '@mui/joy/Select';
 import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
 
@@ -37,6 +38,7 @@ const BuyCard = () => {
     }
     
     const [open, setOpen] = React.useState<boolean>(false);
+    const [openModal50, setOpenModal50] = React.useState<boolean>(false);
 
     function renderValue(option: SelectOption<string> | null) {
         return option ? (
@@ -48,6 +50,17 @@ const BuyCard = () => {
             </>
         ) : null;
     }
+
+    const checkAmount50 = () => {
+        if(count > 50) {
+            setOpenModal50(true);
+        } else {
+         setOpen(true);
+        }
+    }
+    const handleOpenModal50 = async () => {
+        setOpenModal50(false);
+          };
 
     return (
         <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
@@ -212,7 +225,7 @@ const BuyCard = () => {
                         boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
                         marginTop: '28px'
                     }}
-                    onClick={() => setOpen(true)}
+                    onClick={checkAmount50}
                 >
                     Create Order
                 </Button>
@@ -323,6 +336,10 @@ const BuyCard = () => {
                         </DialogContent>
                     </ModalDialog>
                 </Modal>
+                <ModalCheck50
+                onOpenModal50={handleOpenModal50}
+                openModal50={openModal50}
+                />
             </React.Fragment>
         </div>
     )

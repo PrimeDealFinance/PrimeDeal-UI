@@ -285,7 +285,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
     return (
         <div className="flex flex-col h-full flex flex-col items-center font-['GothamPro']">
             <div className="flex flex-col items-center w-[1211px] relative h-[788px] rounded-[22px] bg-[#0A0914] z-[2] mt-[188px] mb-[123px]">
-                <div className="absolute flex justify-between items-center top-[-58px] left-[0] w-[378px]">
+                <div className="absolute flex justify-between items-center top-[-58px] left-[0]">
                     <div className="flex">
                         <Image
                             src={iconETH_WBTC}
@@ -293,7 +293,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                             width={29}
                             height={29}
                         />
-                        <p className="color-[#FFF] text-[32px] font-normal tracking-[-0.64px] ml-[11px]">
+                        <p className="color-[#FFF] text-[32px] font-normal tracking-[-0.64px] mx-[11px]">
                             {ETH_WBTC}
                         </p>
                     </div>

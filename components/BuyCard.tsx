@@ -168,7 +168,10 @@ const BuyCard = () => {
                         <Select
                             sx={{
                                 fontFamily: 'GothamPro',
-                                width: '130px'
+                                width: '130px',
+                                [`&:hover`] : {
+                                    borderRadius: '1000px',
+                                  },
                             }}
                             indicator={<KeyboardArrowDown />}
                             defaultValue='usdc'

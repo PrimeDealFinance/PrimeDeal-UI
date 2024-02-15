@@ -19,15 +19,21 @@ import {
 } from '@mui/joy';
 import { SelectOption } from '@mui/joy/Select';
 import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
-
-
+import { useWalletStore } from "@/service/store";
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
     { value: 'matic', label: 'MATIC', src: '/matic.svg' },
-  ];
+];
+
+const TEXT_CELL_CARD = {
+    btn: 'Create Order'
+}
 
 const SellCard = () => {
+    const {
+        isConnect,
+    } = useWalletStore();
 
     const [count, setCount] = useState(0)
 
@@ -37,7 +43,7 @@ const SellCard = () => {
             setCount(parseValue)
         }
     }
-    
+
     const [open, setOpen] = React.useState<boolean>(false);
 
     function renderValue(option: SelectOption<string> | null) {
@@ -53,36 +59,33 @@ const SellCard = () => {
 
     return (
         <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
-           
             <Select
-                
                 indicator={<KeyboardArrowDown />}
                 defaultValue='usdc'
                 slotProps={{
                     listbox: {
-                      sx: {
-                        borderRadius: '12px'
-                      },
+                        sx: {
+                            borderRadius: '12px'
+                        },
                     },
-                  }}
+                }}
                 sx={{
                     width: '476px',
                     height: '50px',
                     borderRadius: '100px',
-                    marginTop:'38px',
-                    backgroundColor:'#0A0914'
+                    marginTop: '38px',
+                    backgroundColor: '#0A0914'
                 }}
-                startDecorator= {
+                startDecorator={
                     <React.Fragment>
-                        <Avatar size="sm" src="/usdc.svg"/>
+                        <Avatar size="sm" src="/usdc.svg" />
                     </React.Fragment>
                 }
-              
-                >
-                    <Option value="usdc" sx={{borderRadius:'100px', width:'456px', marginLeft:'10px'}}>
-                        <Avatar size="sm" src="/usdc.svg" />
-                        USDC
-                    </Option>
+            >
+                <Option value="usdc" sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px' }}>
+                    <Avatar size="sm" src="/usdc.svg" />
+                    USDC
+                </Option>
             </Select>
             <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
                 <div style={{
@@ -91,7 +94,7 @@ const SellCard = () => {
                     backgroundPosition: 'center',
                     backgroundSize: '100%',
                 }}
-                className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
+                    className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
                 >
                 </div>
                 <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
@@ -121,7 +124,7 @@ const SellCard = () => {
                     </div>
                 </div>
             </div>
-            <Input 
+            <Input
                 placeholder="Amount"
                 variant="outlined"
                 endDecorator={
@@ -133,17 +136,17 @@ const SellCard = () => {
                             variant="plain"
                             slotProps={{
                                 listbox: {
-                                  variant: 'outlined',
-                                  sx: {
-                                    borderRadius:'12px',
-                                  },
+                                    variant: 'outlined',
+                                    sx: {
+                                        borderRadius: '12px',
+                                    },
                                 },
-                              }}
+                            }}
                         >
                             {options.map((option, index) => (
                                 <React.Fragment key={option.value}>
-                                {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
-                                    <Option value={option.value} label={option.label} sx={{borderRadius:'100px', width:'115px', marginLeft:'5px'}}>
+                                    {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
+                                    <Option value={option.value} label={option.label} sx={{ borderRadius: '100px', width: '115px', marginLeft: '5px' }}>
                                         <ListItemDecorator>
                                             <Avatar size="sm" src={option.src} />
                                         </ListItemDecorator>
@@ -159,11 +162,11 @@ const SellCard = () => {
                     height: '50px',
                     borderRadius: '100px',
                     marginTop: '59px',
-                    backgroundColor:'#0A0914'
+                    backgroundColor: '#0A0914'
                 }}
             />
-            <FormControl sx={{marginTop:'21px'}}>
-                <FormLabel 
+            <FormControl sx={{ marginTop: '21px' }}>
+                <FormLabel
                     sx={{
                         color: "#8A8997",
                         fontSize: "12px",
@@ -173,7 +176,7 @@ const SellCard = () => {
                 >
                     Верхняя граница
                 </FormLabel>
-                <Input 
+                <Input
                     placeholder=""
                     variant="outlined"
                     endDecorator={
@@ -190,34 +193,34 @@ const SellCard = () => {
                         width: '476px',
                         height: '50px',
                         borderRadius: '100px',
-                        backgroundColor:'#0A0914'
+                        backgroundColor: '#0A0914'
                     }}
                     value={count}
                     onChange={handleCountChange}
                 />
             </FormControl>
             <React.Fragment>
-                <Button
-                    sx={{
-                        color: '#FFF',
-                        textAlign: 'center',
-                        fontSize: '12px',
-                        fontStyle: 'normal',
-                        fontWeight: '700',
-                        lineHeight: '18.264px',
-                        letterSpacing: '0.24px',
-                        textTransform: 'uppercase',
-                        width: '210px',
-                        height: '55px',
-                        backgroundColor: '#5706FF',
-                        borderRadius: '1000px',
-                        boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
-                        marginTop: '28px'
-                    }}
-                    onClick={() => setOpen(true)}
-                >
-                    Create Order
-                </Button>
+            <Button
+                disabled={!isConnect}
+                sx={{
+                    color: '#FFF',
+                    textAlign: 'center',
+                    fontSize: '12px',
+                    fontStyle: 'normal',
+                    fontWeight: '700',
+                    lineHeight: '18.264px',
+                    letterSpacing: '0.24px',
+                    textTransform: 'uppercase',
+                    width: '210px',
+                    height: '55px',
+                    backgroundColor: '#5706FF',
+                    borderRadius: '1000px',
+                    boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
+                    marginTop: '28px'
+                }}
+            >
+                {TEXT_CELL_CARD.btn}
+            </Button>
                 <Modal 
                     open={open} 
                     onClose={() => setOpen(false)}

@@ -12,9 +12,7 @@ import { ethers, Contract } from "ethers";
 import defaultProvider from "../../provider/defaultProvider";
 import abiContract from "../../../components/abiContract";
 import { maxUint128 } from "viem";
-import greenDot from "@/public/greenDot.svg"
 import ProtectedRoute from "@/components/ProtectedRoute";
-
 import { useWalletStore } from "@/service/store";
 const {
     abi: INonfungiblePositionManagerABI,
@@ -47,6 +45,12 @@ function OrderIdPage({ params }: { params: { id: string } }) {
     const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
     const [paramsId, setParamsId] = useState<string>("");
     const [halfPrice, setHalfPrice] = useState<number>(0);
+    const [colorDot, setColorDot] = useState<string>("");
+    const [share0, setShare0] = useState<string>("");
+    const [share1, setShare1] = useState<string>("");
+    const [ratioAPrice, setRatioAPrice] = useState<string>("");
+    const [ratioBPrice, setRatioBPrice] = useState<string>("");
+    const [middlePurchase, setMiddlePurchase] = useState<string>("");
   
     const closePositionId = async() => {
       try {
@@ -65,7 +69,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
 
     const claimFees = async() => {
         try {
-        const tx = await contractSigner.closePosition(params.id,
+        const tx = await contractSigner.collect(params.id,
           {
             gasLimit: 850000,
           });
@@ -100,6 +104,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
           USDTContractAddress,
           "3000"
         );
+
         const priceUSDC_ETH = 1 / (Number(sqrtPriceX96EthUsdt) ** 2 / 2 ** 192);
         // ещё нужен прайс для битка тут
   
@@ -138,13 +143,25 @@ function OrderIdPage({ params }: { params: { id: string } }) {
             );
             const tickLower = first[6];
             const tickUpper = first[7];
+            const share0 = ((Number(tickUpper) - Number(currentTick))) / (((Number(tickUpper) - Number(tickLower))) / 100);
+            const share1 = 100 - share0;
             if (currentTick > tickLower && currentTick < tickUpper) {
               setInRange("In range");
               setColorRange("#6FEE8E");
-              // setColorRange("bg-[#6FEE8E]");
+              setColorDot('/greenDot.svg');
+              setShare0(share0.toFixed(2).toString());
+              setShare1(share1.toFixed(2).toString());
             } else {
               setInRange("Out of range"); 
               setColorRange("#e73326");
+              setColorDot('/redDot.svg');
+              if(currentTick < tickLower){
+                setShare0("100");
+                setShare1("0");
+              } else {
+                setShare0("0");
+                setShare1("100");
+              }
             }
   
             // // Calculate fee
@@ -187,9 +204,17 @@ function OrderIdPage({ params }: { params: { id: string } }) {
             const liquidity = first[8];
             let sqrtRatioA = Math.sqrt(1.0001 ** Number(tickLower)).toFixed(18); // (18)нужно вытаскивать десималс из токена
             let sqrtRatioB = Math.sqrt(1.0001 ** Number(tickUpper)).toFixed(18); // (18)нужно вытаскивать десималс из токена
-            let currentRatio = Math.sqrt(1.0001 ** Number(currentTick)).toFixed(
-              18
-            );
+            let currentRatio = Math.sqrt(1.0001 ** Number(currentTick)).toFixed(18);
+            let currentRatioPrice = (1.0001 ** Number(currentTick)).toFixed(18);
+            let sqrtRatioAPrice = (1.0001 ** Number(tickUpper)).toFixed(18);
+            let sqrtRatioBPrice = (1.0001 ** Number(tickLower)).toFixed(18);
+            setRatioAPrice((1 / +sqrtRatioAPrice).toFixed(2).toString());
+            setRatioBPrice((1 / +sqrtRatioBPrice).toFixed(2).toString());
+            setMiddlePurchase((((1 / +sqrtRatioAPrice) + (1 / +sqrtRatioBPrice)) / 2 ).toFixed(2).toString());
+            //console.log("currentRatioPrice:" , ((1 / +sqrtRatioAPrice) + (1 / +sqrtRatioBPrice)) / 2);
+            //console.log("sqrtRatioAPrice: ", sqrtRatioAPrice);
+            // console.log("sqrtRatioB: ", sqrtRatioB);
+
             let amount0wei = 0;
             let amount1wei = 0;
             if (currentTick <= tickLower) {
@@ -276,7 +301,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                         sx={{color: colorRange, background:'transparent'}}
                         startDecorator={
                             <Avatar 
-                                src='/greenDot.svg'
+                                src={colorDot}
                                 sx={{width:'8px', height:'8px'}}
                             />
                         }
@@ -338,7 +363,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                                       {amountUSDC}
                                     </p>
                                     <p className="text-[16px] tracking-[0.16px] opacity-50">
-                                        0.32%
+                                        {share0}{""}%
                                     </p>
                                 </div>
                             </div>
@@ -359,7 +384,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                                      {amountETH_WBTC} 
                                     </p>
                                     <p className="text-[16px] tracking-[0.16px] opacity-50">
-                                        0.68%
+                                    {share1}{""}%
                                     </p>
                                 </div>
                             </div>
@@ -430,20 +455,15 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                 <div className="relative flex justify-between mt-[134px] w-[1120px] h-[139px]">
                     <div className="absolute top-[-56px] left-0"> 
                         <p className="text-[32px] font-bold tracking-[-0.64px]">
-                            Аналитика
+                          Analytics
                         </p>
                     </div>
                     <div className="flex flex-col items-start w-[364px] h-[139px] rounded-[13px] bg-[#141320]">
                         <p className="mb-[4px] mt-[25px] ml-[30px] text-[#8A8997] text-[14px] tracking-[0.14px]">
-                            Средняя цена покупки
+                           Middle purchase
                         </p> 
                         <p className="mb-[3px] ml-[30px] text-[24px] tracking-[-0.48px] leading-[36.528px]">
-                            $253.45
-                            
-                         {/* {" "}
-                             Average price, $:{" "}
-                       {halfPrice.toFixed(2)}{" "} */}
-                                  
+                            ${" "}{middlePurchase}
                         </p>
                         <div className="flex ml-[30px] items-center">
                             <div>
@@ -469,12 +489,12 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                     </div>
                     <div className="relative flex flex-col items-start w-[364px] h-[139px] rounded-[13px] bg-[#141320]">
                         <p className="mb-[4px] mt-[25px] ml-[30px] text-[#8A8997] text-[14px] tracking-[0.14px]">
-                            Доходность
+                            Current income
                         </p>
                         <div className="flex items-center mb-[3px] ml-[30px] ">
                             <p className="text-[#6FEE8E]">+</p>
                             <p className="text-[24px] tracking-[-0.48px] leading-[36.528px]">
-                                $253.45
+                            ${" "}{feeDollars}
                             </p>
                         </div>
                         <div className="flex ml-[30px] items-center">
@@ -501,15 +521,15 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                     </div>
                     <div className="flex flex-col items-start w-[364px] h-[139px] rounded-[13px] bg-[#141320]">
                         <p className="mb-[8px] mt-[27px] ml-[32px] text-[#8A8997] text-[14px] tracking-[0.14px]">
-                            Выбранный диапазон
+                            Your range
                         </p>
                         <div className="flex ml-[32px]">
                             <div className="flex flex-col items-start">
                                 <p className="text-[24px] tracking-[-0.48px] leading-[36.528px] mb-[8px]">
-                                    $253.45
+                                    ${" "}{ratioAPrice}
                                 </p>
                                 <p className="opacity-50 text-[14px] tracking-[0.14px]">
-                                    Мин. цена
+                                    Min price
                                 </p>
                             </div>
                             <p className="text-[24px] font-bold leading-[36.582px] mx-[21px] opacity-30">
@@ -517,10 +537,10 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                             </p>
                             <div className="flex flex-col items-start">
                                 <p className="text-[24px] tracking-[-0.48px] leading-[36.528px] mb-[8px]">
-                                    $253.45
+                                ${" "}{ratioBPrice}
                                 </p>
                                 <p className="opacity-50 text-[14px] tracking-[0.14px]">
-                                    Макс. цена
+                                    Max Price
                                 </p>
                             </div>
                         </div>

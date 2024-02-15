@@ -34,6 +34,10 @@ const TEXT_BUY_CARD = {
 }
 
 const BuyCard = () => {
+
+  /// @dev if amount larger 5, disable buttons
+  const [amountDisable, setAmountDisable] = useState(true);
+
     const {
         isConnect,
     } = useWalletStore();
@@ -44,6 +48,9 @@ const BuyCard = () => {
         if (!isNaN(parseValue)) {
             setCount(parseValue)
         }
+      
+      if (event.target.value === '' || event.target.value === null)
+        setCount(0);
     }
     
     const [open, setOpen] = React.useState<boolean>(false);
@@ -60,13 +67,19 @@ const BuyCard = () => {
         ) : null;
     }
 
-    const checkAmount50 = () => {
-        if(count > 50) {
-            setOpenModal50(true);
-        } else {
-         setOpen(true);
-        }
-    }
+    // const checkAmount50 = () => {
+    //     if(count > 50) {
+    //         setOpenModal50(true);
+    //     } else {
+    //      setOpen(true);
+    //     }
+    // }
+
+  /// @dev Disable buttons if amount out of range
+  const handleChangeAmount = (event: React.ChangeEvent<HTMLInputElement>) => {
+    (Number(event.target.value) > 5 || event.target.value === '') ? setAmountDisable(true) : setAmountDisable(false);
+  }
+
     const handleOpenModal50 = async () => {
         setOpenModal50(false);
           };
@@ -149,6 +162,7 @@ const BuyCard = () => {
             <Input
                 placeholder="Amount"
                 variant="outlined"
+                onChange={handleChangeAmount}
                 endDecorator={
                     <React.Fragment>
                         <Select
@@ -207,10 +221,10 @@ const BuyCard = () => {
                     variant="outlined"
                     endDecorator={
                         <ButtonGroup spacing='9px' sx={{ borderRadius: '100%' }} variant="plain">
-                            <IconButton onClick={() => setCount(count + 1)} variant="plain">
+                        <IconButton disabled={amountDisable} onClick={() => setCount(count + 1)} variant="plain">
                                 <Plus />
                             </IconButton>
-                            <IconButton onClick={() => setCount(count - 1)} variant='plain'>
+                            <IconButton disabled={amountDisable} onClick={() => setCount(count - 1)} variant='plain'>
                                 <Minus />
                             </IconButton>
                         </ButtonGroup>
@@ -229,7 +243,7 @@ const BuyCard = () => {
             <React.Fragment>
 
             <Button
-                disabled={!isConnect}
+            disabled={!isConnect || amountDisable}
                 sx={{
                     color: '#FFF',
                     textAlign: 'center',
@@ -247,7 +261,7 @@ const BuyCard = () => {
                     marginTop: '28px',
                     fontFamily: 'GothamPro'
                 }}
-                onClick={checkAmount50}
+                // onClick={checkAmount50}
             >
                 {TEXT_BUY_CARD.btn}
             </Button>

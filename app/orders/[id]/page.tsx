@@ -27,7 +27,8 @@ function OrderIdPage({ params }: { params: { id: string } }) {
       positionManagerContractAddress,
       USDTContractAddress,
       ETHContractAddress,
-      contractSigner
+      contractSigner,
+      reinitializeContracts
     } = useWalletStore();
 
     const [nameOrder, setNameOrder] = useState<string>("");
@@ -53,6 +54,10 @@ function OrderIdPage({ params }: { params: { id: string } }) {
     const [ratioAPrice, setRatioAPrice] = useState<string>("");
     const [ratioBPrice, setRatioBPrice] = useState<string>("");
     const [middlePurchase, setMiddlePurchase] = useState<string>("");
+
+    useEffect(() => {
+      reinitializeContracts();
+    }, []);
   
     const closePositionId = async() => {
       try {

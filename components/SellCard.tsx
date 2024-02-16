@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
 import {
     Avatar,
     ListItemDecorator,
@@ -21,6 +22,8 @@ import { SelectOption } from '@mui/joy/Select';
 import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
 import { useWalletStore } from "@/service/store";
 import "@/app/font.css";
+import defaultProvider from "../app/provider/defaultProvider";
+import abiContract from "../components/abiContract";
 
 const options = [
     { value: 'eth', label: 'ETH', src: '/eth.svg' },
@@ -34,18 +37,101 @@ const TEXT_CELL_CARD = {
 const SellCard = () => {
     const {
         isConnect,
+        account,
+        positionManagerContractAddress,
+        usdtSigner,
+        contractSigner,
+        USDTContractAddress,
+        ETHContractAddress,
     } = useWalletStore();
 
-    const [count, setCount] = useState(0)
-
-    const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const parseValue = parseInt(event.target.value);
-        if (!isNaN(parseValue)) {
-            setCount(parseValue)
-        }
-    }
-
+    const [count, setCount] = useState("");
+    const [targetPrice, setTargetPrice] = useState(0);
     const [open, setOpen] = React.useState<boolean>(false);
+    const [currentRatioPrice, setCurrentRatioPrice] = useState("");
+    const [middlePurchase, setMiddlePurchase] = useState("");
+    const [futureAmount, setFutureAmount] = useState("");
+    const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
+
+    const contractProvider = new ethers.Contract(
+        positionManagerContractAddress,
+        abiContract,
+        defaultProvider
+      );
+   // вытаскиваем данные для расчетов курсов и тд
+    useEffect(() => {
+    (async () => {
+        try {
+    let currentTick = await contractProvider.getCurrentTick(poolAddressETH_USDC);
+    let currentRatioPrice = (1.0001 ** Number(currentTick)).toFixed(18);
+    setCurrentRatioPrice(((1 / +currentRatioPrice).toFixed(2).toString()));
+    
+     } catch(error) {
+        console.error(error);
+     }
+     })();
+    }, []);
+    
+    const getOpenSellPosition = async () => {
+    try {
+      const allowance = await usdtSigner.allowance(
+        account,
+        positionManagerContractAddress
+      );
+
+      const allowanceToString = ethers.formatUnits(allowance, 0);
+      const allowanceToNumber = +allowanceToString / 10 ** 18;
+      const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
+      const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
+      let targetPriceReady = BigInt(Math.sqrt(1 / +targetPrice) * 2 ** 96);
+      let targetReady_ = targetPriceReady.toString();
+
+      const maxUint256 = ethers.MaxInt256;
+
+      allowanceToNumber < +count
+        ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
+        : null;
+
+      const tx = await contractSigner.openSellPosition(
+        USDTContractAddress,
+        ETHContractAddress,
+        "3000",
+        targetReady_,
+        amountCoin_,
+        "0",
+        {
+          gasLimit: 850000,
+        }
+      );
+
+     // setTxhash(tx.hash);
+     // setIsOpenModalTx(true);
+      const response = await tx.wait();
+     // setIsOpenModalTx(false);
+      console.log("responseTxSwap1: ", response);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const parseValue = parseInt(event.target.value);
+    if(middlePurchase) {
+        setFutureAmount((parseValue * +middlePurchase).toFixed(2).toString());
+    }
+    if (!isNaN(parseValue)) {
+        setCount(parseValue.toFixed(2));
+    }
+}
+const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const parseValue = parseInt(event.target.value);
+    let middlePurchase = ((+currentRatioPrice + parseValue) / 2 ).toFixed(2).toString();
+        setMiddlePurchase(middlePurchase);
+        setFutureAmount((+count * +middlePurchase).toFixed(2).toString());
+    if (!isNaN(parseValue)) {
+        setTargetPrice(parseValue);
+    }
+}
 
     function renderValue(option: SelectOption<string> | null) {
         return option ? (
@@ -60,14 +146,13 @@ const SellCard = () => {
 
     return (
         <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px] font-['GothamPro']">
-            <Select
+             <Select
                 indicator={<KeyboardArrowDown />}
-                defaultValue='usdc'
+                defaultValue='eth'
                 slotProps={{
                     listbox: {
                         sx: {
-                            borderRadius: '12px',
-                            fontFamily: 'GothamPro'
+                            borderRadius: '12px'
                         },
                     },
                 }}
@@ -76,19 +161,24 @@ const SellCard = () => {
                     height: '50px',
                     borderRadius: '100px',
                     marginTop: '38px',
-                    backgroundColor: '#0A0914',
-                    fontFamily: 'GothamPro'
+                    backgroundColor: '#0A0914'
                 }}
-                startDecorator={
-                    <React.Fragment>
-                        <Avatar size="sm" src="/usdc.svg" />
-                    </React.Fragment>
-                }
+                renderValue={renderValue}
             >
-                <Option value="usdc" sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px', fontFamily: 'GothamPro' }}>
-                    <Avatar size="sm" src="/usdc.svg" />
-                    USDC
-                </Option>
+                {options.map((option, index) => (
+                    <React.Fragment key={option.value}>
+                        {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
+                        <Option
+                            value={option.value}
+                            label={option.label}
+                            sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px' }}>
+                            <ListItemDecorator>
+                                <Avatar size="sm" src={option.src} />
+                            </ListItemDecorator>
+                            {option.label}
+                        </Option>
+                    </React.Fragment>
+                ))}
             </Select>
             <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
                 <div style={{
@@ -103,26 +193,26 @@ const SellCard = () => {
                 <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
                     <div>
                         <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                            Текущая цена
+                            Current price
                         </div>
                         <div className="text-[16px] font-normal leading-[24.32px]">
-                            74280.88
+                            $ {" "}{currentRatioPrice}
                         </div>
                     </div>
                     <div>
                         <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                            Средняя цена покупки
+                            Middle purchase
                         </div>
                         <div className="text-[16px] font-normal leading-[24.32px]">
-                            74280.88
+                           ${" "} {middlePurchase}
                         </div>
                     </div>
                     <div>
                         <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                            Всего получено
+                            You will get
                         </div>
                         <div className="text-[16px] font-normal leading-[24.32px]">
-                            74280.88
+                            ~{" "}${" "}{futureAmount}
                         </div>
                     </div>
                 </div>
@@ -176,6 +266,7 @@ const SellCard = () => {
                     backgroundColor: '#0A0914',
                     fontFamily: 'GothamPro'
                 }}
+                onChange={handleCountChange}
             />
             <FormControl sx={{ marginTop: '21px' }}>
                 <FormLabel
@@ -194,10 +285,10 @@ const SellCard = () => {
                     variant="outlined"
                     endDecorator={
                         <ButtonGroup spacing='9px' sx={{ borderRadius: '100%' }} variant="plain">
-                            <IconButton onClick={() => setCount(count + 1)} variant="plain">
+                             <IconButton onClick={() => setTargetPrice(targetPrice + 1)} variant="plain">
                                 <Plus />
                             </IconButton>
-                            <IconButton onClick={() => setCount(count - 1)} variant='plain'>
+                            <IconButton onClick={() => setTargetPrice(targetPrice - 1)} variant='plain'>
                                 <Minus />
                             </IconButton>
                         </ButtonGroup>
@@ -209,8 +300,8 @@ const SellCard = () => {
                         backgroundColor: '#0A0914',
                         fontFamily: 'GothamPro'
                     }}
-                    value={count}
-                    onChange={handleCountChange}
+                    value={targetPrice}
+                    onChange={handleTargetPrice}
                 />
             </FormControl>
             <React.Fragment>
@@ -233,6 +324,7 @@ const SellCard = () => {
                     marginTop: '28px',
                     fontFamily: 'GothamPro'
                 }}
+                onClick={() => setOpen(true)}
             >
                 {TEXT_CELL_CARD.btn}
             </Button>
@@ -253,7 +345,7 @@ const SellCard = () => {
                         <DialogTitle sx={{fontFamily: 'GothamPro'}}>
                             Confirmation
                         </DialogTitle>
-                        <DialogContent sx={{display:'flex', flexDirection:'column', alignItems:"center", fontFamily: 'GothamPro'}}>
+                        <DialogContent sx={{display:'flex', flexDirection:'column', alignItems:"center"}}>
                             <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
                                 <div className="absolute left-0 top-[-23px]">
                                    <p className="text-[14px]">
@@ -261,13 +353,14 @@ const SellCard = () => {
                                     </p> 
                                 </div>
                                 <div className="flex items-center">
-                                   <Avatar size="sm" src="/eth.svg"/>
+                                  
+                                  <Avatar size="sm" src="/eth.svg"/>
                                    <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
                                         ETH
                                     </p>
                                 </div>
                                 <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
-                                    Amount
+                                    {count}
                                 </p>
                             </div>
                             <div className="relative flex items-center w-[455px] justify-between mt-[30px]">
@@ -277,46 +370,23 @@ const SellCard = () => {
                                     </p> 
                                 </div>
                                 <div className="flex items-center">
-                                   <Avatar size="sm" src="/usdc.svg"/>
+                                   
+                                <Avatar size="sm" src="/usdc.svg"/>
                                    <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
-                                        USDC
+                                      USDC
                                     </p>
                                 </div>
                                 <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
-                                    Amount
+                                    {futureAmount}
                                 </p>
                             </div>
                             <div className="flex flex-col items-center w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
                                 <div className="flex items-center justify-between w-[415px] mt-[10px]">
                                     <p className="text-[16px]">
-                                        Нижняя граница
+                                        Middle price 
                                     </p>
                                     <p className="text-[16px] text-[#FFF]">
-                                        Цена
-                                    </p>
-                                </div>
-                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
-                                    <p className="text-[16px]">
-                                        Награды за день
-                                    </p>
-                                    <p className="text-[16px] text-[#FFF]">
-                                        Кол-во
-                                    </p>
-                                </div>
-                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
-                                    <p className="text-[16px]">
-                                        Награды за неделю
-                                    </p>
-                                    <p className="text-[16px] text-[#FFF]">
-                                        Кол-во
-                                    </p>
-                                </div>
-                                <div className="flex items-center justify-between w-[415px] my-[10px]">
-                                    <p className="text-[16px]">
-                                        Награды за месяц
-                                    </p>
-                                    <p className="text-[16px] text-[#FFF]">
-                                        Кол-во
+                                       ${" "} {middlePurchase}
                                     </p>
                                 </div>
                             </div>
@@ -335,12 +405,11 @@ const SellCard = () => {
                                     backgroundColor: '#5706FF',
                                     borderRadius: '1000px',
                                     boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
-                                    marginTop: '28px',
-                                    fontFamily: 'GothamPro'
+                                    marginTop: '28px'
                                 }}
-                                onClick={() => setOpen(true)}
+                                onClick={getOpenSellPosition}
                             >
-                            Подтвердить
+                            Confirm
                         </Button>
                         </DialogContent>
                     </ModalDialog>

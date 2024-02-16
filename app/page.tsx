@@ -8,6 +8,12 @@ import Tab, { tabClasses } from '@mui/joy/Tab';
 import TabPanel from '@mui/joy/TabPanel';
 import "@/app/font.css";
 
+const options = [
+    { value: 'eth', label: 'ETH', src: '/eth.svg' },
+    { value: 'matic', label: 'MATIC', src: '/matic.svg' },
+    { value: 'usdc', label: 'usdc', src: '/usdc.svg' },
+];
+
 const CreateOrderPage = () => {
     return (
        <div className='flex relative h-screen flex-col items-center'> 

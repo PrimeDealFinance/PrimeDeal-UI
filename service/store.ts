@@ -222,7 +222,6 @@ export const useWalletStore = create<WalletState>(
     }),
     {
       name: "wallet-state",
-      partialize: (state) => ({ isConnect: state.isConnect, account: state.account }),
     }
   ) as StateCreator<WalletState>
 );

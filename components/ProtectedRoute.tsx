@@ -1,7 +1,7 @@
 
 import { useEffect } from "react";
 import { redirect } from "next/navigation";
-import { getLocalStorage } from "@/utils/getLocalStorage";
+import { getLocalStorageItem } from "@/utils/getLocalStorageItem";
 
 type ProtectedRouteProps = {
   params?: {
@@ -11,8 +11,8 @@ type ProtectedRouteProps = {
 
 const ProtectedRoute = <T extends ProtectedRouteProps>(Component: React.ComponentType<T>) => {
   return (props: T) =>  {
-    const isAuth = getLocalStorage();
-    console.log(isAuth)
+    const isAuth = getLocalStorageItem();
+    
     useEffect(() => {
       if (!isAuth) {
         return redirect("/");

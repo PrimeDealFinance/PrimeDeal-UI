@@ -59,6 +59,7 @@ const BuyCard = () => {
   const [futureAmount, setFutureAmount] = useState("");
   const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
+
   const contractProvider = new ethers.Contract(
     positionManagerContractAddress,
     abiContract,

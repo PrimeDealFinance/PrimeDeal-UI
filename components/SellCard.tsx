@@ -46,7 +46,8 @@ const SellCard = () => {
     usdtSigner,
     contractSigner,
     USDTContractAddress,
-    ETHContractAddress,
+      ETHContractAddress,
+    reinitializeContracts,
   } = useWalletStore();
 
   const [amountDisable, setAmountDisable] = useState(true);
@@ -64,7 +65,8 @@ const SellCard = () => {
     defaultProvider
   );
   // вытаскиваем данные для расчетов курсов и тд
-  useEffect(() => {
+    useEffect(() => {
+      reinitializeContracts();
     (async () => {
       try {
         let currentTick = await contractProvider.getCurrentTick(

@@ -47,6 +47,7 @@ const BuyCard = () => {
     contractSigner,
     USDTContractAddress,
     ETHContractAddress,
+    reinitializeContracts,
   } = useWalletStore();
 
   /// @dev if amount larger 5, disable buttons
@@ -67,6 +68,7 @@ const BuyCard = () => {
   );
   // вытаскиваем данные для расчетов курсов и тд
   useEffect(() => {
+    reinitializeContracts();
     (async () => {
       try {
         let currentTick = await contractProvider.getCurrentTick(

@@ -47,7 +47,12 @@ const SellCard = () => {
     contractSigner,
     USDTContractAddress,
     ETHContractAddress,
+    reinitializeContracts,
   } = useWalletStore();
+
+  useEffect(() => {
+    reinitializeContracts();
+  }, []);
 
   const [amountDisable, setAmountDisable] = useState(true);
   const [count, setCount] = useState("");
@@ -121,11 +126,12 @@ const SellCard = () => {
   };
 
   const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    (Number(event.target.value) * Number(currentRatioPrice)) > 50 || event.target.value === ""
+    Number(event.target.value) * Number(currentRatioPrice) > 50 ||
+    event.target.value === ""
       ? setAmountDisable(true)
       : setAmountDisable(false);
-      console.log(Number(event.target.value) * Number(currentRatioPrice));
-      console.log(amountDisable);
+    console.log(Number(event.target.value) * Number(currentRatioPrice));
+    console.log(amountDisable);
 
     const parseValue = parseInt(event.target.value);
     if (middlePurchase) {

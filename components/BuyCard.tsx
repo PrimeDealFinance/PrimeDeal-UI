@@ -27,7 +27,7 @@ import {
 import { useWalletStore } from "@/service/store";
 import defaultProvider from "../app/provider/defaultProvider";
 import abiContract from "../components/abiContract";
-import { parse } from 'path';
+import { parse } from "path";
 
 const options = [
   { value: "eth", label: "ETH", src: "/eth.svg" },
@@ -47,7 +47,12 @@ const BuyCard = () => {
     contractSigner,
     USDTContractAddress,
     ETHContractAddress,
+    reinitializeContracts,
   } = useWalletStore();
+
+  useEffect(() => {
+    reinitializeContracts();
+  }, []);
 
   /// @dev if amount larger 5, disable buttons
   const [amountDisable, setAmountDisable] = useState(true);
@@ -58,7 +63,6 @@ const BuyCard = () => {
   const [middlePurchase, setMiddlePurchase] = useState("");
   const [futureAmount, setFutureAmount] = useState("");
   const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
-
 
   const contractProvider = new ethers.Contract(
     positionManagerContractAddress,
@@ -130,20 +134,20 @@ const BuyCard = () => {
       : setAmountDisable(false);
   };
 
-  const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {  
+  const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     Number(event.target.value) > 50 || event.target.value === ""
       ? setAmountDisable(true)
       : setAmountDisable(false);
-    
-    const parseValue = parseInt(String(event.target.value).replace("/\D/g", ''));
+
+    const parseValue = parseInt(String(event.target.value).replace("/D/g", ""));
 
     if (isNaN(parseValue)) {
-      setFutureAmount('');
+      setFutureAmount("");
     } else {
       setCount(parseValue.toFixed(2));
     }
 
-    setCount(String(event.target.value).replace("/\D/g", ''));
+    setCount(String(event.target.value).replace("/D/g", ""));
   };
 
   const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,15 +155,15 @@ const BuyCard = () => {
     let middlePurchase = ((+currentRatioPrice + parseValue) / 2)
       .toFixed(2)
       .toString();
-    
+
     if (isNaN(Number(middlePurchase))) {
-      setMiddlePurchase('');
+      setMiddlePurchase("");
     } else {
       setMiddlePurchase(middlePurchase);
     }
-   
-    setFutureAmount((+count / +middlePurchase).toFixed(2).toString());  
-    
+
+    setFutureAmount((+count / +middlePurchase).toFixed(2).toString());
+
     if (!isNaN(parseValue)) {
       setTargetPrice(parseValue);
     }

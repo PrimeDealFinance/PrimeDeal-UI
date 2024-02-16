@@ -27,6 +27,7 @@ import {
 import { useWalletStore } from "@/service/store";
 import defaultProvider from "../app/provider/defaultProvider";
 import abiContract from "../components/abiContract";
+import "@/app/font.css";
 import { parse } from "path";
 
 const options = [
@@ -184,7 +185,7 @@ const BuyCard = () => {
   }
 
   return (
-    <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px]">
+    <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px] font-['GothamPro']">
       <Select
         indicator={<KeyboardArrowDown />}
         defaultValue="eth"
@@ -201,6 +202,7 @@ const BuyCard = () => {
           borderRadius: "100px",
           marginTop: "38px",
           backgroundColor: "#0A0914",
+          fontFamily: "GothamPro",
         }}
         renderValue={renderValue}
       >
@@ -212,7 +214,12 @@ const BuyCard = () => {
             <Option
               value={option.value}
               label={option.label}
-              sx={{ borderRadius: "100px", width: "456px", marginLeft: "10px" }}
+              sx={{
+                borderRadius: "100px",
+                width: "456px",
+                marginLeft: "10px",
+                fontFamily: "GothamPro",
+              }}
             >
               <ListItemDecorator>
                 <Avatar size="sm" src={option.src} />
@@ -225,12 +232,12 @@ const BuyCard = () => {
       <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
         <div
           style={{
-            borderTop: "1px solid #433F72",
-            borderBottom: "1px solid #6FEE8E",
+            borderTop: "1px solid #6FEE8E",
+            borderBottom: "1px solid #433F72",
             backgroundPosition: "center",
             backgroundSize: "100%",
           }}
-          className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
+          className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
         ></div>
         <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
           <div>
@@ -266,6 +273,13 @@ const BuyCard = () => {
         endDecorator={
           <React.Fragment>
             <Select
+              sx={{
+                fontFamily: "GothamPro",
+                width: "130px",
+                [`&:hover`]: {
+                  borderRadius: "1000px",
+                },
+              }}
               indicator={<KeyboardArrowDown />}
               defaultValue="usdc"
               variant="plain"
@@ -274,6 +288,7 @@ const BuyCard = () => {
                   variant: "outlined",
                   sx: {
                     borderRadius: "12px",
+                    fontFamily: "GothamPro",
                   },
                 },
               }}
@@ -287,8 +302,9 @@ const BuyCard = () => {
                 value="usdc"
                 sx={{
                   borderRadius: "100px",
-                  width: "115px",
-                  marginLeft: "5px",
+                  width: "120px",
+                  marginLeft: "4.5px",
+                  fontFamily: "GothamPro",
                 }}
               >
                 <Avatar size="sm" src="/usdc.svg" />
@@ -303,6 +319,7 @@ const BuyCard = () => {
           borderRadius: "100px",
           marginTop: "59px",
           backgroundColor: "#0A0914",
+          fontFamily: "GothamPro",
         }}
         onChange={handleCountChange}
       />
@@ -313,6 +330,7 @@ const BuyCard = () => {
             fontSize: "12px",
             fontWeight: "normal",
             letterSpacing: "0.12px",
+            fontFamily: "GothamPro",
           }}
         >
           Target Price
@@ -349,6 +367,7 @@ const BuyCard = () => {
             height: "50px",
             borderRadius: "100px",
             backgroundColor: "#0A0914",
+            fontFamily: "GothamPro",
           }}
         />
       </FormControl>
@@ -370,6 +389,7 @@ const BuyCard = () => {
             borderRadius: "1000px",
             boxShadow: "0px 20px 20px -8px rgba(62, 33, 255, 0.49)",
             marginTop: "28px",
+            fontFamily: "GothamPro",
           }}
           onClick={() => setOpen(true)}
         >
@@ -382,6 +402,7 @@ const BuyCard = () => {
               width: "500px",
               position: "relative",
               borderRadius: "12px",
+              fontFamily: "GothamPro",
             }}
           >
             <ModalClose
@@ -392,12 +413,15 @@ const BuyCard = () => {
                 opacity: "0.3",
               }}
             />
-            <DialogTitle>Confirmation</DialogTitle>
+            <DialogTitle sx={{ fontFamily: "GothamPro" }}>
+              Confirmation
+            </DialogTitle>
             <DialogContent
               sx={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                fontFamily: "GothamPro",
               }}
             >
               <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
@@ -450,6 +474,7 @@ const BuyCard = () => {
                   borderRadius: "1000px",
                   boxShadow: "0px 20px 20px -8px rgba(62, 33, 255, 0.49)",
                   marginTop: "28px",
+                  fontFamily: "GothamPro",
                 }}
                 onClick={getOpenBuyPosition}
               >

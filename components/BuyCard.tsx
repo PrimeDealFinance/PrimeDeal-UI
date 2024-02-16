@@ -28,6 +28,7 @@ import { useWalletStore } from "@/service/store";
 import defaultProvider from "../app/provider/defaultProvider";
 import abiContract from "../components/abiContract";
 import "@/app/font.css"
+import { parse } from 'path';
 
 
 const options = [
@@ -48,13 +49,10 @@ const BuyCard = () => {
     contractSigner,
     USDTContractAddress,
     ETHContractAddress,
-    reinitializeContracts,
   } = useWalletStore();
 
-  useEffect(() => {
-    reinitializeContracts();
-  }, []);
-
+  /// @dev if amount larger 5, disable buttons
+  const [amountDisable, setAmountDisable] = useState(true);
   const [count, setCount] = useState("");
   const [targetPrice, setTargetPrice] = useState(0);
   const [open, setOpen] = React.useState<boolean>(false);
@@ -62,6 +60,7 @@ const BuyCard = () => {
   const [middlePurchase, setMiddlePurchase] = useState("");
   const [futureAmount, setFutureAmount] = useState("");
   const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
+
 
   const contractProvider = new ethers.Contract(
     positionManagerContractAddress,
@@ -125,22 +124,44 @@ const BuyCard = () => {
     }
   };
 
-  const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const parseValue = parseInt(event.target.value);
-    if (middlePurchase) {
-      setFutureAmount((parseValue / +middlePurchase).toFixed(2).toString());
-    }
-    if (!isNaN(parseValue)) {
+  /// @dev Disable buttons if amount out of range
+  const handleChangeAmount = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(event.target.value);
+    Number(event.target.value) > 50 || event.target.value === ""
+      ? setAmountDisable(true)
+      : setAmountDisable(false);
+  };
+
+  const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {  
+    Number(event.target.value) > 50 || event.target.value === ""
+      ? setAmountDisable(true)
+      : setAmountDisable(false);
+    
+    const parseValue = parseInt(String(event.target.value).replace("/\D/g", ''));
+
+    if (isNaN(parseValue)) {
+      setFutureAmount('');
+    } else {
       setCount(parseValue.toFixed(2));
     }
+
+    setCount(String(event.target.value).replace("/\D/g", ''));
   };
+
   const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const parseValue = parseInt(event.target.value);
+    const parseValue = Number(event.target.value);
     let middlePurchase = ((+currentRatioPrice + parseValue) / 2)
       .toFixed(2)
       .toString();
-    setMiddlePurchase(middlePurchase);
-    setFutureAmount((+count / +middlePurchase).toFixed(2).toString());
+    
+    if (isNaN(Number(middlePurchase))) {
+      setMiddlePurchase('');
+    } else {
+      setMiddlePurchase(middlePurchase);
+    }
+   
+    setFutureAmount((+count / +middlePurchase).toFixed(2).toString());  
+    
     if (!isNaN(parseValue)) {
       setTargetPrice(parseValue);
     }
@@ -240,6 +261,7 @@ const BuyCard = () => {
       <Input
         placeholder="Amount"
         variant="outlined"
+        value={count}
         endDecorator={
           <React.Fragment>
             <Select
@@ -315,12 +337,14 @@ const BuyCard = () => {
               variant="plain"
             >
               <IconButton
+                disabled={amountDisable}
                 onClick={() => setTargetPrice(targetPrice + 1)}
                 variant="plain"
               >
                 <Plus />
               </IconButton>
               <IconButton
+                disabled={amountDisable}
                 onClick={() => setTargetPrice(targetPrice - 1)}
                 variant="plain"
               >
@@ -341,7 +365,7 @@ const BuyCard = () => {
       </FormControl>
       <React.Fragment>
         <Button
-          disabled={!isConnect}
+          disabled={!isConnect || amountDisable}
           sx={{
             color: "#FFF",
             textAlign: "center",

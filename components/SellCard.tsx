@@ -47,13 +47,9 @@ const SellCard = () => {
     contractSigner,
     USDTContractAddress,
     ETHContractAddress,
-    reinitializeContracts,
   } = useWalletStore();
 
-  useEffect(() => {
-    reinitializeContracts();
-  }, []);
-
+  const [amountDisable, setAmountDisable] = useState(true);
   const [count, setCount] = useState("");
   const [targetPrice, setTargetPrice] = useState(0);
   const [open, setOpen] = React.useState<boolean>(false);
@@ -125,6 +121,12 @@ const SellCard = () => {
   };
 
   const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    (Number(event.target.value) * Number(currentRatioPrice)) > 50 || event.target.value === ""
+      ? setAmountDisable(true)
+      : setAmountDisable(false);
+      console.log(Number(event.target.value) * Number(currentRatioPrice));
+      console.log(amountDisable);
+
     const parseValue = parseInt(event.target.value);
     if (middlePurchase) {
       setFutureAmount((parseValue * +middlePurchase).toFixed(2).toString());
@@ -319,12 +321,14 @@ const SellCard = () => {
               variant="plain"
             >
               <IconButton
+                disabled={amountDisable}
                 onClick={() => setTargetPrice(targetPrice + 1)}
                 variant="plain"
               >
                 <Plus />
               </IconButton>
               <IconButton
+                disabled={amountDisable}
                 onClick={() => setTargetPrice(targetPrice - 1)}
                 variant="plain"
               >
@@ -345,7 +349,7 @@ const SellCard = () => {
       </FormControl>
       <React.Fragment>
         <Button
-          disabled={!isConnect}
+          disabled={!isConnect || amountDisable}
           sx={{
             color: "#FFF",
             textAlign: "center",

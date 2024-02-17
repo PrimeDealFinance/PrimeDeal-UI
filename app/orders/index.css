@@ -1,0 +1,13 @@
+.visible{
+  opacity: 0;
+  animation: slowShow 0.5s forwards;
+}
+
+@keyframes slowShow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

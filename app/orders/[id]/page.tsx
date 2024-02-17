@@ -12,7 +12,7 @@ import { ethers, Contract } from "ethers";
 import defaultProvider from "../../provider/defaultProvider";
 import abiContract from "../../../components/abiContract";
 import { maxUint128 } from "viem";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import {ProtectedRoute} from "@/components";
 import { useWalletStore } from "@/service/store";
 import "@/app/font.css";
 
@@ -559,4 +559,3 @@ function OrderIdPage({ params }: { params: { id: string } }) {
 }
 
 export default ProtectedRoute(OrderIdPage);
-

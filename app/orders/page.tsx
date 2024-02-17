@@ -172,4 +172,4 @@ function Orders() {
   );
 }
 
-export default dynamic(() => Promise.resolve(ProtectedRoute(Orders)), { ssr: false });
+export default ProtectedRoute(Orders);

@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry';
-import MainPage from "@/components/MainPage";
+import ThemeRegistry from '@/components/ThemeRegistry/ThemeRegistry';;
 import "./globals.css";
 import "./font.css";
+import dynamic from 'next/dynamic'
+
+const MainPageDynamic = dynamic(() => import('../components/MainPage'), {
+  ssr: false,
+})
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +25,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={inter.className}>
         <ThemeRegistry>
-          <MainPage children={children}/>
+          <MainPageDynamic children={children}/>
         </ThemeRegistry>
       </body>
     </html>

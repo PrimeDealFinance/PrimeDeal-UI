@@ -9,7 +9,7 @@ type ProtectedRouteProps = {
   };
 };
 
-const ProtectedRoute = <T extends ProtectedRouteProps>(Component: React.ComponentType<T>) => {
+export const ProtectedRoute = <T extends ProtectedRouteProps>(Component: React.ComponentType<T>) => {
   return (props: T) =>  {
     const isAuth = getLocalStorageItem();
     
@@ -26,4 +26,3 @@ const ProtectedRoute = <T extends ProtectedRouteProps>(Component: React.Componen
     return <Component {...props} />;
   };
 }
-export default  ProtectedRoute

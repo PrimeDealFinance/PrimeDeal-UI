@@ -1,14 +1,14 @@
 "use client";
-import { useWalletStore } from '@/service/store';
 import { useEffect, useState } from 'react';
-import abiContract from '@/components/abiContract';
-import defaultProvider from "../provider/defaultProvider";
 import { Contract, ethers } from "ethers";
 import { maxUint128 } from "viem";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import dynamic from 'next/dynamic';
+import { useWalletStore } from '@/service/store';
+import defaultProvider from "../provider/defaultProvider";
+import abiContract from '@/components/abiContract';
+import { ProtectedRoute, TableOrders, Spinner } from '@/components';
 import { abi as INonfungiblePositionManagerABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { PositionInfo, Positions, UserPosition } from "../types";
-import { TableOrders, Spinner } from '@/components';
 
 const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
@@ -172,4 +172,4 @@ function Orders() {
   );
 }
 
-export default ProtectedRoute(Orders)
+export default dynamic(() => Promise.resolve(ProtectedRoute(Orders)), { ssr: false });

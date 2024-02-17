@@ -54,34 +54,40 @@ export function Background() {
         alt=""
         width={159.42}
         height={185.29}
-        className="absolute right-0 top-[165.12px]" />
+        priority
+        className="w-auto absolute right-0 top-[165.12px]" />
       <Image
         src={blurCoinRight}
         alt=""
         width={100}
         height={200}
-        className="absolute right-[33.88px] top-[601.04px]" />
+        priority
+        className="w-auto absolute right-[33.88px] top-[601.04px]" />
       <Image
         src={smallCoinLeft}
         alt=""
         width={80}
+        priority
         className="absolute left-0 top-[261px]" />
       <Image
         src={coinLeft}
         alt=""
         width={51.3}
         height={79.5}
+        priority
         className="absolute left-[70px] top-[639px]" />
       <Image
         src={bitcoinLeft}
         alt=""
         width={250}
         height={355}
-        className="absolute left-0 top-[335px]" />
+        priority
+        className="w-auto absolute left-0 top-[335px]" />
       <Image
         src={downCoin}
         alt=""
         width={264}
+        priority
         className="absolute left-[279px] bottom-0" />
     </>
   );

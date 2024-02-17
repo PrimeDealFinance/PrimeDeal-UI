@@ -1,9 +1,4 @@
 "use client";
-import Link from "next/link";
-import Table from '@mui/joy/Table';
-import Avatar from '@mui/joy/Avatar';
-import Sheet from '@mui/joy/Sheet';
-import { COLUMNS } from "@/app/orders/COLUMNS";
 import { useWalletStore } from '@/service/store';
 import { useEffect, useState } from 'react';
 import abiContract from '@/components/abiContract';
@@ -12,8 +7,8 @@ import { Contract, ethers } from "ethers";
 import { maxUint128 } from "viem";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { abi as INonfungiblePositionManagerABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
-import { Spinner } from "@/components/Spinner/Spinner";
-import './index.css'
+import { PositionInfo, Positions, UserPosition } from "../types";
+import { TableOrders, Spinner } from '@/components';
 
 const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
@@ -26,38 +21,6 @@ const ERC20_ABI = [
   "function name() public view returns (string)",
 ];
 
-interface IUserPosition {
-  id: number | string;
-  avatar: string;
-  asset: string;
-  type: string;
-  link: string;
-  feeBalance: string;
-  orderBalance: string;
-  usdBalance: string;
-};
-interface PositionInfo {
-  positionDirection: BigInt | boolean;
-  amount: BigInt;
-  uniswapTokenId: BigInt;
-}
-
-interface Positions {
-  pos: PositionInfo;
-  nonce: BigInt;
-  operator: string;
-  token0: string;
-  token1: string;
-  fee: BigInt;
-  tickLower: BigInt;
-  tickUpper: BigInt;
-  liquidity: BigInt;
-  feeGrowthInside0LastX128: BigInt;
-  feeGrowthInside1LastX128: BigInt;
-  tokensOwed0: BigInt;
-  tokensOwed1: BigInt;
-}
-
 const TEXT_ORDERS = {
   title: 'My orders'
 }
@@ -69,7 +32,7 @@ function Orders() {
     ETHContractAddress,
   } = useWalletStore();
   const [loading, setLoading] = useState(true);
-  const [dataOrders, setDataOrders] = useState<IUserPosition[]>([]);
+  const [dataOrders, setDataOrders] = useState<UserPosition[]>([]);
   // type Order = typeof dataOrders[0];
 
   useEffect(() => {
@@ -100,7 +63,7 @@ function Orders() {
       const allPositions: Positions[] = await contractView.getOpenPositions(account);
 
       allPositions.forEach(async (position: Positions, index: number) => {
-        const positionItem: IUserPosition = {
+        const positionItem: UserPosition = {
           id: index,
           avatar: "",
           asset: "",
@@ -199,36 +162,10 @@ function Orders() {
     <div className="mt-[180px] h-screen flex flex-col items-center z-10 mb-20">
       <div className="xl:w-[1200px] w-11/12">
         <h1 className="self-start text-3xl font-bold font-['GothamPro']">{TEXT_ORDERS.title}</h1>
-        {loading ? (
+        {loading  ? (
           <Spinner />
         ) : (
-          <Sheet color="primary" className={`p-5 mt-5 rounded-3xl ${loading ? 'hidden' : 'visible'}`}>
-            <Table variant="plain" sx={{ fontFamily: 'GothamPro' }}>
-              <thead>
-                <tr>
-                  {COLUMNS.map((column) => (
-                    <th key={column.uid}>{column.name}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(dataOrders.map((row) => (
-                  <tr key={row.id}>
-                    <td>
-                      <Link href={row.link} className="flex items-center">
-                        <Avatar alt="Avatar" src={row.avatar} className="mr-3" />
-                        <span>{row.asset}</span>
-                      </Link>
-                    </td>
-                    <td className={row.type === 'Sell' ? 'text-[#EF3131]' : 'text-[#6FEE8E]'}>{row.type}</td>
-                    <td>{row.feeBalance}</td>
-                    <td>{row.orderBalance}</td>
-                    <td>{row.usdBalance}</td>
-                  </tr>
-                )))}
-              </tbody>
-            </Table>
-          </Sheet>
+          <TableOrders loading={loading} orders={dataOrders}/>
         )}
       </div>
     </div>

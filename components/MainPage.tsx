@@ -8,7 +8,6 @@ import { Background } from "@/components/Background";
 import { useRouter } from "next/navigation";
 import "@/app/font.css";
 
-
 export default function MainPage({
   children,
 }: {
@@ -41,7 +40,7 @@ export default function MainPage({
             alt="logo"
             width={88}
             height={14}
-            className="absolute top-[45.07px] left-[70.34px]" />
+            className="w-auto absolute top-[45.07px] left-[70.34px]" />
         </Link>
       </div>
       <div className="absolute top-[35px] z-[2] right-[70px]">

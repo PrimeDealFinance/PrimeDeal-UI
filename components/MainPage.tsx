@@ -40,13 +40,13 @@ export default function MainPage({
             alt="logo"
             width={88}
             height={14}
-            className="w-auto absolute top-[45.07px] left-[70.34px]" />
+            className="w-auto absolute top-[45.07px] left-[70.34px] max-[767px]:top-[20.07px] max-[767px]:left-[50.34px]" />
         </Link>
       </div>
-      <div className="absolute top-[35px] z-[2] right-[70px]">
+      <div className="absolute top-[35px] z-[2] right-[70px] max-[1110px]:right-[-40px] max-[767px]:top-[10px]">
         <MainButton text={isConnect ? miniText : "CONNECT WALLET"} handleConnectClick={handleConnectClick} />
       </div>
-      <div className="absolute top-[100px] z-[2] right-[70px] font-['GothamPro']">
+      <div className="absolute top-[90px] z-[2] right-[70px] max-[1110px]:right-[-40px] max-[767px]:top-[10px] max-[767px]:right-[130px] font-['GothamPro']">
         {isConnect &&
           <Link href={'/orders'}>
             <MainButton text={"MY ORDERS"} />

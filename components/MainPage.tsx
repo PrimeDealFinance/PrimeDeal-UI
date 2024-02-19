@@ -105,7 +105,7 @@ export default function MainPage({
             </div>
             <div className="mt-[60px] font-['GothamPro']">
               {isConnect &&
-                <Link href={'/orders'}>
+                <Link href={'/orders'} onClick={toggleDrawer(false)}>
                   <MainButton text={"MY ORDERS"} />
                 </Link>
               }

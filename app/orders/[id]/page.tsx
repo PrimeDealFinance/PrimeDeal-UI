@@ -15,6 +15,7 @@ import { maxUint128 } from "viem";
 import {ProtectedRoute} from "@/components";
 import { useWalletStore } from "@/service/store";
 import "@/app/font.css";
+import ModalTsxInprogress from "../../../components/ModalTsxInpogress";
 
 const {
     abi: INonfungiblePositionManagerABI,
@@ -32,6 +33,11 @@ function OrderIdPage({ params }: { params: { id: string } }) {
     } = useWalletStore();
 
     const [nameOrder, setNameOrder] = useState<string>("");
+    const [isOpenModalTx, setIsOpenModalTx] = React.useState<boolean>(false);
+    const [txhash, setTxhash] = useState("");
+    const miniTxhash = txhash.substring(0, 5) + "....." + txhash.slice(45);
+    const hashLink = process.env.NEXT_PUBLIC_HASH_LINK_MUMBAI;
+    const hashLinkPlus = hashLink + txhash;
     const [inRange, setInRange] = useState<string>("");
     const [colorRange, setColorRange] = useState<string>("");
     const [ETH_WBTC, setETH_WBTC] = useState<string>("");
@@ -66,9 +72,12 @@ function OrderIdPage({ params }: { params: { id: string } }) {
           gasLimit: 850000,
         });
       
-      console.log("Tx: ", tx.hash);
-      const response = await tx.wait();
-      console.log("responseTxSwap1: ", response);
+        setTxhash(tx.hash);
+        setIsOpenModalTx(true);
+        const response = await tx.wait();
+        setIsOpenModalTx(false);
+        console.log("responseTxSwap1: ", response);
+        window.location.replace("/orders");
     } catch (error) {
       console.error(error);
       }
@@ -81,9 +90,11 @@ function OrderIdPage({ params }: { params: { id: string } }) {
             gasLimit: 850000,
           });
         
-        console.log("Tx: ", tx.hash);
-        const response = await tx.wait();
-        console.log("responseTxSwap1: ", response);
+          setTxhash(tx.hash);
+          setIsOpenModalTx(true);
+          const response = await tx.wait();
+          setIsOpenModalTx(false);
+          console.log("responseTxSwap1: ", response);
       } catch (error) {
         console.error(error);
         }
@@ -286,6 +297,10 @@ function OrderIdPage({ params }: { params: { id: string } }) {
         }
       })();
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleOpenModalTx = async () => {
+      setIsOpenModalTx(false);
+     };
 
     return (
         <div className="flex flex-col h-full flex flex-col items-center font-['GothamPro']">
@@ -554,6 +569,14 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                     </div>
                 </div>
             </div>
+            <div aria-disabled={true} role="alert">
+      <ModalTsxInprogress 
+      onOpenModalTx={handleOpenModalTx}
+      isOpenModalTx={isOpenModalTx}
+      miniTxhash={miniTxhash}
+      hashLinkPlus={hashLinkPlus}
+      />
+      </div>
         </div>
     )
 }

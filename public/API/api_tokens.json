@@ -1,0 +1,40 @@
+{
+  "main_api_server": "http://64.226.66.9/api/pools",
+  "pools": [
+    {
+      "id": 1,
+      "poolAddress": "0x680752645E785B727E9E6Bf1D9d21C5F56175096",
+      "tokenAcontract": "0x9EC3c43006145f5701d4FD527e826131778cA122",
+      "tokenBcontract": "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889",
+      "tokenAsymbol": "USDT",
+      "tokenBsymbol": "WMATIC",
+      "createdAt": "2024-02-17T11:11:18.424Z",
+      "updatedAt": "2024-02-17T11:11:18.424Z"
+    }
+  ],
+
+  "tokenA": [
+    {
+      "value": "eth",
+      "label": "ETH",
+      "src": "https://raw.githubusercontent.com/PrimeDealFinance/PrimeDeal-UI/main/public/eth.svg"
+    },
+    {
+      "value": "matic",
+      "label": "MATIC",
+      "src": "https://raw.githubusercontent.com/PrimeDealFinance/PrimeDeal-UI/main/public/matic.svg"
+    }
+  ],
+  "tokenB": [
+    {
+      "value": "usdc",
+      "label": "USDC",
+      "src": "https://raw.githubusercontent.com/PrimeDealFinance/PrimeDeal-UI/main/public/usdc.svg"
+    },
+    {
+      "value": "matic",
+      "label": "MATIC",
+      "src": "https://raw.githubusercontent.com/PrimeDealFinance/PrimeDeal-UI/main/public/matic.svg"
+    }
+  ]
+}

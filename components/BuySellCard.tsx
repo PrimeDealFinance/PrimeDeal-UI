@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     Avatar,
     ListItemDecorator,
@@ -21,379 +21,483 @@ import ModalCheck50 from "./ModalCheck50";
 import { SelectOption } from '@mui/joy/Select';
 import { KeyboardArrowDown, AddCircleOutline as Plus, RemoveCircleOutline as Minus } from '@mui/icons-material';
 import { useWalletStore } from "@/service/store";
+import { ethers } from 'ethers';
+import defaultProvider from "../app/provider/defaultProvider";
+import abiContract from "../components/abiContract";
 import "@/app/font.css"
 
+
+// http://64.226.66.9/api/pools
+
+type API = {
+  value: string;
+  label: string;
+  src: string;
+}
+
 type Props = {
-    value: string;
-    label: string;
-    src: string
+  tokenA: API[];
+  tokenB: API[];
+  TXT_BUTTON: string;
+  func: Function;
+  limit: Function;
+  tabIndex: number;
 }
 
-// const options = [
-//     { value: 'eth', label: 'ETH', src: '/eth.svg' },
-//     { value: 'matic', label: 'MATIC', src: '/matic.svg' },
-// ];
+const BuySellCard = ({
+  tokenA,
+  tokenB,
+  TXT_BUTTON,
+  func,
+  limit,
+  tabIndex
+}: Props) => {
 
-const TEXT_BUY_CARD = {
-    btn: 'Create Order'
-}
+  const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
+  const {
+    isConnect,
+    account,
+    positionManagerContractAddress,
+    usdtSigner,
+    contractSigner,
+    USDTContractAddress,
+    ETHContractAddress,
+    reinitializeContracts,
+  } = useWalletStore();
 
-
-const BuySellCard = ({options, defaultAmountTicker}: any | string) => {
-
-  /// @dev if amount larger 50, disable buttons
   const [amountDisable, setAmountDisable] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [count, setCount] = useState("");
+  const [targetPrice, setTargetPrice] = useState(0);
+  const [currentRatioPrice, setCurrentRatioPrice] = useState("");
+  const [middlePurchase, setMiddlePurchase] = useState("");
+  const [futureAmount, setFutureAmount] = useState("");
 
-    const {
-        isConnect,
-    } = useWalletStore();
-    const [count, setCount] = useState(0)
+  const contractProvider = new ethers.Contract(
+    positionManagerContractAddress,
+    abiContract,
+    defaultProvider
+  );
 
-    const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const parseValue = parseInt(event.target.value);
-        if (!isNaN(parseValue)) {
-            setCount(parseValue)
-        }
-      
-      if (event.target.value === '' || event.target.value === null)
-        setCount(0);
+  // вытаскиваем данные для расчетов курсов и тд
+  useEffect(() => {
+    reinitializeContracts();
+    (async () => {
+      try {
+        let currentTick = await contractProvider.getCurrentTick(
+          poolAddressETH_USDC
+        );
+        let currentRatioPrice = (1.0001 ** Number(currentTick)).toFixed(18);
+        setCurrentRatioPrice((1 / Number(currentRatioPrice)).toFixed(2).toString());
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, []);
+
+  const getOpenSellPosition = async () => {
+    try {
+      const allowance = await usdtSigner.allowance(
+        account,
+        positionManagerContractAddress
+      );
+
+      const allowanceToString = ethers.formatUnits(allowance, 0);
+      const allowanceToNumber = Number(allowanceToString) / 10 ** 18;
+      const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
+      const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
+      let targetPriceReady = BigInt(Math.sqrt(1 / Number(targetPrice)) * 2 ** 96);
+      let targetReady_ = targetPriceReady.toString();
+
+      const maxUint256 = ethers.MaxInt256;
+
+      allowanceToNumber < +count
+        ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
+        : null;
+
+      const tx = await contractSigner.openSellPosition(
+        USDTContractAddress,
+        ETHContractAddress,
+        "3000",
+        targetReady_,
+        amountCoin_,
+        "0",
+        {
+          gasLimit: 850000,
+        } 
+      );
+
+      // setTxhash(tx.hash);
+      // setIsOpenModalTx(true);
+      const response = await tx.wait();
+      // setIsOpenModalTx(false);
+      console.log("responseTxSwap1: ", response);
+    } catch (error) {
+      console.error(error);
     }
+  };
+
+  const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+    // @dev If current tab index = 0 (buy tab), amount convert to usdt (50 * 1)
+    //  if tab index = 1 (sell tab), amount (ETH) convert to USDT (~0.0015)
+    const limitAmount = tabIndex === 0 ?
+      limit(Number(event.target.value), 1) :
+      limit(Number(event.target.value), Number(currentRatioPrice));
+
+    /// @dev if amount > 50 - disable buttons "create order" and "+ -"
+    limitAmount > 50 || event.target.value === "" ?
+      setAmountDisable(true) :
+      setAmountDisable(false);
     
-    const [open, setOpen] = React.useState<boolean>(false);
-    const [openModal50, setOpenModal50] = React.useState<boolean>(false);
-
-    function renderValue(option: SelectOption<string> | null) {
-        return option ? (
-            <>
-                <ListItemDecorator>
-                    <Avatar size="sm" src={options.find((o) => o.value === option.value)?.src} />
-                </ListItemDecorator>
-                <span className="ml-2">{option.label}</span>
-            </>
-        ) : null;
+    /// TODO: Переписать логику, чтобы в окне не было NaN    
+    const parseValue = parseInt(event.target.value);
+    if (middlePurchase) {
+      setFutureAmount(func(parseValue, Number(middlePurchase))
+        .toFixed(2).toString());
     }
-
-    const checkAmount50 = () => {
-        if(count > 50) {
-            setOpenModal50(true);
-        } else {
-         setOpen(true);
-        }
+    if (!isNaN(parseValue)) {
+      setCount(parseValue.toFixed(2));
     }
+    /// /TODO
+  }
+ 
+  /// @dev Disable buttons if amount out of range
+  const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
 
-    /// @dev Disable buttons if amount out of range
-    const handleChangeAmount = (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (isNaN(Number(event.target.value)))
-        console.log('Not number'); 
-      
-       (Number(event.target.value) > 50 || event.target.value === '') ? setAmountDisable(true) : setAmountDisable(false);
+    const parseValue = Number(event.target.value);
+    let middlePurchase = ((+currentRatioPrice + parseValue) / 2)
+      .toFixed(2)
+      .toString();
+    
+    if (isNaN(Number(middlePurchase))) {
+      setMiddlePurchase('');
+    } else {
+      setMiddlePurchase(middlePurchase);
     }
+   
+    setFutureAmount((+count / +middlePurchase).toFixed(2).toString());  
+    
+    if (!isNaN(parseValue)) {
+      setTargetPrice(parseValue);
+    }
+  }
 
-    const handleOpenModal50 = async () => {
-        setOpenModal50(false);
-          };
+  function renderValue(tokenA: SelectOption<string> | null) {
+    return tokenA ? (
+      <>
+        <ListItemDecorator>
+          <Avatar
+            size="sm"
+            //TODO доделать загрузку картинок
+            // src={tokenA.find((o) : any  => o.value === tokenA.value)?.src}
+          />
+        </ListItemDecorator>
+        <span className="ml-2">{tokenA.label}</span>
+      </>
+    ) : null;
+  }
 
-    return (
-        <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px] font-['GothamPro']">
-            <Select
-                indicator={<KeyboardArrowDown />}
-                defaultValue={options[0].value}
-                slotProps={{
-                    listbox: {
-                        sx: {
-                            borderRadius: '12px',
-                            fontFamily: 'GothamPro'
-                        },
-                    },
-                }}
-                sx={{
-                    width: '476px',
-                    height: '50px',
-                    borderRadius: '100px',
-                    marginTop: '38px',
-                    backgroundColor: '#0A0914',
-                    fontFamily: 'GothamPro'
-                }}
-                renderValue={renderValue}
-            >
-                {options.map((option: Props, index: number) => (
-                    <React.Fragment key={option.value}>
-                        {index !== 0 ? <ListDivider role="none" inset="startContent" /> : null}
-                        <Option
-                            value={option.value}
-                            label={option.label}
-                            sx={{ borderRadius: '100px', width: '456px', marginLeft: '10px', fontFamily: 'GothamPro' }}>
-                            <ListItemDecorator>
-                                <Avatar size="sm" src={option.src} />
-                            </ListItemDecorator>
-                            {option.label}
-                        </Option>
-                    </React.Fragment>
-                ))}
-            </Select>
-            <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
-                <div style={{
-                    borderTop: '1px solid #6FEE8E',
-                    borderBottom: '1px solid #433F72',
-                    backgroundPosition: 'center',
-                    backgroundSize: '100%'
-                }}
-                    className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
-                >
-                </div>
-                <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
-                    <div>
-                        <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]" style={{fontFamily: 'GothamPro'}}>
-                            Текущая цена
-                        </div>
-                        <div className="text-[16px] font-normal leading-[24.32px]" style={{fontFamily: 'GothamPro'}}>
-                            74280.88
-                        </div>
-                    </div>
-                    <div>
-                        <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]" style={{fontFamily: 'GothamPro'}}>
-                            Средняя цена покупки
-                        </div>
-                        <div className="text-[16px] font-normal leading-[24.32px]" style={{fontFamily: 'GothamPro'}}>
-                            74280.88
-                        </div>
-                    </div>
-                    <div>
-                        <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]" style={{fontFamily: 'GothamPro'}}>
-                            Всего получено
-                        </div>
-                        <div className="text-[16px] font-normal leading-[24.32px]" style={{fontFamily: 'GothamPro'}}>
-                            74280.88
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <Input
-                placeholder="Amount"
-                variant="outlined"
-                onChange={handleChangeAmount}
-                endDecorator={
-                    <React.Fragment>
-                        <Select
-                            sx={{
-                                fontFamily: 'GothamPro',
-                                width: '130px',
-                                [`&:hover`] : {
-                                    borderRadius: '1000px',
-                                  },
-                            }}
-                            indicator={<KeyboardArrowDown />}
-                            defaultValue={defaultAmountTicker}
-                            variant="plain"
-                            slotProps={{
-                                listbox: {
-                                    variant: 'outlined',
-                                    sx: {
-                                        borderRadius: '12px',
-                                        fontFamily: 'GothamPro'
-                                    },
-                                },
-                            }}
-                            startDecorator={
-                                <React.Fragment>
-                                    <Avatar size="sm" src="/usdc.svg" />
-                                </React.Fragment>
-                            }
-                        >
-                            <Option  selected value={defaultAmountTicker} sx={{ borderRadius: '100px', width: '120px', marginLeft: '5px', fontFamily: 'GothamPro'}}>
-                                <Avatar size="sm" src="/usdc.svg" />
-                                { defaultAmountTicker }
-                            </Option>
-                        </Select>
-                    </React.Fragment>
-                }
-                sx={{
-                    fontFamily: 'GothamPro',
-                    width: '476px',
-                    height: '50px',
-                    borderRadius: '100px',
-                    marginTop: '59px',
-                    backgroundColor: '#0A0914'
-                }}
-            />
-            <FormControl sx={{ marginTop: '21px' }}>
-                <FormLabel
-                    sx={{
-                        color: "#8A8997",
-                        fontSize: "12px",
-                        fontWeight: "normal",
-                        letterSpacing: "0.12px",
-                        fontFamily: 'GothamPro'
-                    }}
-                >
-                    Верхняя граница
-                </FormLabel>
-                <Input
-                    placeholder=""
-                    variant="outlined"
-                    endDecorator={
-                        <ButtonGroup spacing='9px' sx={{ borderRadius: '100%' }} variant="plain">
-                        <IconButton disabled={amountDisable} onClick={() => setCount(count + 1)} variant="plain">
-                                <Plus />
-                            </IconButton>
-                            <IconButton disabled={amountDisable} onClick={() => setCount(count - 1)} variant='plain'>
-                                <Minus />
-                            </IconButton>
-                        </ButtonGroup>
-                    }
-                    value={count}
-                    onChange={handleCountChange}
-                    sx={{
-                        width: '476px',
-                        height: '50px',
-                        borderRadius: '100px',
-                        backgroundColor: '#0A0914',
-                        fontFamily: 'GothamPro'
-                    }}
-                />
-            </FormControl>
-            <React.Fragment>
-
-            <Button
-            disabled={!isConnect || amountDisable}
-                sx={{
-                    color: '#FFF',
-                    textAlign: 'center',
-                    fontSize: '12px',
-                    fontStyle: 'normal',
-                    fontWeight: '700',
-                    lineHeight: '18.264px',
-                    letterSpacing: '0.24px',
-                    textTransform: 'uppercase',
-                    width: '210px',
-                    height: '55px',
-                    backgroundColor: '#5706FF',
-                    borderRadius: '1000px',
-                    boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
-                    marginTop: '28px',
-                    fontFamily: 'GothamPro'
-                }}
-                // onClick={checkAmount50}
-            >
-                {TEXT_BUY_CARD.btn}
-            </Button>
-                <Modal 
-                    open={open} 
-                    onClose={() => setOpen(false)}
-                >
-                    <ModalDialog
-                        variant="plain" 
-                        sx={{
-                            width: "500px",
-                            position: "relative",
-                            borderRadius: "12px",
-                            fontFamily: 'GothamPro'
-                        }}
-                    >
-                        <ModalClose sx={{position:'absolute', top:'0px', right:'0', opacity:'0.5'}}/>
-                        <DialogTitle sx={{fontFamily: 'GothamPro'}}>
-                            Confirmation
-                        </DialogTitle>
-                        <DialogContent sx={{display:'flex', flexDirection:'column', alignItems:"center", fontFamily: 'GothamPro'}}>
-                            <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
-                                <div className="absolute left-0 top-[-23px]">
-                                   <p className="text-[14px]">
-                                        From
-                                    </p> 
-                                </div>
-                                <div className="flex items-center">
-                                   <Avatar size="sm" src="/usdc.svg"/>
-                                   <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
-                                        USDC
-                                    </p>
-                                </div>
-                                <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
-                                    Amount
-                                </p>
-                            </div>
-                            <div className="relative flex items-center w-[455px] justify-between mt-[30px]">
-                                <div className="absolute left-0 top-[-23px]">
-                                   <p className="text-[14px]">
-                                        To
-                                    </p> 
-                                </div>
-                                <div className="flex items-center">
-                                   <Avatar size="sm" src="/eth.svg"/>
-                                   <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
-                                        ETH
-                                    </p>
-                                </div>
-                                <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
-                                    Amount
-                                </p>
-                            </div>
-                            <div className="flex flex-col items-center w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
-                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
-                                    <p className="text-[16px]">
-                                        Верхняя граница
-                                    </p>
-                                    <p className="text-[16px] text-[#FFF]">
-                                        Цена
-                                    </p>
-                                </div>
-                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
-                                    <p className="text-[16px]">
-                                        Награды за день
-                                    </p>
-                                    <p className="text-[16px] text-[#FFF]">
-                                        Кол-во
-                                    </p>
-                                </div>
-                                <div className="flex items-center justify-between w-[415px] mt-[10px]">
-                                    <p className="text-[16px]">
-                                        Награды за неделю
-                                    </p>
-                                    <p className="text-[16px] text-[#FFF]">
-                                        Кол-во
-                                    </p>
-                                </div>
-                                <div className="flex items-center justify-between w-[415px] my-[10px]">
-                                    <p className="text-[16px]">
-                                        Награды за месяц
-                                    </p>
-                                    <p className="text-[16px] text-[#FFF]">
-                                        Кол-во
-                                    </p>
-                                </div>
-                            </div>
-                            <Button
-                                sx={{
-                                    color: '#FFF',
-                                    textAlign: 'center',
-                                    fontSize: '12px',
-                                    fontStyle: 'normal',
-                                    fontWeight: '700',
-                                    lineHeight: '18.264px',
-                                    letterSpacing: '0.24px',
-                                    textTransform: 'uppercase',
-                                    width: '210px',
-                                    height: '55px',
-                                    backgroundColor: '#5706FF',
-                                    borderRadius: '1000px',
-                                    boxShadow: '0px 20px 20px -8px rgba(62, 33, 255, 0.49)',
-                                    marginTop: '28px',
-                                    fontFamily: 'GothamPro'
-                                }}
-                                onClick={() => setOpen(true)}
-                            >
-                            Подтвердить
-                        </Button>
-                        </DialogContent>
-                    </ModalDialog>
-                </Modal>
-                <ModalCheck50
-                onOpenModal50={handleOpenModal50}
-                openModal50={openModal50}
-                />
-            </React.Fragment>
+  return (
+  <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px] font-['GothamPro']">
+    <Select
+      indicator={<KeyboardArrowDown />}
+      defaultValue="eth"
+      slotProps={{
+        listbox: {
+          sx: {
+            borderRadius: "12px",
+          },
+        },
+      }}
+      sx={{
+        width: "476px",
+        height: "50px",
+        borderRadius: "100px",
+        marginTop: "38px",
+        backgroundColor: "#0A0914",
+      }}
+      renderValue={renderValue}
+    >
+      {tokenA.map((token, index) => (
+        <React.Fragment key={token.value}>
+          {index !== 0 ? (
+            <ListDivider role="none" inset="startContent" />
+          ) : null}
+          <Option
+            value={token.value}
+            label={token.label}
+            sx={{ borderRadius: "100px", width: "456px", marginLeft: "10px" }}
+          >
+            <ListItemDecorator>
+              <Avatar size="sm" src={token.src} />
+            </ListItemDecorator>
+            {token.label}
+          </Option>
+        </React.Fragment>
+      ))}
+    </Select>
+    <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
+      <div
+        style={{
+          borderTop: "1px solid #433F72",
+          borderBottom: "1px solid #6FEE8E",
+          backgroundPosition: "center",
+          backgroundSize: "100%",
+        }}
+        className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
+      ></div>
+      <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
+        <div>
+          <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+            Current price
+          </div>
+          <div className="text-[16px] font-normal leading-[24.32px]">
+            $ {currentRatioPrice}
+          </div>
         </div>
-    )
+        <div>
+          <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+            Middle purchase
+          </div>
+          <div className="text-[16px] font-normal leading-[24.32px]">
+            $ {middlePurchase}
+          </div>
+        </div>
+        <div>
+          <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+            You will get
+          </div>
+          <div className="text-[16px] font-normal leading-[24.32px]">
+            ~ $ {futureAmount}
+          </div>
+        </div>
+      </div>
+    </div>
+    <Input
+      placeholder="Amount"
+      variant="outlined"
+      endDecorator={
+        <React.Fragment>
+          <Select
+            sx={{
+              fontFamily: "GothamPro",
+              width: "130px",
+              [`&:hover`]: {
+                borderRadius: "1000px",
+              },
+            }}
+            renderValue={renderValue}
+            indicator={<KeyboardArrowDown />}
+            defaultValue="eth"
+            variant="plain"
+            slotProps={{
+              listbox: {
+                variant: "outlined",
+                sx: {
+                  borderRadius: "12px",
+                  fontFamily: "GothamPro",
+                },
+              },
+            }}
+          >
+            {tokenB.map((token, index) => (
+              <React.Fragment key={token.value}>
+                {index !== 0 ? (
+                  <ListDivider role="none" inset="startContent" />
+                ) : null}
+                <Option
+                  value={token.value}
+                  label={token.label}
+                  sx={{
+                    borderRadius: "100px",
+                    width: "120px",
+                    marginLeft: "5px",
+                    fontFamily: "GothamPro",
+                  }}
+                >
+                  <ListItemDecorator>
+                    <Avatar size="sm" src={token.src} />
+                  </ListItemDecorator>
+                  {token.label}
+                </Option>
+              </React.Fragment>
+            ))}
+          </Select>
+        </React.Fragment>
+      }
+      sx={{
+        width: "476px",
+        height: "50px",
+        borderRadius: "100px",
+        marginTop: "59px",
+        backgroundColor: "#0A0914",
+        fontFamily: "GothamPro",
+      }}
+      onChange={handleCountChange}
+    />
+    <FormControl sx={{ marginTop: "21px" }}>
+      <FormLabel
+        sx={{
+          color: "#8A8997",
+          fontSize: "12px",
+          fontWeight: "normal",
+          letterSpacing: "0.12px",
+          fontFamily: "GothamPro",
+        }}
+      >
+        Верхняя граница
+      </FormLabel>
+      <Input
+        placeholder=""
+        variant="outlined"
+        endDecorator={
+          <ButtonGroup
+            spacing="9px"
+            sx={{ borderRadius: "100%" }}
+            variant="plain"
+          >
+            <IconButton
+              disabled={amountDisable}
+              onClick={() => setTargetPrice(targetPrice + 1)}
+              variant="plain"
+            >
+              <Plus />
+            </IconButton>
+            <IconButton
+              disabled={amountDisable}
+              onClick={() => setTargetPrice(targetPrice - 1)}
+              variant="plain"
+            >
+              <Minus />
+            </IconButton>
+          </ButtonGroup>
+        }
+        sx={{
+          width: "476px",
+          height: "50px",
+          borderRadius: "100px",
+          backgroundColor: "#0A0914",
+          fontFamily: "GothamPro",
+        }}
+        value={targetPrice}
+        onChange={handleTargetPrice}
+      />
+    </FormControl>
+    <React.Fragment>
+      <Button
+        disabled={!isConnect || amountDisable}
+        sx={{
+          color: "#FFF",
+          textAlign: "center",
+          fontSize: "12px",
+          fontStyle: "normal",
+          fontWeight: "700",
+          lineHeight: "18.264px",
+          letterSpacing: "0.24px",
+          textTransform: "uppercase",
+          width: "210px",
+          height: "55px",
+          backgroundColor: "#5706FF",
+          borderRadius: "1000px",
+          boxShadow: "0px 20px 20px -8px rgba(62, 33, 255, 0.49)",
+          marginTop: "28px",
+          fontFamily: "GothamPro",
+        }}
+        onClick={() => setOpen(true)}
+      >
+        {TXT_BUTTON}
+      </Button>
+      <Modal open={open} onClose={() => setOpen(false)}>
+        <ModalDialog
+          variant="plain"
+          sx={{
+            width: "500px",
+            position: "relative",
+            borderRadius: "12px",
+            fontFamily: "GothamPro",
+          }}
+        >
+          <ModalClose
+            sx={{
+              position: "absolute",
+              top: "0",
+              right: "0",
+              opacity: "0.5",
+            }}
+          />
+          <DialogTitle sx={{ fontFamily: "GothamPro" }}>
+            Confirmation
+          </DialogTitle>
+          <DialogContent
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
+              <div className="absolute left-0 top-[-23px]">
+                <p className="text-[14px]">From</p>
+              </div>
+              <div className="flex items-center">
+                <Avatar size="sm" src="/eth.svg" />
+                <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
+                  ETH
+                </p>
+              </div>
+              <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
+                {count}
+              </p>
+            </div>
+            <div className="relative flex items-center w-[455px] justify-between mt-[30px]">
+              <div className="absolute left-0 top-[-23px]">
+                <p className="text-[14px]">To</p>
+              </div>
+              <div className="flex items-center">
+                <Avatar size="sm" src="/usdc.svg" />
+                <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
+                  USDC
+                </p>
+              </div>
+              <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
+                {futureAmount}
+              </p>
+            </div>
+            <div className="flex flex-col items-center w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
+              <div className="flex items-center justify-between w-[415px] mt-[10px]">
+                <p className="text-[16px]">Middle price</p>
+                <p className="text-[16px] text-[#FFF]">$ {middlePurchase}</p>
+              </div>
+            </div>
+            <Button
+              sx={{
+                color: "#FFF",
+                textAlign: "center",
+                fontSize: "12px",
+                fontStyle: "normal",
+                fontWeight: "700",
+                lineHeight: "18.264px",
+                letterSpacing: "0.24px",
+                textTransform: "uppercase",
+                width: "210px",
+                height: "55px",
+                backgroundColor: "#5706FF",
+                borderRadius: "1000px",
+                boxShadow: "0px 20px 20px -8px rgba(62, 33, 255, 0.49)",
+                marginTop: "28px",
+              }}
+              onClick={getOpenSellPosition}
+            >
+              Confirm
+            </Button>
+          </DialogContent>
+        </ModalDialog>
+      </Modal>
+    </React.Fragment>
+  </div>
+  )
 }
 
 export default BuySellCard

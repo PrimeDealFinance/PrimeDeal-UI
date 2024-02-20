@@ -16,6 +16,7 @@ import {ProtectedRoute} from "@/components";
 import { useWalletStore } from "@/service/store";
 import "@/app/font.css";
 import ModalTsxInprogress from "../../../components/ModalTsxInpogress";
+import AlertError from "../../../components/AlertError";
 
 const {
     abi: INonfungiblePositionManagerABI,
@@ -34,6 +35,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
 
     const [nameOrder, setNameOrder] = useState<string>("");
     const [isOpenModalTx, setIsOpenModalTx] = React.useState<boolean>(false);
+    const [isOpenAlertError, setIsOpenAlertError] = React.useState<boolean>(false);
     const [txhash, setTxhash] = useState("");
     const miniTxhash = txhash.substring(0, 5) + "....." + txhash.slice(45);
     const hashLink = process.env.NEXT_PUBLIC_HASH_LINK_MUMBAI;
@@ -79,7 +81,8 @@ function OrderIdPage({ params }: { params: { id: string } }) {
         console.log("responseTxSwap1: ", response);
         window.location.replace("/orders");
     } catch (error) {
-      console.error(error);
+        setIsOpenAlertError(true);
+        console.error(error);
       }
     }
 
@@ -96,7 +99,11 @@ function OrderIdPage({ params }: { params: { id: string } }) {
           setIsOpenModalTx(false);
           console.log("responseTxSwap1: ", response);
       } catch (error) {
+        console.error("000")
+        setIsOpenAlertError(true);
+        console.log("111")
         console.error(error);
+        console.log("222")
         }
       }
   
@@ -302,283 +309,254 @@ function OrderIdPage({ params }: { params: { id: string } }) {
       setIsOpenModalTx(false);
      };
 
+     const handleOpenAlertError = async () => {
+      setIsOpenAlertError(false);
+     };
+
     return (
-        <div className="flex flex-col h-full flex flex-col items-center font-['GothamPro']">
-            <div className="flex flex-col items-center max-[529px]:w-[99%] w-11/12 min-[1222px]:w-[1211px] relative h-fit min-[1222px]:h-[788px] rounded-[22px] bg-[#0A0914] z-[2] mt-[188px] mb-[123px]">
-                <div className="absolute flex justify-between items-center top-[-58px] left-[0]">
-                    <div className="flex">
-                        <Image
-                            src={iconETH_WBTC}
-                            alt=""
-                            width={29}
-                            height={29}
-                        />
-                        <p className="color-[#FFF] text-[32px] font-normal tracking-[-0.64px] mx-[11px]">
-                            {ETH_WBTC}
-                        </p>
-                    </div>
-                    <Chip
-                        variant="plain"
-                        size="lg"
-                        sx={{color: colorRange, background:'transparent', fontFamily: 'GothamPro'}}
-                        startDecorator={
-                            <Avatar 
-                                src={colorDot}
-                                sx={{width:'8px', height:'8px'}}
-                            />
-                        }
-                    >
-                        {inRange}
-                    </Chip>
-                    <div className="flex justify-center items-center w-[168px] h-[31px] rounded-[1000px] bg-[#FFFFFF2B]">
-                        <p className="text-[12px] tracking-[0.12px]">
-                           Current price: $ {priceView}
-                        </p>
-                    </div>
-                </div>
-                <div className="flex max-[1221px]:flex-col justify-between items-center w-fit min-[1222px]:w-[1120px] h-auto min-[1222px]:h-[425px] mt-[50px]">
-                    <div className="flex flex-col items-center justify-center w-11/12 min-[489px]:w-[489px] h-[368px] bg-[#5706FF]">
-                        <TradingViewWidget />
-                    </div>
-                    <div className="flex flex-col max-[1221px]:mt-[15px] item-center justify-between">
-                        <div className="flex flex-col items-center w-[370px] min-[635px]:w-[568px] h-[206px] rounded-[13px] bg-[#141320]">
-                            <div className="flex justify-between items-start w-[350px] min-[635px]:w-[520px] mt-[18px]"> 
-                                <div className="flex flex-col items-start">
-                                    <div className="text-[#8A8997] text-[14px] tracking-[0.14px]">
-                                        Order balance
-                                    </div>
-                                    <div className="text-[32px] tracking-[-1.28px] leading-[48.7px]">
-                                      $ {balanceDollars}
-                                    </div>
-                                </div>
-                                <Button sx={{
-                                    color:"#FFF",
-                                    backgroundColor:"#5706FF",
-                                    width:"156px",
-                                    height:"50px",
-                                    borderRadius:"1000px",
-                                    boxShadow:"0px 20px 20px -8px rgba(62, 33, 255, 0.49)",
-                                    fontSize: '12px',
-                                    fontStyle: 'normal',
-                                    fontWeight: '700',
-                                    lineHeight: '152.2%',
-                                    letterSpacing: '0.24px',
-                                }}
-                                onClick={closePositionId}>
-                                    CLOSE ORDER
-                                </Button>
-                            </div>
-                            <div className="flex justify-between items-center w-[347px] min-[635px]:w-[517px] mt-[23.5px]">
-                                <div className="flex items-center">
-                                    <Image
-                                        src={USDC}
-                                        alt=""
-                                        width={30}
-                                        height={30}                                
-                                    />
-                                    <p className="text-[14px] tracking-[0.14px] opacity-50 ml-[12px]">
-                                        USDC
-                                    </p>
-                                </div>
-                                <div className="flex justify-between">
-                                    <p className="text-[16px] tracking-[0.16px] opacity-50 mr-[33px]">
-                                      {amountUSDC}
-                                    </p>
-                                    <p className="text-[16px] tracking-[0.16px] opacity-50">
-                                        {share0}{""}%
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex justify-between items-center w-[347px] min-[635px]:w-[517px] mt-[7.6px]">
-                            <div className="flex items-center">
-                                    <Image
-                                        src={iconETH_WBTC}
-                                        alt=""
-                                        width={30}
-                                        height={30}                                
-                                    />
-                                    <p className="text-[14px] tracking-[0.14px] opacity-50 ml-[12px]">
-                                      {ETH_WBTC}
-                                    </p>
-                                </div>
-                                <div className="flex justify-between">
-                                    <p className="text-[16px] tracking-[0.16px] opacity-50 mr-[33px]">
-                                     {amountETH_WBTC} 
-                                    </p>
-                                    <p className="text-[16px] tracking-[0.16px] opacity-50">
-                                    {share1}{""}%
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex flex-col items-center  w-[370px] min-[635px]:w-[568px] h-[206px] rounded-[13px] bg-[#141320] mt-[13px]">
-                            <div className="flex justify-between items-start w-[350px] min-[635px]:w-[520px] mt-[18px]"> 
-                                <div className="flex flex-col items-start">
-                                    <div className="text-[#8A8997] text-[14px] tracking-[0.14px]">
-                                        Fee balance
-                                    </div>
-                                    <div className="text-[32px] tracking-[-1.28px] leading-[48.7px]">
-                                     $ {feeDollars}
-                                    </div>
-                                </div>
-                                <Button sx={{
-                                    color:"#FFF",
-                                    backgroundColor:"#5706FF",
-                                    width:"156px",
-                                    height:"50px",
-                                    borderRadius:"1000px",
-                                    boxShadow:"0px 20px 20px -8px rgba(62, 33, 255, 0.49)",
-                                    fontSize: '12px',
-                                    fontStyle: 'normal',
-                                    fontWeight: '700',
-                                    lineHeight: '152.2%',
-                                    letterSpacing: '0.24px'
-                                 }}
-                                // onClick={claimFees}
-                                >
-                                    CLAIM FEES
-                                </Button>
-                            </div>
-                            <div className="flex justify-between items-center w-[347px] min-[635px]:w-[517px] mt-[23.5px]">
-                                <div className="flex items-center">
-                                    <Image
-                                        src={USDC}
-                                        alt=""
-                                        width={30}
-                                        height={30}                                
-                                    />
-                                    <p className="text-[14px] tracking-[0.14px] opacity-50 ml-[12px]">
-                                        USDC
-                                    </p>
-                                </div>
-                                <p className="text-[16px] tracking-[0.16px] opacity-50">
-                                $ {feeUSDC}
-                                </p>
-                            </div>
-                            <div className="flex justify-between items-center  w-[347px] min-[635px]:w-[517px] mt-[7.6px]">
-                                 <div className="flex items-center">
-                                    <Image
-                                        src={iconETH_WBTC}
-                                        alt=""
-                                        width={30}
-                                        height={30}                                
-                                    />
-                                    <p className="text-[14px] tracking-[0.14px] opacity-50 ml-[12px]">
-                                    {ETH_WBTC}
-                                    </p>
-                                </div>
-                                <p className="text-[16px] tracking-[0.16px] opacity-50">
-                                  {feeETH_WBTC}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="relative flex max-[1221px]:flex-col  max-[1221px]:items-center justify-between mt-[134px] w-fit min-[1222px]:w-[1120px] h-auto min-[1222px]:h-[139px]">
-                    <div className="absolute top-[-56px] left-0"> 
-                        <p className="text-[32px] font-bold tracking-[-0.64px]">
-                          Analytics
-                        </p>
-                    </div>
-                    <div className="relative flex flex-col items-start w-[364px] h-[139px] rounded-[13px] bg-[#141320]">
-                        <p className="mb-[4px] mt-[25px] ml-[30px] text-[#8A8997] text-[14px] tracking-[0.14px]">
-                           Middle purchase
-                        </p> 
-                        <p className="mb-[3px] ml-[30px] text-[24px] tracking-[-0.48px] leading-[36.528px]">
-                            ${" "}{middlePurchase}
-                        </p>
-                        <div className="flex ml-[30px] items-center">
-                            <div>
-                                <Image
-                                    src={USDC}
-                                    alt=""
-                                    width={30}
-                                    height={30}
-                                />
-                            </div>
-                            <div className="absolute left-[45px] bottom-[19px]">
-                                <Image 
-                                    src={ETH}
-                                    alt=""
-                                    width={30}
-                                    height={30}
-                                />
-                            </div>
-                            <p className="opacity-50 ml-[23.5px] text-[14px] tracking-[0.14px]">
-                                ETH за USDC
-                            </p>
-                        </div>
-                    </div>
-                    <div className="relative flex flex-col items-start max-[1221px]:my-[15px] w-[364px] h-[139px] rounded-[13px] bg-[#141320]">
-                        <p className="mb-[4px] mt-[25px] ml-[30px] text-[#8A8997] text-[14px] tracking-[0.14px]">
-                            Current income
-                        </p>
-                        <div className="flex items-center mb-[3px] ml-[30px] ">
-                            <p className="text-[#6FEE8E]">+</p>
-                            <p className="text-[24px] tracking-[-0.48px] leading-[36.528px]">
-                            ${" "}{feeDollars}
-                            </p>
-                        </div>
-                        <div className="flex ml-[30px] items-center">
-                            <div>
-                                <Image
-                                    src={USDC}
-                                    alt=""
-                                    width={30}
-                                    height={30}
-                                />
-                            </div>
-                            <div className="absolute left-[45px] bottom-[19px]">
-                                <Image 
-                                    src={ETH}
-                                    alt=""
-                                    width={30}
-                                    height={30}
-                                />
-                            </div>
-                            <p className="opacity-50 ml-[23.5px] text-[14px] tracking-[0.14px]">
-                                ETH за USDC
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex flex-col items-start max-[1221px]:mb-[10px] w-[364px] h-[139px] rounded-[13px] bg-[#141320]">
-                        <p className="mb-[8px] mt-[27px] ml-[32px] text-[#8A8997] text-[14px] tracking-[0.14px]">
-                            Your range
-                        </p>
-                        <div className="flex ml-[32px]">
-                            <div className="flex flex-col items-start">
-                                <p className="text-[24px] tracking-[-0.48px] leading-[36.528px] mb-[8px]">
-                                    ${" "}{ratioAPrice}
-                                </p>
-                                <p className="opacity-50 text-[14px] tracking-[0.14px]">
-                                    Min price
-                                </p>
-                            </div>
-                            <p className="text-[24px] font-bold leading-[36.582px] mx-[21px] opacity-30">
-                                -
-                            </p>
-                            <div className="flex flex-col items-start">
-                                <p className="text-[24px] tracking-[-0.48px] leading-[36.528px] mb-[8px]">
-                                ${" "}{ratioBPrice}
-                                </p>
-                                <p className="opacity-50 text-[14px] tracking-[0.14px]">
-                                    Max Price
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      <div className="flex flex-col h-full flex flex-col items-center font-['GothamPro']">
+        <div className="flex flex-col items-center max-[529px]:w-[99%] w-11/12 min-[1222px]:w-[1211px] relative h-fit min-[1222px]:h-[788px] rounded-[22px] bg-[#0A0914] z-[2] mt-[188px] mb-[123px]">
+          <div className="absolute flex justify-between items-center top-[-58px] left-[0]">
+            <div className="flex">
+              <Image src={iconETH_WBTC} alt="" width={29} height={29} />
+              <p className="color-[#FFF] text-[32px] font-normal tracking-[-0.64px] mx-[11px]">
+                {ETH_WBTC}
+              </p>
             </div>
-            <div aria-disabled={true} role="alert">
-      <ModalTsxInprogress 
-      onOpenModalTx={handleOpenModalTx}
-      isOpenModalTx={isOpenModalTx}
-      miniTxhash={miniTxhash}
-      hashLinkPlus={hashLinkPlus}
-      />
-      </div>
+            <Chip
+              variant="plain"
+              size="lg"
+              sx={{
+                color: colorRange,
+                background: "transparent",
+                fontFamily: "GothamPro",
+              }}
+              startDecorator={
+                <Avatar src={colorDot} sx={{ width: "8px", height: "8px" }} />
+              }
+            >
+              {inRange}
+            </Chip>
+            <div className="flex justify-center items-center w-[168px] h-[31px] rounded-[1000px] bg-[#FFFFFF2B]">
+              <p className="text-[12px] tracking-[0.12px]">
+                Current price: $ {priceView}
+              </p>
+            </div>
+          </div>
+          <div className="flex max-[1221px]:flex-col justify-between items-center w-fit min-[1222px]:w-[1120px] h-auto min-[1222px]:h-[425px] mt-[50px]">
+            <div className="flex flex-col items-center justify-center w-11/12 min-[489px]:w-[489px] h-[368px] bg-[#5706FF]">
+              <TradingViewWidget />
+            </div>
+            <div className="flex flex-col max-[1221px]:mt-[15px] item-center justify-between">
+              <div className="flex flex-col items-center w-[370px] min-[635px]:w-[568px] h-[206px] rounded-[13px] bg-[#141320]">
+                <div className="flex justify-between items-start w-[350px] min-[635px]:w-[520px] mt-[18px]">
+                  <div className="flex flex-col items-start">
+                    <div className="text-[#8A8997] text-[14px] tracking-[0.14px]">
+                      Order balance
+                    </div>
+                    <div className="text-[32px] tracking-[-1.28px] leading-[48.7px]">
+                      $ {balanceDollars}
+                    </div>
+                  </div>
+                  <Button
+                    sx={{
+                      color: "#FFF",
+                      backgroundColor: "#5706FF",
+                      width: "156px",
+                      height: "50px",
+                      borderRadius: "1000px",
+                      boxShadow: "0px 20px 20px -8px rgba(62, 33, 255, 0.49)",
+                      fontSize: "12px",
+                      fontStyle: "normal",
+                      fontWeight: "700",
+                      lineHeight: "152.2%",
+                      letterSpacing: "0.24px",
+                    }}
+                    onClick={closePositionId}
+                  >
+                    CLOSE ORDER
+                  </Button>
+                </div>
+                <div className="flex justify-between items-center w-[347px] min-[635px]:w-[517px] mt-[23.5px]">
+                  <div className="flex items-center">
+                    <Image src={USDC} alt="" width={30} height={30} />
+                    <p className="text-[14px] tracking-[0.14px] opacity-50 ml-[12px]">
+                      USDC
+                    </p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="text-[16px] tracking-[0.16px] opacity-50 mr-[33px]">
+                      {amountUSDC}
+                    </p>
+                    <p className="text-[16px] tracking-[0.16px] opacity-50">
+                      {share0}
+                      {""}%
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center w-[347px] min-[635px]:w-[517px] mt-[7.6px]">
+                  <div className="flex items-center">
+                    <Image src={iconETH_WBTC} alt="" width={30} height={30} />
+                    <p className="text-[14px] tracking-[0.14px] opacity-50 ml-[12px]">
+                      {ETH_WBTC}
+                    </p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="text-[16px] tracking-[0.16px] opacity-50 mr-[33px]">
+                      {amountETH_WBTC}
+                    </p>
+                    <p className="text-[16px] tracking-[0.16px] opacity-50">
+                      {share1}
+                      {""}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col items-center  w-[370px] min-[635px]:w-[568px] h-[206px] rounded-[13px] bg-[#141320] mt-[13px]">
+                <div className="flex justify-between items-start w-[350px] min-[635px]:w-[520px] mt-[18px]">
+                  <div className="flex flex-col items-start">
+                    <div className="text-[#8A8997] text-[14px] tracking-[0.14px]">
+                      Fee balance
+                    </div>
+                    <div className="text-[32px] tracking-[-1.28px] leading-[48.7px]">
+                      $ {feeDollars}
+                    </div>
+                  </div>
+                  <Button
+                    sx={{
+                      color: "#FFF",
+                      backgroundColor: "#5706FF",
+                      width: "156px",
+                      height: "50px",
+                      borderRadius: "1000px",
+                      boxShadow: "0px 20px 20px -8px rgba(62, 33, 255, 0.49)",
+                      fontSize: "12px",
+                      fontStyle: "normal",
+                      fontWeight: "700",
+                      lineHeight: "152.2%",
+                      letterSpacing: "0.24px",
+                    }}
+                    // onClick={claimFees}
+                  >
+                    CLAIM FEES
+                  </Button>
+                </div>
+                <div className="flex justify-between items-center w-[347px] min-[635px]:w-[517px] mt-[23.5px]">
+                  <div className="flex items-center">
+                    <Image src={USDC} alt="" width={30} height={30} />
+                    <p className="text-[14px] tracking-[0.14px] opacity-50 ml-[12px]">
+                      USDC
+                    </p>
+                  </div>
+                  <p className="text-[16px] tracking-[0.16px] opacity-50">
+                    $ {feeUSDC}
+                  </p>
+                </div>
+                <div className="flex justify-between items-center  w-[347px] min-[635px]:w-[517px] mt-[7.6px]">
+                  <div className="flex items-center">
+                    <Image src={iconETH_WBTC} alt="" width={30} height={30} />
+                    <p className="text-[14px] tracking-[0.14px] opacity-50 ml-[12px]">
+                      {ETH_WBTC}
+                    </p>
+                  </div>
+                  <p className="text-[16px] tracking-[0.16px] opacity-50">
+                    {feeETH_WBTC}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="relative flex max-[1221px]:flex-col  max-[1221px]:items-center justify-between mt-[134px] w-fit min-[1222px]:w-[1120px] h-auto min-[1222px]:h-[139px]">
+            <div className="absolute top-[-56px] left-0">
+              <p className="text-[32px] font-bold tracking-[-0.64px]">
+                Analytics
+              </p>
+            </div>
+            <div className="relative flex flex-col items-start w-[364px] h-[139px] rounded-[13px] bg-[#141320]">
+              <p className="mb-[4px] mt-[25px] ml-[30px] text-[#8A8997] text-[14px] tracking-[0.14px]">
+                Middle purchase
+              </p>
+              <p className="mb-[3px] ml-[30px] text-[24px] tracking-[-0.48px] leading-[36.528px]">
+                $ {middlePurchase}
+              </p>
+              <div className="flex ml-[30px] items-center">
+                <div>
+                  <Image src={USDC} alt="" width={30} height={30} />
+                </div>
+                <div className="absolute left-[45px] bottom-[19px]">
+                  <Image src={ETH} alt="" width={30} height={30} />
+                </div>
+                <p className="opacity-50 ml-[23.5px] text-[14px] tracking-[0.14px]">
+                  ETH за USDC
+                </p>
+              </div>
+            </div>
+            <div className="relative flex flex-col items-start max-[1221px]:my-[15px] w-[364px] h-[139px] rounded-[13px] bg-[#141320]">
+              <p className="mb-[4px] mt-[25px] ml-[30px] text-[#8A8997] text-[14px] tracking-[0.14px]">
+                Current income
+              </p>
+              <div className="flex items-center mb-[3px] ml-[30px] ">
+                <p className="text-[#6FEE8E]">+</p>
+                <p className="text-[24px] tracking-[-0.48px] leading-[36.528px]">
+                  $ {feeDollars}
+                </p>
+              </div>
+              <div className="flex ml-[30px] items-center">
+                <div>
+                  <Image src={USDC} alt="" width={30} height={30} />
+                </div>
+                <div className="absolute left-[45px] bottom-[19px]">
+                  <Image src={ETH} alt="" width={30} height={30} />
+                </div>
+                <p className="opacity-50 ml-[23.5px] text-[14px] tracking-[0.14px]">
+                  ETH за USDC
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-start max-[1221px]:mb-[10px] w-[364px] h-[139px] rounded-[13px] bg-[#141320]">
+              <p className="mb-[8px] mt-[27px] ml-[32px] text-[#8A8997] text-[14px] tracking-[0.14px]">
+                Your range
+              </p>
+              <div className="flex ml-[32px]">
+                <div className="flex flex-col items-start">
+                  <p className="text-[24px] tracking-[-0.48px] leading-[36.528px] mb-[8px]">
+                    $ {ratioAPrice}
+                  </p>
+                  <p className="opacity-50 text-[14px] tracking-[0.14px]">
+                    Min price
+                  </p>
+                </div>
+                <p className="text-[24px] font-bold leading-[36.582px] mx-[21px] opacity-30">
+                  -
+                </p>
+                <div className="flex flex-col items-start">
+                  <p className="text-[24px] tracking-[-0.48px] leading-[36.528px] mb-[8px]">
+                    $ {ratioBPrice}
+                  </p>
+                  <p className="opacity-50 text-[14px] tracking-[0.14px]">
+                    Max Price
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    )
+        <div aria-disabled={true} role="alert">
+          <ModalTsxInprogress
+            onOpenModalTx={handleOpenModalTx}
+            isOpenModalTx={isOpenModalTx}
+            miniTxhash={miniTxhash}
+            hashLinkPlus={hashLinkPlus}
+          />
+        </div>
+        <div aria-disabled={true} role="alert">
+          <AlertError
+            onOpenAlertError={handleOpenAlertError}
+            isOpenAlertError={isOpenAlertError}
+          />
+        </div>
+      </div>
+    );
 }
 
 export default ProtectedRoute(OrderIdPage);

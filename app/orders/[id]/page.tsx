@@ -289,7 +289,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
 
     return (
         <div className="flex flex-col h-full flex flex-col items-center font-['GothamPro']">
-            <div className="flex flex-col items-center max-[529px]:w-fit w-11/12 min-[1222px]:w-[1211px] relative h-fit min-[1222px]:h-[788px] rounded-[22px] bg-[#0A0914] z-[2] mt-[188px] mb-[123px]">
+            <div className="flex flex-col items-center max-[529px]:w-[99%] w-11/12 min-[1222px]:w-[1211px] relative h-fit min-[1222px]:h-[788px] rounded-[22px] bg-[#0A0914] z-[2] mt-[188px] mb-[123px]">
                 <div className="absolute flex justify-between items-center top-[-58px] left-[0]">
                     <div className="flex">
                         <Image
@@ -322,12 +322,12 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                     </div>
                 </div>
                 <div className="flex max-[1221px]:flex-col justify-between items-center w-fit min-[1222px]:w-[1120px] h-auto min-[1222px]:h-[425px] mt-[50px]">
-                    <div className="flex flex-col items-center justify-center w-11/12 min-[469px]:w-[489px] h-[368px] bg-[#5706FF]">
+                    <div className="flex flex-col items-center justify-center w-[98%] min-[469px]:w-[489px] h-[368px] bg-[#5706FF]">
                         <TradingViewWidget />
                     </div>
                     <div className="flex flex-col max-[1221px]:mt-[15px] item-center justify-between">
-                        <div className="flex flex-col items-center w-[380px] min-[569px]:w-[568px] h-[206px] rounded-[13px] bg-[#141320]">
-                            <div className="flex justify-between items-start w-[370px] min-[569px]:w-[520px] mt-[18px]"> 
+                        <div className="flex flex-col items-center w-[370px] min-[569px]:w-[568px] h-[206px] rounded-[13px] bg-[#141320]">
+                            <div className="flex justify-between items-start w-[350px] min-[569px]:w-[520px] mt-[18px]"> 
                                 <div className="flex flex-col items-start">
                                     <div className="text-[#8A8997] text-[14px] tracking-[0.14px]">
                                         Order balance
@@ -353,7 +353,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                                     CLOSE ORDER
                                 </Button>
                             </div>
-                            <div className="flex justify-between items-center w-[370px] min-[569px]:w-[517px] mt-[23.5px]">
+                            <div className="flex justify-between items-center w-[347px] min-[569px]:w-[517px] mt-[23.5px]">
                                 <div className="flex items-center">
                                     <Image
                                         src={USDC}
@@ -374,7 +374,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex justify-between items-center w-[370px] min-[569px]:w-[517px] mt-[7.6px]">
+                            <div className="flex justify-between items-center w-[347px] min-[569px]:w-[517px] mt-[7.6px]">
                             <div className="flex items-center">
                                     <Image
                                         src={iconETH_WBTC}
@@ -396,8 +396,8 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                                 </div>
                             </div>
                         </div>
-                        <div className="flex flex-col items-center  w-[380px] min-[569px]:w-[568px] h-[206px] rounded-[13px] bg-[#141320] mt-[13px]">
-                            <div className="flex justify-between items-start w-[98%] min-[569px]:w-[520px] mt-[18px]"> 
+                        <div className="flex flex-col items-center  w-[370px] min-[569px]:w-[568px] h-[206px] rounded-[13px] bg-[#141320] mt-[13px]">
+                            <div className="flex justify-between items-start w-[350px] min-[569px]:w-[520px] mt-[18px]"> 
                                 <div className="flex flex-col items-start">
                                     <div className="text-[#8A8997] text-[14px] tracking-[0.14px]">
                                         Fee balance
@@ -424,7 +424,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                                     CLAIM FEES
                                 </Button>
                             </div>
-                            <div className="flex justify-between items-center w-[370px] min-[569px]:w-[517px] mt-[23.5px]">
+                            <div className="flex justify-between items-center w-[347px] min-[569px]:w-[517px] mt-[23.5px]">
                                 <div className="flex items-center">
                                     <Image
                                         src={USDC}
@@ -440,7 +440,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                                 $ {feeUSDC}
                                 </p>
                             </div>
-                            <div className="flex justify-between items-center  w-[370px] min-[569px]:w-[517px] mt-[7.6px]">
+                            <div className="flex justify-between items-center  w-[347px] min-[569px]:w-[517px] mt-[7.6px]">
                                  <div className="flex items-center">
                                     <Image
                                         src={iconETH_WBTC}

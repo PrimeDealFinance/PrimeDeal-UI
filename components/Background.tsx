@@ -11,21 +11,19 @@ export function Background() {
     <>
       <div style={{
         position: 'absolute',
-        width: '1082px',
         height: '530.9px',
-        right: '50%',
         top: '103px',
-        margin: '0 -541px 0 0',
         background: 'radial-gradient(50% 50% at 50% 50%, #3144EF 71.39%, #3D0DFF 81.49%)',
         borderRadius: '50%',
         filter: 'blur(152.923px)',
         transform: 'matrix(-1, 0, 0, 1, 0, 0)',
         zIndex: '-1'
-      }}>
+      }}
+      className="w-11/12 min-[1083px]:w-[1082px] min-[1083px]:mr-[-541px] min-[1083px]:right-[50%]"
+      >
       </div>
       <div style={{
         position: 'absolute',
-        width: '548.12px',
         height: '275.32px',
         right: '35%',
         top: '176.34px',
@@ -34,11 +32,12 @@ export function Background() {
         transform: 'matrix(-0.97, 0.26, 0.26, 0.97, 0, 0)',
         filter: 'blur(116.495px)',
         zIndex: '-1'
-      }}>
+      }}
+      className="w-5/12 min-[1083px]:w-[548.12px]"
+      >
       </div>
       <div style={{
         position: 'absolute',
-        width: '313.06px',
         height: '157.25px',
         right: '52%',
         top: '389.85px',
@@ -47,7 +46,9 @@ export function Background() {
         transform: 'matrix(-0.97, 0.26, 0.26, 0.97, 0, 0)',
         filter: 'blur(59.1959px)',
         zIndex: '-1'
-      }}>
+      }}
+      className="w-3/12 min-[1083px]:w-[313.06px]"
+      >
       </div>
       <Image
         src={bitcoinRight}
@@ -88,7 +89,7 @@ export function Background() {
         alt=""
         width={264}
         priority
-        className="absolute left-[279px] bottom-0" />
+        className="absolute left-0 min-[1083px]:left-[279px] bottom-0" />
     </>
   );
 }

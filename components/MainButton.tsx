@@ -21,7 +21,6 @@ const MainButton = ({ text, handleConnectClick }: Props): React.ReactNode => {
           color: '#FFFFFF',
           letterSpacing: '-0.54px',
           width: '160px',
-          height: '48px',
           border: '1px solid',
           lineHeight: 1.5,
           backgroundColor: '#010306',
@@ -46,6 +45,7 @@ const MainButton = ({ text, handleConnectClick }: Props): React.ReactNode => {
           },
         }}
         onClick={handleConnectClick}
+        className="max-[767px]:h-[40px] h-[48px]"
       >
         {text}
       </Button>

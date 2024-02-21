@@ -157,7 +157,7 @@ const BuyCard = () => {
       setMiddlePurchase(middlePurchase);
 
       if (count !== null) {
-        setFutureAmount((count / +middlePurchase).toFixed(2).toString());
+        setFutureAmount((count / +middlePurchase).toFixed(4).toString());
       }
 
       setTargetPrice(parseValue);

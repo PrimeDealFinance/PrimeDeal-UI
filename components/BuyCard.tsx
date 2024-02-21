@@ -232,55 +232,46 @@ const BuyCard = () => {
 
       <MediaQuery minWidth={540}>
         <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
-          <div style={{
-            borderTop: '1px solid #6FEE8E',
-            borderBottom: '1px solid #433F72',
-            backgroundPosition: 'center',
-            backgroundSize: '100%'
-          }}
-            className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
-          >
-          </div>
-        <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
-          <div>
-            <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-              Current price
+            <div style={{
+              borderTop: '1px solid #6FEE8E',
+              borderBottom: '1px solid #433F72',
+              backgroundPosition: 'center',
+              backgroundSize: '100%'
+            }}
+              className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
+            >
             </div>
-            <div className="text-[16px] font-normal leading-[24.32px]">
-              $ {currentRatioPrice}
-            </div>
-          </div>
-          <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
-            <div>
-              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                Current price
+            <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
+              <div>
+                <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                  Current price
+                </div>
+                <div className="text-[16px] font-normal leading-[24.32px]">
+                  $ {currentRatioPrice}
+                </div>
               </div>
-              <div className="text-[16px] font-normal leading-[24.32px]">
-                $ {currentRatioPrice}
+              <div>
+                <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                  Middle purchase
+                </div>
+                <div className="text-[16px] font-normal leading-[24.32px]">
+                  $ {middlePurchase}
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                Middle purchase
-              </div>
-              <div className="text-[16px] font-normal leading-[24.32px]">
-                $ {middlePurchase}
-              </div>
-            </div>
-            <div>
-              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                You will get
-              </div>
-              <div className="text-[16px] font-normal leading-[24.32px]">
-                ~ {futureAmount} ETH
+              <div>
+                <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                  You will get
+                </div>
+                <div className="text-[16px] font-normal leading-[24.32px]">
+                  ~ {futureAmount} ETH
+                </div>
               </div>
             </div>
-          </div>
         </div>
       </MediaQuery>
       <Input
         type="number"
-        className="input_amount"
+        className="input_amount w-11/12 min-[540px]:w-[476px] max-[539px]:my-[30px] min-[540px]:mt-[59px]"
         placeholder="Amount"
         variant="outlined"
         value={count ?? ''}
@@ -333,7 +324,6 @@ const BuyCard = () => {
           backgroundColor: "#0A0914",
           fontFamily: "GothamPro"
         }}
-        className="w-11/12 min-[540px]:w-[476px] max-[539px]:my-[30px] min-[540px]:mt-[59px]"
         onChange={handleAmountChange}
       />
       <FormControl sx={{ marginTop: "21px"}}>
@@ -349,7 +339,7 @@ const BuyCard = () => {
           Target Price
         </FormLabel>
         <Input
-          className="input_amount"
+          className="input_amount w-[100%] min-[540px]:w-[476px] max-[539px]:mb-[10px]"
           type="number"
           placeholder=""
           variant="outlined"
@@ -391,7 +381,6 @@ const BuyCard = () => {
             backgroundColor: "#0A0914",
             fontFamily: "GothamPro"
           }}
-          className="w-[100%] min-[540px]:w-[476px] max-[539px]:mb-[10px]"
         />
       </FormControl>
       <React.Fragment>

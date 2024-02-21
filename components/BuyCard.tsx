@@ -29,6 +29,7 @@ import defaultProvider from "../app/provider/defaultProvider";
 import abiContract from "../components/abiContract";
 import "@/app/font.css"
 import { parse } from 'path';
+import ModalTsxInprogress from "./ModalTsxInpogress";
 import './index.css'
 
 
@@ -61,6 +62,12 @@ const BuyCard = () => {
   const [currentRatioPrice, setCurrentRatioPrice] = useState("");
   const [middlePurchase, setMiddlePurchase] = useState("");
   const [futureAmount, setFutureAmount] = useState("");
+
+  const [isOpenModalTx, setIsOpenModalTx] = React.useState<boolean>(false);
+  const [txhash, setTxhash] = useState("");
+  const miniTxhash = txhash.substring(0, 5) + "....." + txhash.slice(45);
+  const hashLink = process.env.NEXT_PUBLIC_HASH_LINK_MUMBAI;
+  const hashLinkPlus = hashLink + txhash;
 
   const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
@@ -160,6 +167,10 @@ const BuyCard = () => {
       setTargetPrice(null);
     }
   };
+
+  const handleOpenModalTx = async () => {
+    setIsOpenModalTx(false);
+   };
 
   function renderValue(option: SelectOption<string> | null) {
     return option ? (
@@ -480,6 +491,14 @@ const BuyCard = () => {
           </ModalDialog>
         </Modal>
       </React.Fragment>
+      <div aria-disabled={true} role="alert">
+      <ModalTsxInprogress 
+      onOpenModalTx={handleOpenModalTx}
+      isOpenModalTx={isOpenModalTx}
+      miniTxhash={miniTxhash}
+      hashLinkPlus={hashLinkPlus}
+      />
+      </div>
     </div>
   );
 };

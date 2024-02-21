@@ -28,8 +28,7 @@ import { useWalletStore } from "@/service/store";
 import "@/app/font.css";
 import defaultProvider from "../app/provider/defaultProvider";
 import abiContract from "../components/abiContract";
-import MediaQuery from "react-responsive";
-
+import './index.css'
 
 const options = [
   { value: "eth", label: "ETH", src: "/eth.svg" },
@@ -48,16 +47,17 @@ const SellCard = () => {
     usdtSigner,
     contractSigner,
     USDTContractAddress,
-      ETHContractAddress,
+    ETHContractAddress,
     reinitializeContracts,
   } = useWalletStore();
 
+  const [count, setCount] = useState<number | null>(null);
   const [amountDisable, setAmountDisable] = useState(true);
-  const [count, setCount] = useState("");
-  const [targetPrice, setTargetPrice] = useState(0);
+  const [targetPrice, setTargetPrice] = useState<number | null>(null);
+
   const [open, setOpen] = React.useState<boolean>(false);
-  const [currentRatioPrice, setCurrentRatioPrice] = useState("");
-  const [middlePurchase, setMiddlePurchase] = useState("");
+  const [currentRatioPrice, setCurrentRatioPrice] = useState('');
+  const [middlePurchase, setMiddlePurchase] = useState('');
   const [futureAmount, setFutureAmount] = useState("");
   const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
@@ -67,8 +67,8 @@ const SellCard = () => {
     defaultProvider
   );
   // вытаскиваем данные для расчетов курсов и тд
-    useEffect(() => {
-      reinitializeContracts();
+  useEffect(() => {
+    reinitializeContracts();
     (async () => {
       try {
         let currentTick = await contractProvider.getCurrentTick(
@@ -84,70 +84,78 @@ const SellCard = () => {
 
   const getOpenSellPosition = async () => {
     try {
-      const allowance = await usdtSigner.allowance(
-        account,
-        positionManagerContractAddress
-      );
+      if (targetPrice && count) {
+        const allowance = await usdtSigner.allowance(
+          account,
+          positionManagerContractAddress
+        );
 
-      const allowanceToString = ethers.formatUnits(allowance, 0);
-      const allowanceToNumber = +allowanceToString / 10 ** 18;
-      const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
-      const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
-      let targetPriceReady = BigInt(Math.sqrt(1 / +targetPrice) * 2 ** 96);
-      let targetReady_ = targetPriceReady.toString();
+        const allowanceToString = ethers.formatUnits(allowance, 0);
+        const allowanceToNumber = +allowanceToString / 10 ** 18;
+        const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
+        const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
+        let targetPriceReady = BigInt(Math.sqrt(1 / targetPrice) * 2 ** 96);
+        let targetReady_ = targetPriceReady.toString();
 
-      const maxUint256 = ethers.MaxInt256;
+        const maxUint256 = ethers.MaxInt256;
 
-      allowanceToNumber < +count
-        ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
-        : null;
+        allowanceToNumber < +count
+          ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
+          : null;
 
-      const tx = await contractSigner.openSellPosition(
-        USDTContractAddress,
-        ETHContractAddress,
-        "3000",
-        targetReady_,
-        amountCoin_,
-        "0",
-        {
-          gasLimit: 850000,
-        }
-      );
+        const tx = await contractSigner.openBuyPosition(
+          USDTContractAddress,
+          ETHContractAddress,
+          "3000",
+          targetReady_,
+          amountCoin_,
+          "0",
+          {
+            gasLimit: 850000,
+          }
+        );
 
-      // setTxhash(tx.hash);
-      // setIsOpenModalTx(true);
-      const response = await tx.wait();
-      // setIsOpenModalTx(false);
-      console.log("responseTxSwap1: ", response);
+        // setTxhash(tx.hash);
+        // setIsOpenModalTx(true);
+        const response = await tx.wait();
+        // setIsOpenModalTx(false);
+        console.log("responseTxSwap1: ", response);
+      }
     } catch (error) {
       console.error(error);
     }
   };
 
-  const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    (Number(event.target.value) * Number(currentRatioPrice)) > 50 || event.target.value === ""
-      ? setAmountDisable(true)
-      : setAmountDisable(false);
-      console.log(Number(event.target.value) * Number(currentRatioPrice));
-      console.log(amountDisable);
-
-    const parseValue = parseInt(event.target.value);
-    if (middlePurchase) {
-      setFutureAmount((parseValue * +middlePurchase).toFixed(2).toString());
-    }
-    if (!isNaN(parseValue)) {
-      setCount(parseValue.toFixed(2));
-    }
+  const isValidAmount = (value: number): boolean => {
+    return !isNaN(value) && value >= 0 && value <= 1 && value.toString().length <= 6;
   };
+
+  const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue: number = parseFloat(event.target.value);
+
+    const isValid = isValidAmount(inputValue);
+    setAmountDisable(!isValid);
+    setCount(isValid ? Number(inputValue.toFixed(4)) : null);
+  };
+
   const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const parseValue = parseInt(event.target.value);
-    let middlePurchase = ((+currentRatioPrice + parseValue) / 2)
-      .toFixed(2)
-      .toString();
-    setMiddlePurchase(middlePurchase);
-    setFutureAmount((+count * +middlePurchase).toFixed(2).toString());
-    if (!isNaN(parseValue)) {
+    const parseValue = Number(event.target.value);
+
+    if (!isNaN(parseValue) && parseValue >= 1 && parseValue <= 5000)  {
+      let middlePurchase = ((+currentRatioPrice + parseValue) / 2)
+        .toFixed(2)
+        .toString();
+      setMiddlePurchase(middlePurchase);
+
+      if (count !== null) {
+        setFutureAmount((count * +middlePurchase).toFixed(2).toString());
+      }
+
       setTargetPrice(parseValue);
+    } else {
+      setMiddlePurchase('');
+      setFutureAmount('');
+      setTargetPrice(null);
     }
   };
 
@@ -166,7 +174,7 @@ const SellCard = () => {
   }
 
   return (
-    <div className="flex relative flex-col items-center bg-[#0A0914] max-[539px]:pb-[30px] w-[98%] min-[540px]:w-[540px] h-fit min-[540px]:h-[621px] rounded-[32px] font-['GothamPro']">
+    <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px] font-['GothamPro']">
       <Select
         indicator={<KeyboardArrowDown />}
         defaultValue="eth"
@@ -178,14 +186,13 @@ const SellCard = () => {
           },
         }}
         sx={{
+          width: "476px",
           height: "50px",
           borderRadius: "100px",
           marginTop: "38px",
           backgroundColor: "#0A0914",
-          fontFamily: 'GothamPro'
         }}
         renderValue={renderValue}
-        className="w-11/12 min-[540px]:w-[476px]"
       >
         {options.map((option, index) => (
           <React.Fragment key={option.value}>
@@ -195,8 +202,7 @@ const SellCard = () => {
             <Option
               value={option.value}
               label={option.label}
-              sx={{ borderRadius: "100px", fontFamily: 'GothamPro', marginLeft: "2%" }}
-              className="w-[96%] min-[540px]:w-456px"
+              sx={{ borderRadius: "100px", width: "456px", marginLeft: "10px" }}
             >
               <ListItemDecorator>
                 <Avatar size="sm" src={option.src} />
@@ -206,55 +212,55 @@ const SellCard = () => {
           </React.Fragment>
         ))}
       </Select>
-      <MediaQuery minWidth={540}>
-        <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
-          <div
-            style={{
-              borderTop: "1px solid #433F72",
-              borderBottom: "1px solid #6FEE8E",
-              backgroundPosition: "center",
-              backgroundSize: "100%",
-            }}
-            className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
-          >
+      <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
+        <div
+          style={{
+            borderTop: "1px solid #433F72",
+            borderBottom: "1px solid #6FEE8E",
+            backgroundPosition: "center",
+            backgroundSize: "100%",
+          }}
+          className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
+        ></div>
+        <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
+          <div>
+            <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+              Current price
+            </div>
+            <div className="text-[16px] font-normal leading-[24.32px]">
+              $ {currentRatioPrice}
+            </div>
           </div>
-          <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
-            <div>
-              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                Current price
-              </div>
-              <div className="text-[16px] font-normal leading-[24.32px]">
-                $ {currentRatioPrice}
-              </div>
+          <div>
+            <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+              Middle purchase
             </div>
-            <div>
-              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                Middle purchase
-              </div>
-              <div className="text-[16px] font-normal leading-[24.32px]">
-                $ {middlePurchase}
-              </div>
+            <div className="text-[16px] font-normal leading-[24.32px]">
+              $ {middlePurchase}
             </div>
-            <div>
-              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                You will get
-              </div>
-              <div className="text-[16px] font-normal leading-[24.32px]">
-                ~ $ {futureAmount}
-              </div>
+          </div>
+          <div>
+            <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+              You will get
+            </div>
+            <div className="text-[16px] font-normal leading-[24.32px]">
+              ~ $ {futureAmount}
             </div>
           </div>
         </div>
-      </MediaQuery>
+      </div>
       <Input
+        className="input_amount"
+        type="number"
         placeholder="Amount"
         variant="outlined"
+        value={count ?? ''}
         endDecorator={
           <React.Fragment>
             <Select
               sx={{
                 fontFamily: "GothamPro",
-                width: "135px",
+                width: "130px",
                 [`&:hover`]: {
                   borderRadius: "1000px",
                 },
@@ -283,7 +289,7 @@ const SellCard = () => {
                     label={option.label}
                     sx={{
                       borderRadius: "100px",
-                      width: "125px",
+                      width: "120px",
                       marginLeft: "5px",
                       fontFamily: "GothamPro",
                     }}
@@ -299,13 +305,14 @@ const SellCard = () => {
           </React.Fragment>
         }
         sx={{
+          width: "476px",
           height: "50px",
           borderRadius: "100px",
+          marginTop: "59px",
           backgroundColor: "#0A0914",
           fontFamily: "GothamPro",
         }}
-        className="w-11/12 min-[540px]:w-[476px] max-[539px]:my-[30px] min-[540px]:mt-[59px]"
-        onChange={handleCountChange}
+        onChange={handleAmountChange}
       />
       <FormControl sx={{ marginTop: "21px" }}>
         <FormLabel
@@ -317,41 +324,51 @@ const SellCard = () => {
             fontFamily: "GothamPro",
           }}
         >
-          Верхняя граница
+          Target Price
         </FormLabel>
         <Input
+          className="input_amount"
+          type="number"
           placeholder=""
           variant="outlined"
           endDecorator={
             <ButtonGroup
-              spacing="9px"
-              sx={{ borderRadius: "100%" }}
+            spacing="9px"
+            sx={{ borderRadius: "100%" }}
+            variant="plain"
+          >
+            <IconButton
+              disabled={targetPrice === null || targetPrice >= 5000}
+              onClick={() => {
+                if (targetPrice !== null && targetPrice < 5000) {
+                  setTargetPrice(targetPrice + 1);
+                }
+              }}
               variant="plain"
             >
-              <IconButton
-                disabled={amountDisable}
-                onClick={() => setTargetPrice(targetPrice + 1)}
-                variant="plain"
-              >
-                <Plus />
-              </IconButton>
-              <IconButton
-                disabled={amountDisable}
-                onClick={() => setTargetPrice(targetPrice - 1)}
-                variant="plain"
-              >
-                <Minus />
-              </IconButton>
-            </ButtonGroup>
+              <Plus />
+            </IconButton>
+            <IconButton
+              disabled={targetPrice === null || targetPrice <= 1}
+              onClick={() => {
+                if (targetPrice !== null && targetPrice > 1) {
+                  setTargetPrice(targetPrice - 1);
+                }
+              }}
+              variant="plain"
+            >
+              <Minus />
+            </IconButton>
+          </ButtonGroup>
           }
           sx={{
+            width: "476px",
             height: "50px",
             borderRadius: "100px",
             backgroundColor: "#0A0914",
             fontFamily: "GothamPro",
           }}
-          className="w-[100%] min-[540px]:w-[476px] max-[539px]:mb-[10px]"
-          value={targetPrice}
+          value={targetPrice ?? ''}
           onChange={handleTargetPrice}
         />
       </FormControl>
@@ -382,20 +399,17 @@ const SellCard = () => {
         <Modal open={open} onClose={() => setOpen(false)}>
           <ModalDialog
             variant="plain"
-            sx={ (theme) => ({
-              width: '500px',
+            sx={{
+              width: "500px",
               position: "relative",
               borderRadius: "12px",
               fontFamily: "GothamPro",
-              [theme.breakpoints.only('xs')]: {
-                width: '80%',
-              }
-            })}
+            }}
           >
             <ModalClose
               sx={{
                 position: "absolute",
-                top: "5px",
+                top: "0",
                 right: "0",
                 opacity: "0.5",
               }}
@@ -410,7 +424,7 @@ const SellCard = () => {
                 alignItems: "center",
               }}
             >
-              <div className="relative flex items-center  w-11/12 min-[540px]:w-[455px] justify-between mt-[40px]">
+              <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
                 <div className="absolute left-0 top-[-23px]">
                   <p className="text-[14px]">From</p>
                 </div>
@@ -424,7 +438,7 @@ const SellCard = () => {
                   {count}
                 </p>
               </div>
-              <div className="relative flex items-center  w-11/12 min-[540px]:w-[455px] justify-between mt-[30px]">
+              <div className="relative flex items-center w-[455px] justify-between mt-[30px]">
                 <div className="absolute left-0 top-[-23px]">
                   <p className="text-[14px]">To</p>
                 </div>
@@ -438,8 +452,8 @@ const SellCard = () => {
                   {futureAmount}
                 </p>
               </div>
-              <div className="flex flex-col items-center  w-11/12 min-[540px]:w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
-                <div className="flex items-center justify-between  w-10/12 min-[540px]:w-[415px] my-[10px]">
+              <div className="flex flex-col items-center w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
+                <div className="flex items-center justify-between w-[415px] mt-[10px]">
                   <p className="text-[16px]">Middle price</p>
                   <p className="text-[16px] text-[#FFF]">$ {middlePurchase}</p>
                 </div>

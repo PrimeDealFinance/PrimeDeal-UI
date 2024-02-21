@@ -29,7 +29,7 @@ import defaultProvider from "../app/provider/defaultProvider";
 import abiContract from "../components/abiContract";
 import "@/app/font.css"
 import { parse } from 'path';
-import ModalTsxInprogress from "./ModalTsxInpogress";
+import './index.css'
 
 
 const options = [
@@ -53,19 +53,15 @@ const BuyCard = () => {
     reinitializeContracts,
   } = useWalletStore();
 
-  /// @dev if amount larger 5, disable buttons
+  const [count, setCount] = useState<number | null>(null);
   const [amountDisable, setAmountDisable] = useState(true);
-  const [count, setCount] = useState("");
-  const [targetPrice, setTargetPrice] = useState(0);
+  const [targetPrice, setTargetPrice] = useState<number | null>(null);
+
   const [open, setOpen] = React.useState<boolean>(false);
   const [currentRatioPrice, setCurrentRatioPrice] = useState("");
   const [middlePurchase, setMiddlePurchase] = useState("");
   const [futureAmount, setFutureAmount] = useState("");
-  const [isOpenModalTx, setIsOpenModalTx] = React.useState<boolean>(false);
-  const [txhash, setTxhash] = useState("");
-  const miniTxhash = txhash.substring(0, 5) + "....." + txhash.slice(45);
-  const hashLink = process.env.NEXT_PUBLIC_HASH_LINK_MUMBAI;
-  const hashLinkPlus = hashLink + txhash;
+
   const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
 
@@ -91,94 +87,79 @@ const BuyCard = () => {
   }, []);
 
   const getOpenBuyPosition = async () => {
-    
     try {
-      const allowance = await usdtSigner.allowance(
-        account,
-        positionManagerContractAddress
-      );
+      if (targetPrice && count) {
+        const allowance = await usdtSigner.allowance(
+          account,
+          positionManagerContractAddress
+        );
 
-      const allowanceToString = ethers.formatUnits(allowance, 0);
-      const allowanceToNumber = +allowanceToString / 10 ** 18;
-      const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
-      const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
-      let targetPriceReady = BigInt(Math.sqrt(1 / +targetPrice) * 2 ** 96);
-      let targetReady_ = targetPriceReady.toString();
+        const allowanceToString = ethers.formatUnits(allowance, 0);
+        const allowanceToNumber = +allowanceToString / 10 ** 18;
+        const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
+        const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
+        let targetPriceReady = BigInt(Math.sqrt(1 / targetPrice) * 2 ** 96);
+        let targetReady_ = targetPriceReady.toString();
 
-      const maxUint256 = ethers.MaxInt256;
+        const maxUint256 = ethers.MaxInt256;
 
-      allowanceToNumber < +count
-        ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
-        : null;
+        allowanceToNumber < +count
+          ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
+          : null;
 
-      const tx = await contractSigner.openBuyPosition(
-        USDTContractAddress,
-        ETHContractAddress,
-        "3000",
-        targetReady_,
-        amountCoin_,
-        "0",
-        {
-          gasLimit: 850000,
-        }
-      );
+        const tx = await contractSigner.openBuyPosition(
+          USDTContractAddress,
+          ETHContractAddress,
+          "3000",
+          targetReady_,
+          amountCoin_,
+          "0",
+          {
+            gasLimit: 850000,
+          }
+        );
 
-      setTxhash(tx.hash);
-      setIsOpenModalTx(true);
-      const response = await tx.wait();
-      setIsOpenModalTx(false);
-      console.log("responseTxSwap1: ", response);
+        // setTxhash(tx.hash);
+        // setIsOpenModalTx(true);
+        const response = await tx.wait();
+        // setIsOpenModalTx(false);
+        console.log("responseTxSwap1: ", response);
+      }
     } catch (error) {
       console.error(error);
     }
   };
 
-  /// @dev Disable buttons if amount out of range
-  const handleChangeAmount = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.target.value);
-    Number(event.target.value) > 50 || event.target.value === ""
-      ? setAmountDisable(true)
-      : setAmountDisable(false);
-  };
+  const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = Number(event.target.value);
 
-  const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {  
-    Number(event.target.value) > 50 || event.target.value === ""
-      ? setAmountDisable(true)
-      : setAmountDisable(false);
-    
-    const parseValue = parseInt(String(event.target.value).replace("/\D/g", ''));
-
-    if (isNaN(parseValue)) {
-      setFutureAmount('');
+    if (inputValue >= 1 && inputValue <= 50) {
+      setAmountDisable(false);
+      setCount(inputValue);
     } else {
-      setCount(parseValue.toFixed(2));
+      setAmountDisable(true);
+      setCount(null);
     }
-
-    setCount(String(event.target.value).replace("/\D/g", ''));
   };
-
+ 
   const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
     const parseValue = Number(event.target.value);
-    let middlePurchase = ((+currentRatioPrice + parseValue) / 2)
-      .toFixed(2)
-      .toString();
-    
-    if (isNaN(Number(middlePurchase))) {
-      setMiddlePurchase('');
-    } else {
+
+    if (!isNaN(parseValue) && parseValue >= 1 && parseValue < +currentRatioPrice) {
+      let middlePurchase = ((+currentRatioPrice + parseValue) / 2).toFixed(2).toString();
       setMiddlePurchase(middlePurchase);
-    }
-   
-    setFutureAmount((+count / +middlePurchase).toFixed(2).toString());  
-    
-    if (!isNaN(parseValue)) {
+
+      if (count !== null) {
+        setFutureAmount((count / +middlePurchase).toFixed(2).toString());
+      }
+
       setTargetPrice(parseValue);
+    } else {
+      setMiddlePurchase('');
+      setFutureAmount('');
+      setTargetPrice(null);
     }
   };
-
-  const handleOpenModalTx = async () => {
-      setIsOpenModalTx(false);
-     };
 
   function renderValue(option: SelectOption<string> | null) {
     return option ? (
@@ -235,13 +216,13 @@ const BuyCard = () => {
         ))}
       </Select>
       <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
-      <div style={{
-                    borderTop: '1px solid #6FEE8E',
-                    borderBottom: '1px solid #433F72',
-                    backgroundPosition: 'center',
-                    backgroundSize: '100%'
-                }}
-                 className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
+        <div style={{
+          borderTop: '1px solid #6FEE8E',
+          borderBottom: '1px solid #433F72',
+          backgroundPosition: 'center',
+          backgroundSize: '100%'
+        }}
+          className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
         >
         </div>
         <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
@@ -272,19 +253,21 @@ const BuyCard = () => {
         </div>
       </div>
       <Input
+        type="number"
+        className="input_amount"
         placeholder="Amount"
         variant="outlined"
-        value={count}
+        value={count ?? ''}
         endDecorator={
           <React.Fragment>
             <Select
-                sx={{
+              sx={{
                 fontFamily: "GothamPro",
                 width: "130px",
                 [`&:hover`]: {
                   borderRadius: "1000px",
                 },
-                }}
+              }}
               indicator={<KeyboardArrowDown />}
               defaultValue="usdc"
               variant="plain"
@@ -326,7 +309,7 @@ const BuyCard = () => {
           backgroundColor: "#0A0914",
           fontFamily: "GothamPro"
         }}
-        onChange={handleCountChange}
+        onChange={handleAmountChange}
       />
       <FormControl sx={{ marginTop: "21px" }}>
         <FormLabel
@@ -341,6 +324,8 @@ const BuyCard = () => {
           Target Price
         </FormLabel>
         <Input
+          className="input_amount"
+          type="number"
           placeholder=""
           variant="outlined"
           endDecorator={
@@ -350,22 +335,30 @@ const BuyCard = () => {
               variant="plain"
             >
               <IconButton
-                disabled={amountDisable}
-                onClick={() => setTargetPrice(targetPrice + 1)}
+                disabled={targetPrice === null || targetPrice >= Number(currentRatioPrice)}
+                onClick={() => {
+                  if (targetPrice !== null && targetPrice < Number(currentRatioPrice)) {
+                    setTargetPrice(targetPrice + 1);
+                  }
+                }}
                 variant="plain"
               >
                 <Plus />
               </IconButton>
               <IconButton
-                disabled={amountDisable}
-                onClick={() => setTargetPrice(targetPrice - 1)}
+                disabled={targetPrice === null || targetPrice <= 1}
+                onClick={() => {
+                  if (targetPrice !== null && targetPrice > 1) {
+                    setTargetPrice(targetPrice - 1);
+                  }
+                }}
                 variant="plain"
               >
                 <Minus />
               </IconButton>
             </ButtonGroup>
           }
-          value={targetPrice}
+          value={targetPrice ?? ''}
           onChange={handleTargetPrice}
           sx={{
             width: "476px",
@@ -418,7 +411,7 @@ const BuyCard = () => {
                 opacity: "0.3",
               }}
             />
-            <DialogTitle sx={{fontFamily: "GothamPro"}}>Confirmation</DialogTitle>
+            <DialogTitle sx={{ fontFamily: "GothamPro" }}>Confirmation</DialogTitle>
             <DialogContent
               sx={{
                 display: "flex",
@@ -487,15 +480,6 @@ const BuyCard = () => {
           </ModalDialog>
         </Modal>
       </React.Fragment>
-      <div aria-disabled={true} role="alert">
-      <ModalTsxInprogress 
-      onOpenModalTx={handleOpenModalTx}
-      isOpenModalTx={isOpenModalTx}
-      miniTxhash={miniTxhash}
-      hashLinkPlus={hashLinkPlus}
-      />
-      </div>
-      
     </div>
   );
 };

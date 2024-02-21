@@ -39,6 +39,8 @@ const TEXT_CELL_CARD = {
   btn: "Create Order",
 };
 
+const ETH_MAX_COST = 100000;
+
 const SellCard = () => {
   const {
     isConnect,
@@ -141,7 +143,7 @@ const SellCard = () => {
   const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
     const parseValue = Number(event.target.value);
 
-    if (!isNaN(parseValue) && parseValue >= 1 && parseValue <= 5000)  {
+    if (!isNaN(parseValue) && parseValue >= 1 && parseValue <= ETH_MAX_COST)  {
       let middlePurchase = ((+currentRatioPrice + parseValue) / 2)
         .toFixed(2)
         .toString();
@@ -338,9 +340,9 @@ const SellCard = () => {
             variant="plain"
           >
             <IconButton
-              disabled={targetPrice === null || targetPrice >= 5000}
+              disabled={targetPrice === null || targetPrice >= ETH_MAX_COST}
               onClick={() => {
-                if (targetPrice !== null && targetPrice < 5000) {
+                if (targetPrice !== null && targetPrice < ETH_MAX_COST) {
                   setTargetPrice(targetPrice + 1);
                 }
               }}

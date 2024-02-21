@@ -30,6 +30,7 @@ import abiContract from "../components/abiContract";
 import "@/app/font.css"
 import { parse } from 'path';
 import ModalTsxInprogress from "./ModalTsxInpogress";
+import MediaQuery from "react-responsive";
 
 
 const options = [
@@ -195,7 +196,7 @@ const BuyCard = () => {
   }
 
   return (
-    <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px] font-['GothamPro']">
+    <div className="flex relative flex-col items-center bg-[#0A0914] max-[539px]:pb-[30px] w-[98%] min-[540px]:w-[540px] h-fit min-[540px]:h-[621px] rounded-[32px] font-['GothamPro']">
       <Select
         indicator={<KeyboardArrowDown />}
         defaultValue="eth"
@@ -207,7 +208,6 @@ const BuyCard = () => {
           },
         }}
         sx={{
-          width: "476px",
           height: "50px",
           borderRadius: "100px",
           marginTop: "38px",
@@ -215,6 +215,7 @@ const BuyCard = () => {
           fontFamily: "GothamPro"
         }}
         renderValue={renderValue}
+        className="w-11/12 min-[540px]:w-[476px]"
       >
         {options.map((option, index) => (
           <React.Fragment key={option.value}>
@@ -224,7 +225,8 @@ const BuyCard = () => {
             <Option
               value={option.value}
               label={option.label}
-              sx={{ borderRadius: "100px", width: "456px", marginLeft: "10px", fontFamily: "GothamPro" }}
+              sx={{ borderRadius: "100px", fontFamily: "GothamPro", marginLeft: '2%'}}
+              className="w-[96%] min-[540px]:w-456px"
             >
               <ListItemDecorator>
                 <Avatar size="sm" src={option.src} />
@@ -234,43 +236,45 @@ const BuyCard = () => {
           </React.Fragment>
         ))}
       </Select>
-      <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
-      <div style={{
-                    borderTop: '1px solid #6FEE8E',
-                    borderBottom: '1px solid #433F72',
-                    backgroundPosition: 'center',
-                    backgroundSize: '100%'
-                }}
-                 className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
-        >
+      <MediaQuery minWidth={540}>
+        <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
+          <div style={{
+                        borderTop: '1px solid #6FEE8E',
+                        borderBottom: '1px solid #433F72',
+                        backgroundPosition: 'center',
+                        backgroundSize: '100%'
+                    }}
+                    className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
+            >
+          </div>
+          <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
+            <div>
+              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                Current price
+              </div>
+              <div className="text-[16px] font-normal leading-[24.32px]">
+                $ {currentRatioPrice}
+              </div>
+            </div>
+            <div>
+              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                Middle purchase
+              </div>
+              <div className="text-[16px] font-normal leading-[24.32px]">
+                $ {middlePurchase}
+              </div>
+            </div>
+            <div>
+              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                You will get
+              </div>
+              <div className="text-[16px] font-normal leading-[24.32px]">
+                ~ {futureAmount} ETH
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
-          <div>
-            <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-              Current price
-            </div>
-            <div className="text-[16px] font-normal leading-[24.32px]">
-              $ {currentRatioPrice}
-            </div>
-          </div>
-          <div>
-            <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-              Middle purchase
-            </div>
-            <div className="text-[16px] font-normal leading-[24.32px]">
-              $ {middlePurchase}
-            </div>
-          </div>
-          <div>
-            <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-              You will get
-            </div>
-            <div className="text-[16px] font-normal leading-[24.32px]">
-              ~ {futureAmount} ETH
-            </div>
-          </div>
-        </div>
-      </div>
+      </MediaQuery>
       <Input
         placeholder="Amount"
         variant="outlined"
@@ -280,7 +284,7 @@ const BuyCard = () => {
             <Select
                 sx={{
                 fontFamily: "GothamPro",
-                width: "130px",
+                width: "135px",
                 [`&:hover`]: {
                   borderRadius: "1000px",
                 },
@@ -307,7 +311,7 @@ const BuyCard = () => {
                 value="usdc"
                 sx={{
                   borderRadius: "100px",
-                  width: "120px",
+                  width: "125px",
                   marginLeft: "4.5px",
                   fontFamily: "GothamPro",
                 }}
@@ -319,16 +323,15 @@ const BuyCard = () => {
           </React.Fragment>
         }
         sx={{
-          width: "476px",
           height: "50px",
           borderRadius: "100px",
-          marginTop: "59px",
           backgroundColor: "#0A0914",
           fontFamily: "GothamPro"
         }}
+        className="w-11/12 min-[540px]:w-[476px] max-[539px]:my-[30px] min-[540px]:mt-[59px]"
         onChange={handleCountChange}
       />
-      <FormControl sx={{ marginTop: "21px" }}>
+      <FormControl sx={{ marginTop: "21px"}}>
         <FormLabel
           sx={{
             color: "#8A8997",
@@ -368,12 +371,12 @@ const BuyCard = () => {
           value={targetPrice}
           onChange={handleTargetPrice}
           sx={{
-            width: "476px",
             height: "50px",
             borderRadius: "100px",
             backgroundColor: "#0A0914",
             fontFamily: "GothamPro"
           }}
+          className="w-[100%] min-[540px]:w-[476px] max-[539px]:mb-[10px]"
         />
       </FormControl>
       <React.Fragment>
@@ -403,19 +406,22 @@ const BuyCard = () => {
         <Modal open={open} onClose={() => setOpen(false)}>
           <ModalDialog
             variant="plain"
-            sx={{
-              width: "500px",
+            sx={ (theme) => ({
+              width: '500px',
               position: "relative",
               borderRadius: "12px",
-              fontFamily: "GothamPro"
-            }}
+              fontFamily: "GothamPro",
+              [theme.breakpoints.only('xs')]: {
+                width: '80%',
+              }
+            })}
           >
             <ModalClose
               sx={{
                 position: "absolute",
-                top: "-40px",
+                top: "5px",
                 right: "0",
-                opacity: "0.3",
+                opacity: "0.5",
               }}
             />
             <DialogTitle sx={{fontFamily: "GothamPro"}}>Confirmation</DialogTitle>
@@ -427,7 +433,7 @@ const BuyCard = () => {
                 fontFamily: "GothamPro"
               }}
             >
-              <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
+              <div className="relative flex items-center w-11/12 min-[540px]:w-[455px] justify-between mt-[40px]">
                 <div className="absolute left-0 top-[-23px]">
                   <p className="text-[14px]">From</p>
                 </div>
@@ -441,7 +447,7 @@ const BuyCard = () => {
                   {count}
                 </p>
               </div>
-              <div className="relative flex items-center w-[455px] justify-between mt-[30px]">
+              <div className="relative flex items-center w-11/12 min-[540px]:w-[455px] justify-between mt-[30px]">
                 <div className="absolute left-0 top-[-23px]">
                   <p className="text-[14px]">To</p>
                 </div>
@@ -455,8 +461,8 @@ const BuyCard = () => {
                   {futureAmount}
                 </p>
               </div>
-              <div className="flex flex-col items-center w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
-                <div className="flex items-center justify-between w-[415px] mt-[10px]">
+              <div className="flex flex-col items-center w-11/12 min-[540px]:w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
+                <div className="flex items-center justify-between w-10/12 min-[540px]:w-[415px] my-[10px]">
                   <p className="text-[16px]">Middle price</p>
                   <p className="text-[16px] text-[#FFF]">$ {middlePurchase}</p>
                 </div>

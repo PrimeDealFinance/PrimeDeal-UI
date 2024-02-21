@@ -47,11 +47,7 @@ export default function AlertError({
               alignItems: 'center'
             }}
           >
-            <CircularProgress 
-              size='md'
-            >
-              <Warning/>
-            </CircularProgress>
+            <Warning/>
             Rejected
           </DialogTitle>
           <DialogContent>

@@ -71,9 +71,6 @@ const BuyCard = () => {
   const hashLink = process.env.NEXT_PUBLIC_HASH_LINK_MUMBAI;
   const hashLinkPlus = hashLink + txhash;
 
-  const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
-
-
   const contractProvider = new ethers.Contract(
     positionManagerContractAddress,
     abiContract,
@@ -84,11 +81,16 @@ const BuyCard = () => {
     reinitializeContracts();
     (async () => {
       try {
+        let pool = await contractProvider.getPoolAddress(
+          USDTContractAddress,
+          ETHContractAddress,
+          3000 // TODO: make changable
+        );
         let currentTick = await contractProvider.getCurrentTick(
-          poolAddressETH_USDC
+          pool
         );
         let currentRatioPrice = (1.0001 ** Number(currentTick)).toFixed(18);
-        setCurrentRatioPrice((1 / +currentRatioPrice).toFixed(2).toString());
+        setCurrentRatioPrice((+currentRatioPrice).toFixed(2).toString());
       } catch (error) {
         console.error(error);
       }
@@ -107,7 +109,7 @@ const BuyCard = () => {
         const allowanceToNumber = +allowanceToString / 10 ** 18;
         const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
         const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
-        let targetPriceReady = BigInt(Math.sqrt(1 / targetPrice) * 2 ** 96);
+        let targetPriceReady = BigInt(Math.sqrt(targetPrice) * 2 ** 96);
         let targetReady_ = targetPriceReady.toString();
 
         const maxUint256 = ethers.MaxInt256;
@@ -117,8 +119,8 @@ const BuyCard = () => {
           : null;
 
         const tx = await contractSigner.openBuyPosition(
-          USDTContractAddress,
           ETHContractAddress,
+          USDTContractAddress,
           "3000",
           targetReady_,
           amountCoin_,

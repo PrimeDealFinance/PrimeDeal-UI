@@ -28,7 +28,6 @@ import { useWalletStore } from "@/service/store";
 import "@/app/font.css";
 import defaultProvider from "../app/provider/defaultProvider";
 import abiContract from "../components/abiContract";
-import './index.css'
 import MediaQuery from "react-responsive";
 import ModalTsxInprogress from "./ModalTsxInpogress";
 import AlertError from "./AlertError";
@@ -42,7 +41,7 @@ const TEXT_CELL_CARD = {
   btn: "Create Order",
 };
 
-const ETH_MAX_COST = 100000;
+const ETH_MAX_COST = 100000000;
 
 const SellCard = () => {
   const {
@@ -56,15 +55,14 @@ const SellCard = () => {
     reinitializeContracts,
   } = useWalletStore();
 
-  const [count, setCount] = useState<number | null>(null);
-  const [amountDisable, setAmountDisable] = useState(true);
-  const [targetPrice, setTargetPrice] = useState<number | null>(null);
+  const [count, setCount] = useState("");
+  const [targetPrice, setTargetPrice] = useState("");
 
   const [open, setOpen] = React.useState<boolean>(false);
   const [currentRatioPrice, setCurrentRatioPrice] = useState('');
   const [middlePurchase, setMiddlePurchase] = useState('');
   const [futureAmount, setFutureAmount] = useState("");
-  
+
   const [isOpenAlertError, setIsOpenAlertError] = React.useState<boolean>(false);
   const [isOpenModalTx, setIsOpenModalTx] = React.useState<boolean>(false);
   const [txhash, setTxhash] = useState("");
@@ -83,9 +81,9 @@ const SellCard = () => {
     (async () => {
       try {
         let pool = await contractProvider.getPoolAddress(
-            USDTContractAddress,
-            ETHContractAddress,
-            3000 // TODO: make changable
+          USDTContractAddress,
+          ETHContractAddress,
+          3000 // TODO: make changable
         );
         let currentTick = await contractProvider.getCurrentTick(
           pool
@@ -101,44 +99,42 @@ const SellCard = () => {
   const getOpenSellPosition = async () => {
     setOpen(false);
     try {
-      if (targetPrice && count) {
-        const allowance = await ethSigner.allowance(
-          account,
-          positionManagerContractAddress
-        );
+      const allowance = await ethSigner.allowance(
+        account,
+        positionManagerContractAddress
+      );
 
-        const allowanceToString = ethers.formatUnits(allowance, 0);
-        const allowanceToNumber = +allowanceToString / 10 ** 18;
-        const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
-        const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
-        let targetPriceReady = BigInt(Math.sqrt(targetPrice) * 2 ** 96);
-        let targetReady_ = targetPriceReady.toString();
+      const allowanceToString = ethers.formatUnits(allowance, 0);
+      const allowanceToNumber = +allowanceToString / 10 ** 18;
+      const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
+      const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
+      let targetPriceReady = BigInt(Math.sqrt(Number(targetPrice)) * 2 ** 96);
+      let targetReady_ = targetPriceReady.toString();
 
-        const maxUint256 = ethers.MaxInt256;
+      const maxUint256 = ethers.MaxInt256;
 
-        allowanceToNumber < +count
-          ? await ethSigner.approve(positionManagerContractAddress, maxUint256)
-          : null;
+      allowanceToNumber < +count
+        ? await ethSigner.approve(positionManagerContractAddress, maxUint256)
+        : null;
 
-        const tx = await contractSigner.openSellPosition(
-          ETHContractAddress,
-          USDTContractAddress,
-          "3000",
-          targetReady_,
-          amountCoin_,
-          "0",
-          {
-            gasLimit: 850000,
-          }
-        );
+      const tx = await contractSigner.openSellPosition(
+        ETHContractAddress,
+        USDTContractAddress,
+        "3000",
+        targetReady_,
+        amountCoin_,
+        "0",
+        {
+          gasLimit: 850000,
+        }
+      );
 
-        setTxhash(tx.hash);
-        setIsOpenModalTx(true);
-        const response = await tx.wait();
-        setIsOpenModalTx(false);
-        console.log("responseTxSwap1: ", response);
-        window.location.replace("/orders");
-      }
+      setTxhash(tx.hash);
+      setIsOpenModalTx(true);
+      const response = await tx.wait();
+      setIsOpenModalTx(false);
+      console.log("responseTxSwap1: ", response);
+      window.location.replace("/orders");
     } catch (error) {
       setIsOpenModalTx(false);
       setIsOpenAlertError(true);
@@ -146,46 +142,60 @@ const SellCard = () => {
     }
   };
 
-  const isValidAmount = (value: number): boolean => {
-    return !isNaN(value) && value >= 0 && value <= 1 && value.toString().length <= 6;
-  };
-
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue: number = parseFloat(event.target.value);
+    const amountInputValue = event.target.value;
 
-    const isValid = isValidAmount(inputValue);
-    setAmountDisable(!isValid);
-    setCount(isValid ? Number(inputValue.toFixed(4)) : null);
+    if (!amountInputValue) {
+      setCount("");
+      return;
+    }
+
+    if (isNaN(Number(amountInputValue))) {
+      return;
+    }
+
+    setCount(amountInputValue)
   };
 
   const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const parseValue = Number(event.target.value);
+    const targetPriceInputValue = Number(event.target.value);
 
-    if (!isNaN(parseValue) && parseValue >= 1 && parseValue <= ETH_MAX_COST)  {
-      let middlePurchase = ((+currentRatioPrice + parseValue) / 2)
-        .toFixed(2)
-        .toString();
+    if (!targetPriceInputValue) {
+      setTargetPrice('');
+      setMiddlePurchase('');
+      setFutureAmount('');
+      return;
+    }
+
+    if (isNaN(targetPriceInputValue)) {
+      return;
+    }
+
+    const targetPrice = String(targetPriceInputValue);
+    setTargetPrice(targetPrice);
+
+    if (targetPriceInputValue > Number(currentRatioPrice) && targetPriceInputValue < ETH_MAX_COST) {
+
+      const middlePurchase = ((Number(currentRatioPrice) + targetPriceInputValue) / 2).toFixed(2);
+      const futureAmount = (Number(count) * Number(middlePurchase)).toFixed(2);
+
       setMiddlePurchase(middlePurchase);
-
-      if (count !== null) {
-        setFutureAmount((count * +middlePurchase).toFixed(2).toString());
-      }
-
-      setTargetPrice(parseValue);
+      setFutureAmount(futureAmount);
     } else {
       setMiddlePurchase('');
       setFutureAmount('');
-      setTargetPrice(null);
     }
   };
 
+  const isButtonDisabled = !isConnect || Number(targetPrice) < Number(currentRatioPrice) || Number(count) <= 0 || Number(count) > 1 || count.length > 10;
+
   const handleOpenModalTx = async () => {
     setIsOpenModalTx(false);
-   };
+  };
 
-   const handleOpenAlertError = async () => {
+  const handleOpenAlertError = async () => {
     setIsOpenAlertError(false);
-   };
+  };
 
   function renderValue(option: SelectOption<string> | null) {
     return option ? (
@@ -282,11 +292,10 @@ const SellCard = () => {
         </div>
       </MediaQuery>
       <Input
-        className="input_amount w-11/12 min-[540px]:w-[476px] max-[539px]:my-[30px] min-[540px]:mt-[59px]"
-        type="number"
+        className="w-11/12 min-[540px]:w-[476px] max-[539px]:my-[30px] min-[540px]:mt-[59px]"
         placeholder="Amount"
         variant="outlined"
-        value={count ?? ''}
+        value={count || ''}
         endDecorator={
           <React.Fragment>
             <Select
@@ -357,39 +366,37 @@ const SellCard = () => {
           Target Price
         </FormLabel>
         <Input
-          className="input_amount w-[100%] min-[540px]:w-[476px] max-[539px]:mb-[10px]"
-          type="number"
-          placeholder=""
+          className="w-[100%] min-[540px]:w-[476px] max-[539px]:mb-[10px]"
           variant="outlined"
           endDecorator={
             <ButtonGroup
-            spacing="9px"
-            sx={{ borderRadius: "100%" }}
-            variant="plain"
-          >
-            <IconButton
-              disabled={targetPrice === null || targetPrice >= ETH_MAX_COST}
-              onClick={() => {
-                if (targetPrice !== null && targetPrice < ETH_MAX_COST) {
-                  setTargetPrice(targetPrice + 1);
-                }
-              }}
+              spacing="9px"
+              sx={{ borderRadius: "100%" }}
               variant="plain"
             >
-              <Plus />
-            </IconButton>
-            <IconButton
-              disabled={targetPrice === null || targetPrice <= 1}
-              onClick={() => {
-                if (targetPrice !== null && targetPrice > 1) {
-                  setTargetPrice(targetPrice - 1);
-                }
-              }}
-              variant="plain"
-            >
-              <Minus />
-            </IconButton>
-          </ButtonGroup>
+              <IconButton
+                disabled={!targetPrice || Number(targetPrice) >= ETH_MAX_COST}
+                onClick={() => {
+                  if (targetPrice !== null && Number(targetPrice) < ETH_MAX_COST) {
+                    setTargetPrice(String(Number(targetPrice) + 1));
+                  }
+                }}
+                variant="plain"
+              >
+                <Plus />
+              </IconButton>
+              <IconButton
+                disabled={Number(targetPrice) <= 1}
+                onClick={() => {
+                  if (targetPrice !== null && Number(targetPrice) > 1) {
+                    setTargetPrice(String(Number(targetPrice) - 1));
+                  }
+                }}
+                variant="plain"
+              >
+                <Minus />
+              </IconButton>
+            </ButtonGroup>
           }
           sx={{
             height: "50px",
@@ -403,7 +410,7 @@ const SellCard = () => {
       </FormControl>
       <React.Fragment>
         <Button
-          disabled={!isConnect || amountDisable}
+          disabled={isButtonDisabled}
           sx={{
             color: "#FFF",
             textAlign: "center",
@@ -428,7 +435,7 @@ const SellCard = () => {
         <Modal open={open} onClose={() => setOpen(false)}>
           <ModalDialog
             variant="plain"
-            sx={ (theme) => ({
+            sx={(theme) => ({
               width: '500px',
               position: "relative",
               borderRadius: "12px",
@@ -516,19 +523,19 @@ const SellCard = () => {
         </Modal>
       </React.Fragment>
       <div aria-disabled={true} role="alert">
-      <ModalTsxInprogress 
-      onOpenModalTx={handleOpenModalTx}
-      isOpenModalTx={isOpenModalTx}
-      miniTxhash={miniTxhash}
-      hashLinkPlus={hashLinkPlus}
-      />
+        <ModalTsxInprogress
+          onOpenModalTx={handleOpenModalTx}
+          isOpenModalTx={isOpenModalTx}
+          miniTxhash={miniTxhash}
+          hashLinkPlus={hashLinkPlus}
+        />
       </div>
       <div aria-disabled={true} role="alert">
-          <AlertError
-            onOpenAlertError={handleOpenAlertError}
-            isOpenAlertError={isOpenAlertError}
-          />
-        </div>
+        <AlertError
+          onOpenAlertError={handleOpenAlertError}
+          isOpenAlertError={isOpenAlertError}
+        />
+      </div>
     </div>
   );
 };

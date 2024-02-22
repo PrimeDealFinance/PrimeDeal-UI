@@ -99,11 +99,8 @@ function OrderIdPage({ params }: { params: { id: string } }) {
           setIsOpenModalTx(false);
           console.log("responseTxSwap1: ", response);
       } catch (error) {
-        console.error("000")
         setIsOpenAlertError(true);
-        console.log("111")
         console.error(error);
-        console.log("222")
         }
       }
   

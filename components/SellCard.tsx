@@ -49,7 +49,7 @@ const SellCard = () => {
     isConnect,
     account,
     positionManagerContractAddress,
-    usdtSigner,
+    ethSigner,
     contractSigner,
     USDTContractAddress,
     ETHContractAddress,
@@ -102,7 +102,7 @@ const SellCard = () => {
     setOpen(false);
     try {
       if (targetPrice && count) {
-        const allowance = await usdtSigner.allowance(
+        const allowance = await ethSigner.allowance(
           account,
           positionManagerContractAddress
         );
@@ -117,12 +117,12 @@ const SellCard = () => {
         const maxUint256 = ethers.MaxInt256;
 
         allowanceToNumber < +count
-          ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
+          ? await ethSigner.approve(positionManagerContractAddress, maxUint256)
           : null;
 
         const tx = await contractSigner.openSellPosition(
-          USDTContractAddress,
           ETHContractAddress,
+          USDTContractAddress,
           "3000",
           targetReady_,
           amountCoin_,

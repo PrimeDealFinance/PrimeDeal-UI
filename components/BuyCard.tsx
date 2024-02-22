@@ -17,12 +17,17 @@ import {
   ModalClose,
   DialogTitle,
   DialogContent,
+  Radio,
+  RadioGroup,
+  radioClasses,
+  Sheet
 } from "@mui/joy";
 import { SelectOption } from "@mui/joy/Select";
 import {
   KeyboardArrowDown,
   AddCircleOutline as Plus,
   RemoveCircleOutline as Minus,
+  CheckCircleRounded as CheckCircleRoundedIcon,
 } from "@mui/icons-material";
 import { useWalletStore } from "@/service/store";
 import defaultProvider from "../app/provider/defaultProvider";
@@ -40,6 +45,7 @@ const options = [
   { value: "matic", label: "MATIC", src: "/matic.svg" },
 ];
 
+const fees = ['0.01%', '0.05%', '0.30%', '1%']
 const TEXT_BUY_CARD = {
   btn: "Create Order",
 };
@@ -189,7 +195,7 @@ const BuyCard = () => {
   }
 
   return (
-    <div className="flex relative flex-col items-center bg-[#0A0914] max-[539px]:pb-[30px] w-[98%] min-[540px]:w-[540px] h-fit min-[540px]:h-[621px] rounded-[32px] font-['GothamPro']">
+    <div className="flex relative flex-col items-center bg-[#0A0914] max-[539px]:pb-[30px] w-[98%] min-[540px]:w-[540px] h-fit min-[540px]:h-[711px] rounded-[32px] font-['GothamPro']">
       <Select
         indicator={<KeyboardArrowDown />}
         defaultValue="eth"
@@ -382,6 +388,72 @@ const BuyCard = () => {
             fontFamily: "GothamPro"
           }}
         />
+      </FormControl>
+      <FormControl sx={{marginTop: '21px'}}>
+      <FormLabel
+          sx={{
+            color: "#8A8997",
+            fontSize: "12px",
+            fontWeight: "normal",
+            letterSpacing: "0.12px",
+            fontFamily: "GothamPro"
+          }}
+        >
+          Pool Fees
+        </FormLabel>
+        <RadioGroup 
+           aria-label="fees"
+           defaultValue="0.05%"
+           overlay
+           name="fees"
+           sx={{
+             fontFamily: 'GothamPro',
+             flexDirection: 'row',
+             gap: 2,
+             [`& .${radioClasses.checked}`]: {
+               [`& .${radioClasses.action}`]: {
+                 inset: -1,
+                 border: '3px solid',
+                 borderColor: '#5706FF',
+               },
+             },
+             [`& .${radioClasses.radio}`]: {
+               display: 'contents',
+               '& > svg': {
+                 zIndex: 2,
+                 position: 'absolute',
+                 top: '-8px',
+                 right: '-8px',
+                 bgcolor: 'background.surface',
+                 borderRadius: '12px',
+               },
+             },
+           }}
+           className="w-11/12"
+        >
+          {fees.map((value) => (
+            <Sheet
+              key={value}
+              variant="outlined"
+              sx={ (theme) =>({
+                borderRadius: '12px',
+                boxShadow: 'sm',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 1.5,
+                p: 0.5,
+                minWidth: 100,
+                [theme.breakpoints.only('xs')]: {
+                  minWidth: 70,
+                }
+              })}
+            >
+              <Radio id={value} value={value} checkedIcon={<CheckCircleRoundedIcon />} />
+              <FormLabel htmlFor={value} sx={{fontFamily:'GothamPro'}}>{value}</FormLabel>
+            </Sheet>
+          ))}
+        </RadioGroup>
       </FormControl>
       <React.Fragment>
         <Button

@@ -16,7 +16,7 @@ const options = [
 
 const CreateOrderPage = () => {
     return (
-       <div className='flex relative h-screen flex-col items-center'> 
+       <div className='flex relative h-full flex-col items-center'> 
         <div>
           <Tabs aria-label="tabs" defaultValue={0} sx={{ bgcolor: 'transparent'}}>
             <TabList

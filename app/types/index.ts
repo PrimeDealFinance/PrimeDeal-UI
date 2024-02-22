@@ -10,9 +10,11 @@ export interface UserPosition {
 };
 
 export interface PositionInfo {
-  positionDirection: BigInt | boolean;
   amount: BigInt;
   uniswapTokenId: BigInt;
+  positionDirection: BigInt | boolean;
+  isNativeA: boolean;
+  isNativeB: boolean;
 }
 
 export interface Positions {

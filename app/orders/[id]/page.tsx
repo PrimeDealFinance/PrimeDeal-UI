@@ -127,7 +127,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
           "3000"
         );
 
-        const priceUSDC_ETH = 1 / (Number(sqrtPriceX96EthUsdt) ** 2 / 2 ** 192);
+        const priceUSDC_ETH = (Number(sqrtPriceX96EthUsdt) ** 2 / 2 ** 192);
         // ещё нужен прайс для битка тут
   
         var nums: any = allPositions;

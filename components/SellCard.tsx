@@ -47,7 +47,7 @@ const TEXT_CELL_CARD = {
   btn: "Create Order",
 };
 
-const ETH_MAX_COST = 100000000;
+const ETH_MAX_COST = 100000000000;
 
 const SellCard = () => {
   const {
@@ -194,7 +194,7 @@ const SellCard = () => {
     }
   };
 
-  const isButtonDisabled = !isConnect || Number(targetPrice) < Number(currentRatioPrice) || Number(count) <= 0 || Number(count) > 1 || count.length > 10;
+  const isButtonDisabled = !isConnect || Number(targetPrice) < Number(currentRatioPrice) || Number(count) <= 0 || Number(count) > 1 || Number(targetPrice) > ETH_MAX_COST;
 
   const handleOpenModalTx = async () => {
     setIsOpenModalTx(false);

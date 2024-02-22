@@ -28,15 +28,17 @@ import { useWalletStore } from "@/service/store";
 import defaultProvider from "../app/provider/defaultProvider";
 import abiContract from "../components/abiContract";
 import "@/app/font.css"
-import { parse } from 'path';
 import ModalTsxInprogress from "./ModalTsxInpogress";
 import AlertError from "./AlertError";
 import MediaQuery from "react-responsive";
-import './index.css'
 
+type Options = {
+  value: string;
+  label: string;
+  src: string;
+};
 
-
-const options = [
+const options: Options[] = [
   { value: "eth", label: "ETH", src: "/eth.svg" },
   { value: "matic", label: "MATIC", src: "/matic.svg" },
 ];
@@ -57,9 +59,9 @@ const BuyCard = () => {
     reinitializeContracts,
   } = useWalletStore();
 
-  const [count, setCount] = useState<number | null>(null);
-  const [amountDisable, setAmountDisable] = useState(true);
-  const [targetPrice, setTargetPrice] = useState<number | null>(null);
+  const [count, setCount] = useState("");
+  const [targetPrice, setTargetPrice] = useState("");
+  const [selectedOption, setSelectedOption] = useState<Options>(options[0]);
 
   const [open, setOpen] = React.useState<boolean>(false);
   const [currentRatioPrice, setCurrentRatioPrice] = useState("");
@@ -102,44 +104,42 @@ const BuyCard = () => {
   const getOpenBuyPosition = async () => {
     setOpen(false);
     try {
-      if (targetPrice && count) {
-        const allowance = await usdtSigner.allowance(
-          account,
-          positionManagerContractAddress
-        );
+      const allowance = await usdtSigner.allowance(
+        account,
+        positionManagerContractAddress
+      );
 
-        const allowanceToString = ethers.formatUnits(allowance, 0);
-        const allowanceToNumber = +allowanceToString / 10 ** 18;
-        const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
-        const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
-        let targetPriceReady = BigInt(Math.sqrt(targetPrice) * 2 ** 96);
-        let targetReady_ = targetPriceReady.toString();
+      const allowanceToString = ethers.formatUnits(allowance, 0);
+      const allowanceToNumber = +allowanceToString / 10 ** 18;
+      const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
+      const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
+      let targetPriceReady = BigInt(Math.sqrt(Number(targetPrice)) * 2 ** 96);
+      let targetReady_ = targetPriceReady.toString();
 
-        const maxUint256 = ethers.MaxInt256;
+      const maxUint256 = ethers.MaxInt256;
 
-        allowanceToNumber < +count
-          ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
-          : null;
+      allowanceToNumber < +count
+        ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
+        : null;
 
-        const tx = await contractSigner.openBuyPosition(
-          ETHContractAddress,
-          USDTContractAddress,
-          "3000",
-          targetReady_,
-          amountCoin_,
-          "0",
-          {
-            gasLimit: 850000,
-          }
-        );
+      const tx = await contractSigner.openBuyPosition(
+        ETHContractAddress,
+        USDTContractAddress,
+        "3000",
+        targetReady_,
+        amountCoin_,
+        "0",
+        {
+          gasLimit: 850000,
+        }
+      );
 
-        setTxhash(tx.hash);
-        setIsOpenModalTx(true);
-        const response = await tx.wait();
-        setIsOpenModalTx(false);
-        console.log("responseTxSwap1: ", response);
-        window.location.replace("/orders");
-      }
+      setTxhash(tx.hash);
+      setIsOpenModalTx(true);
+      const response = await tx.wait();
+      setIsOpenModalTx(false);
+      console.log("responseTxSwap1: ", response);
+      window.location.replace("/orders");
     } catch (error) {
       setIsOpenModalTx(false);
       setIsOpenAlertError(true);
@@ -148,43 +148,59 @@ const BuyCard = () => {
   };
 
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = Number(event.target.value);
+    const amountInputValue = Number(event.target.value);
 
-    if (inputValue >= 1 && inputValue <= 50) {
-      setAmountDisable(false);
-      setCount(inputValue);
-    } else {
-      setAmountDisable(true);
-      setCount(null);
+    if (!amountInputValue) {
+      setCount("");
+      return;
     }
+
+    if (isNaN(amountInputValue)) {
+      return;
+    }
+
+    setCount(String(amountInputValue));
   };
- 
+
   const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const parseValue = Number(event.target.value);
+    const targetPriceInputValue = Number(event.target.value);
 
-    if (!isNaN(parseValue) && parseValue >= 1 && parseValue < +currentRatioPrice) {
-      let middlePurchase = ((+currentRatioPrice + parseValue) / 2).toFixed(2).toString();
+    if (!targetPriceInputValue) {
+      setTargetPrice('');
+      setMiddlePurchase('');
+      setFutureAmount('');
+      return;
+    }
+
+    if (isNaN(targetPriceInputValue)) {
+      return;
+    }
+
+    const targetPrice = String(targetPriceInputValue);
+    setTargetPrice(targetPrice);
+
+    if (targetPriceInputValue < Number(currentRatioPrice)) {
+
+      const middlePurchase = ((Number(currentRatioPrice) + targetPriceInputValue) / 2).toFixed(2);
+      const futureAmount = (Number(count) / Number(middlePurchase)).toFixed(4);
+
       setMiddlePurchase(middlePurchase);
-
-      if (count !== null) {
-        setFutureAmount((count / +middlePurchase).toFixed(4).toString());
-      }
-
-      setTargetPrice(parseValue);
+      setFutureAmount(futureAmount);
     } else {
       setMiddlePurchase('');
       setFutureAmount('');
-      setTargetPrice(null);
     }
   };
 
+  const isButtonDisabled = !isConnect || !targetPrice || !count || Number(targetPrice) > Number(currentRatioPrice) || Number(count) >= 50;
+
   const handleOpenModalTx = async () => {
     setIsOpenModalTx(false);
-   };
+  };
 
-   const handleOpenAlertError = async () => {
+  const handleOpenAlertError = async () => {
     setIsOpenAlertError(false);
-   };
+  };
 
   function renderValue(option: SelectOption<string> | null) {
     return option ? (
@@ -204,7 +220,13 @@ const BuyCard = () => {
     <div className="flex relative flex-col items-center bg-[#0A0914] max-[539px]:pb-[30px] w-[98%] min-[540px]:w-[540px] h-fit min-[540px]:h-[621px] rounded-[32px] font-['GothamPro']">
       <Select
         indicator={<KeyboardArrowDown />}
-        defaultValue="eth"
+        defaultValue={selectedOption ? selectedOption.value : 'eth'}
+        onChange={(_, value) => {
+          const selectedOption = options.find(option => option.value === value);
+          if (selectedOption) {
+            setSelectedOption(selectedOption);
+          }
+        }}
         slotProps={{
           listbox: {
             sx: {
@@ -230,7 +252,7 @@ const BuyCard = () => {
             <Option
               value={option.value}
               label={option.label}
-              sx={{ borderRadius: "100px", fontFamily: "GothamPro", marginLeft: '2%'}}
+              sx={{ borderRadius: "100px", fontFamily: "GothamPro", marginLeft: '2%' }}
               className="w-[96%] min-[540px]:w-456px"
             >
               <ListItemDecorator>
@@ -244,49 +266,48 @@ const BuyCard = () => {
 
       <MediaQuery minWidth={540}>
         <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
-            <div style={{
-              borderTop: '1px solid #6FEE8E',
-              borderBottom: '1px solid #433F72',
-              backgroundPosition: 'center',
-              backgroundSize: '100%'
-            }}
-              className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
-            >
-            </div>
-            <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
-              <div>
-                <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                  Current price
-                </div>
-                <div className="text-[16px] font-normal leading-[24.32px]">
-                  $ {currentRatioPrice}
-                </div>
+          <div style={{
+            borderTop: '1px solid #6FEE8E',
+            borderBottom: '1px solid #433F72',
+            backgroundPosition: 'center',
+            backgroundSize: '100%'
+          }}
+            className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorUp.svg')]"
+          >
+          </div>
+          <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
+            <div>
+              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                Current price
               </div>
-              <div>
-                <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                  Middle purchase
-                </div>
-                <div className="text-[16px] font-normal leading-[24.32px]">
-                  $ {middlePurchase}
-                </div>
-              </div>
-              <div>
-                <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-                  You will get
-                </div>
-                <div className="text-[16px] font-normal leading-[24.32px]">
-                  ~ {futureAmount} ETH
-                </div>
+              <div className="text-[16px] font-normal leading-[24.32px]">
+                $ {currentRatioPrice}
               </div>
             </div>
+            <div>
+              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                Middle purchase
+              </div>
+              <div className="text-[16px] font-normal leading-[24.32px]">
+                $ {middlePurchase}
+              </div>
+            </div>
+            <div>
+              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                You will get
+              </div>
+              <div className="text-[16px] font-normal leading-[24.32px]">
+                ~ {futureAmount} ETH
+              </div>
+            </div>
+          </div>
         </div>
       </MediaQuery>
       <Input
-        type="number"
-        className="input_amount w-11/12 min-[540px]:w-[476px] max-[539px]:my-[30px] min-[540px]:mt-[59px]"
+        className="w-11/12 min-[540px]:w-[476px] max-[539px]:my-[30px] min-[540px]:mt-[59px]"
         placeholder="Amount"
         variant="outlined"
-        value={count ?? ''}
+        value={count || ''}
         endDecorator={
           <React.Fragment>
             <Select
@@ -338,7 +359,7 @@ const BuyCard = () => {
         }}
         onChange={handleAmountChange}
       />
-      <FormControl sx={{ marginTop: "21px"}}>
+      <FormControl sx={{ marginTop: "21px" }}>
         <FormLabel
           sx={{
             color: "#8A8997",
@@ -351,9 +372,7 @@ const BuyCard = () => {
           Target Price
         </FormLabel>
         <Input
-          className="input_amount w-[100%] min-[540px]:w-[476px] max-[539px]:mb-[10px]"
-          type="number"
-          placeholder=""
+          className="w-[100%] min-[540px]:w-[476px] max-[539px]:mb-[10px]"
           variant="outlined"
           endDecorator={
             <ButtonGroup
@@ -362,10 +381,10 @@ const BuyCard = () => {
               variant="plain"
             >
               <IconButton
-                disabled={targetPrice === null || targetPrice >= Number(currentRatioPrice)}
+                disabled={!targetPrice || Number(targetPrice) >= Number(currentRatioPrice)}
                 onClick={() => {
-                  if (targetPrice !== null && targetPrice < Number(currentRatioPrice)) {
-                    setTargetPrice(targetPrice + 1);
+                  if (targetPrice !== null && Number(targetPrice) < Number(currentRatioPrice)) {
+                    setTargetPrice(String(Number(targetPrice) + 1));
                   }
                 }}
                 variant="plain"
@@ -373,10 +392,10 @@ const BuyCard = () => {
                 <Plus />
               </IconButton>
               <IconButton
-                disabled={targetPrice === null || targetPrice <= 1}
+                disabled={Number(targetPrice) <= 1}
                 onClick={() => {
-                  if (targetPrice !== null && targetPrice > 1) {
-                    setTargetPrice(targetPrice - 1);
+                  if (targetPrice !== null && Number(targetPrice) > 1) {
+                    setTargetPrice(String(Number(targetPrice) - 1));
                   }
                 }}
                 variant="plain"
@@ -385,7 +404,7 @@ const BuyCard = () => {
               </IconButton>
             </ButtonGroup>
           }
-          value={targetPrice ?? ''}
+          value={targetPrice || ''}
           onChange={handleTargetPrice}
           sx={{
             height: "50px",
@@ -397,7 +416,7 @@ const BuyCard = () => {
       </FormControl>
       <React.Fragment>
         <Button
-          disabled={!isConnect || amountDisable}
+          disabled={isButtonDisabled}
           sx={{
             color: "#FFF",
             textAlign: "center",
@@ -422,7 +441,7 @@ const BuyCard = () => {
         <Modal open={open} onClose={() => setOpen(false)}>
           <ModalDialog
             variant="plain"
-            sx={ (theme) => ({
+            sx={(theme) => ({
               width: '500px',
               position: "relative",
               borderRadius: "12px",
@@ -468,9 +487,9 @@ const BuyCard = () => {
                   <p className="text-[14px]">To</p>
                 </div>
                 <div className="flex items-center">
-                  <Avatar size="sm" src="/eth.svg" />
+                  <Avatar size="sm" src={selectedOption.src} /> 
                   <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
-                    ETH
+                    {selectedOption.label}
                   </p>
                 </div>
                 <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
@@ -510,19 +529,19 @@ const BuyCard = () => {
         </Modal>
       </React.Fragment>
       <div aria-disabled={true} role="alert">
-      <ModalTsxInprogress 
-      onOpenModalTx={handleOpenModalTx}
-      isOpenModalTx={isOpenModalTx}
-      miniTxhash={miniTxhash}
-      hashLinkPlus={hashLinkPlus}
-      />
+        <ModalTsxInprogress
+          onOpenModalTx={handleOpenModalTx}
+          isOpenModalTx={isOpenModalTx}
+          miniTxhash={miniTxhash}
+          hashLinkPlus={hashLinkPlus}
+        />
       </div>
       <div aria-disabled={true} role="alert">
-          <AlertError
-            onOpenAlertError={handleOpenAlertError}
-            isOpenAlertError={isOpenAlertError}
-          />
-        </div>
+        <AlertError
+          onOpenAlertError={handleOpenAlertError}
+          isOpenAlertError={isOpenAlertError}
+        />
+      </div>
     </div>
   );
 };

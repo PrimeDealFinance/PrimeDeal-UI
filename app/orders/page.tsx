@@ -20,7 +20,7 @@ const PATH_TO_ASSETS = 'https://raw.githubusercontent.com/PrimeDealFinance/Prime
 // const PATH_TO_ASSETS = '';
 
 const ERC20_ABI = [
-  "function name() public view returns (string)",
+  "function symbol() public view returns (string)",
 ];
 
 const TEXT_ORDERS = {
@@ -45,7 +45,7 @@ function Orders() {
         address: string,
         abi: string[],
         provider: ethers.JsonRpcApiProvider,) {
-        return await (new Contract(address, abi, defaultProvider)).name();
+        return await (new Contract(address, abi, defaultProvider)).symbol();
       }
 
       dataOrders.length = 0;

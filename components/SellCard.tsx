@@ -30,6 +30,8 @@ import defaultProvider from "../app/provider/defaultProvider";
 import abiContract from "../components/abiContract";
 import './index.css'
 import MediaQuery from "react-responsive";
+import ModalTsxInprogress from "./ModalTsxInpogress";
+import AlertError from "./AlertError";
 
 const options = [
   { value: "eth", label: "ETH", src: "/eth.svg" },
@@ -62,6 +64,14 @@ const SellCard = () => {
   const [currentRatioPrice, setCurrentRatioPrice] = useState('');
   const [middlePurchase, setMiddlePurchase] = useState('');
   const [futureAmount, setFutureAmount] = useState("");
+  
+  const [isOpenAlertError, setIsOpenAlertError] = React.useState<boolean>(false);
+  const [isOpenModalTx, setIsOpenModalTx] = React.useState<boolean>(false);
+  const [txhash, setTxhash] = useState("");
+  const miniTxhash = txhash.substring(0, 5) + "....." + txhash.slice(45);
+  const hashLink = process.env.NEXT_PUBLIC_HASH_LINK_MUMBAI;
+  const hashLinkPlus = hashLink + txhash;
+
   const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
 
   const contractProvider = new ethers.Contract(
@@ -86,6 +96,7 @@ const SellCard = () => {
   }, []);
 
   const getOpenSellPosition = async () => {
+    setOpen(false);
     try {
       if (targetPrice && count) {
         const allowance = await usdtSigner.allowance(
@@ -118,13 +129,16 @@ const SellCard = () => {
           }
         );
 
-        // setTxhash(tx.hash);
-        // setIsOpenModalTx(true);
+        setTxhash(tx.hash);
+        setIsOpenModalTx(true);
         const response = await tx.wait();
-        // setIsOpenModalTx(false);
+        setIsOpenModalTx(false);
         console.log("responseTxSwap1: ", response);
+        window.location.replace("/orders");
       }
     } catch (error) {
+      setIsOpenModalTx(false);
+      setIsOpenAlertError(true);
       console.error(error);
     }
   };
@@ -161,6 +175,14 @@ const SellCard = () => {
       setTargetPrice(null);
     }
   };
+
+  const handleOpenModalTx = async () => {
+    setIsOpenModalTx(false);
+   };
+
+   const handleOpenAlertError = async () => {
+    setIsOpenAlertError(false);
+   };
 
   function renderValue(option: SelectOption<string> | null) {
     return option ? (
@@ -490,6 +512,20 @@ const SellCard = () => {
           </ModalDialog>
         </Modal>
       </React.Fragment>
+      <div aria-disabled={true} role="alert">
+      <ModalTsxInprogress 
+      onOpenModalTx={handleOpenModalTx}
+      isOpenModalTx={isOpenModalTx}
+      miniTxhash={miniTxhash}
+      hashLinkPlus={hashLinkPlus}
+      />
+      </div>
+      <div aria-disabled={true} role="alert">
+          <AlertError
+            onOpenAlertError={handleOpenAlertError}
+            isOpenAlertError={isOpenAlertError}
+          />
+        </div>
     </div>
   );
 };

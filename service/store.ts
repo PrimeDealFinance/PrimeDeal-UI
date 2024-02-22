@@ -94,6 +94,7 @@ export const useWalletStore = create<WalletState>(
           signer: null,
           network: null,
         });
+        localStorage.removeItem('wallet-state')
       },
       setIsOpenModalConnect: (isOpen) => set({ isOpenModalConnect: isOpen }),
       setIsConnect: (isConnect) => set(() => ({ isConnect })),

@@ -26,33 +26,12 @@ jobs:
         env:
           DIGITALOCEAN_ACCESS_TOKEN: "op://GitHub/Digital Ocean token for GitHub/credential"
 
-      - run: echo $DIGITALOCEAN_ACCESS_TOKEN | md5sum
-
-      - uses: jjst/action-digitalocean-deploy-app@v2
-        with:
-          token: $DIGITALOCEAN_ACCESS_TOKEN
-
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
           token: $DIGITALOCEAN_ACCESS_TOKEN
 
-      # - name: Set up Docker Buildx
-      #   uses: docker/setup-buildx-action@v3
-
-      # - name: Login to Docker Hub
-      #   uses: docker/login-action@v3
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      # - name: Build and push
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     push: true
-      #     tags: registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend-new:latest
-
-      # - name: Publish Image to Container Registry
-      #   uses: ripplr-io/docr-docker-publish@v1
-      #   with:
-      #     image_path: registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend-new:latest
+      - name: Publish Image to Container Registry
+        uses: ripplr-io/docr-docker-publish@v1
+        with:
+          image_path: registry.digitalocean.com/chain-owls/w3a-mvp-dapp-frontend-new:latest

@@ -30,6 +30,7 @@ import abiContract from "../components/abiContract";
 import "@/app/font.css"
 import { parse } from 'path';
 import ModalTsxInprogress from "./ModalTsxInpogress";
+import AlertError from "./AlertError";
 import MediaQuery from "react-responsive";
 import './index.css'
 
@@ -65,6 +66,7 @@ const BuyCard = () => {
   const [middlePurchase, setMiddlePurchase] = useState("");
   const [futureAmount, setFutureAmount] = useState("");
 
+  const [isOpenAlertError, setIsOpenAlertError] = React.useState<boolean>(false);
   const [isOpenModalTx, setIsOpenModalTx] = React.useState<boolean>(false);
   const [txhash, setTxhash] = useState("");
   const miniTxhash = txhash.substring(0, 5) + "....." + txhash.slice(45);
@@ -98,6 +100,7 @@ const BuyCard = () => {
   }, []);
 
   const getOpenBuyPosition = async () => {
+    setOpen(false);
     try {
       if (targetPrice && count) {
         const allowance = await usdtSigner.allowance(
@@ -135,8 +138,11 @@ const BuyCard = () => {
         const response = await tx.wait();
         setIsOpenModalTx(false);
         console.log("responseTxSwap1: ", response);
+        window.location.replace("/orders");
       }
     } catch (error) {
+      setIsOpenModalTx(false);
+      setIsOpenAlertError(true);
       console.error(error);
     }
   };
@@ -174,6 +180,10 @@ const BuyCard = () => {
 
   const handleOpenModalTx = async () => {
     setIsOpenModalTx(false);
+   };
+
+   const handleOpenAlertError = async () => {
+    setIsOpenAlertError(false);
    };
 
   function renderValue(option: SelectOption<string> | null) {
@@ -507,6 +517,12 @@ const BuyCard = () => {
       hashLinkPlus={hashLinkPlus}
       />
       </div>
+      <div aria-disabled={true} role="alert">
+          <AlertError
+            onOpenAlertError={handleOpenAlertError}
+            isOpenAlertError={isOpenAlertError}
+          />
+        </div>
     </div>
   );
 };

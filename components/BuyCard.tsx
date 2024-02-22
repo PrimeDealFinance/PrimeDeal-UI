@@ -332,7 +332,7 @@ const BuyCard = () => {
         }}
         onChange={handleAmountChange}
       />
-      <FormControl sx={{ marginTop: "15px"}}>
+      <FormControl sx={{ marginTop: "21px"}}>
         <FormLabel
           sx={{
             color: "#8A8997",

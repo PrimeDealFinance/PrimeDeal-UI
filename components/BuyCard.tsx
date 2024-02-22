@@ -32,7 +32,13 @@ import ModalTsxInprogress from "./ModalTsxInpogress";
 import AlertError from "./AlertError";
 import MediaQuery from "react-responsive";
 
-const options = [
+type Options = {
+  value: string;
+  label: string;
+  src: string;
+};
+
+const options: Options[] = [
   { value: "eth", label: "ETH", src: "/eth.svg" },
   { value: "matic", label: "MATIC", src: "/matic.svg" },
 ];
@@ -55,6 +61,7 @@ const BuyCard = () => {
 
   const [count, setCount] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
+  const [selectedOption, setSelectedOption] = useState<Options>(options[0]);
 
   const [open, setOpen] = React.useState<boolean>(false);
   const [currentRatioPrice, setCurrentRatioPrice] = useState("");
@@ -147,11 +154,11 @@ const BuyCard = () => {
       setCount("");
       return;
     }
-  
+
     if (isNaN(amountInputValue)) {
       return;
     }
-  
+
     setCount(String(amountInputValue));
   };
 
@@ -213,7 +220,13 @@ const BuyCard = () => {
     <div className="flex relative flex-col items-center bg-[#0A0914] max-[539px]:pb-[30px] w-[98%] min-[540px]:w-[540px] h-fit min-[540px]:h-[621px] rounded-[32px] font-['GothamPro']">
       <Select
         indicator={<KeyboardArrowDown />}
-        defaultValue="eth"
+        defaultValue={selectedOption ? selectedOption.value : 'eth'}
+        onChange={(_, value) => {
+          const selectedOption = options.find(option => option.value === value);
+          if (selectedOption) {
+            setSelectedOption(selectedOption);
+          }
+        }}
         slotProps={{
           listbox: {
             sx: {
@@ -474,9 +487,9 @@ const BuyCard = () => {
                   <p className="text-[14px]">To</p>
                 </div>
                 <div className="flex items-center">
-                  <Avatar size="sm" src="/eth.svg" />
+                  <Avatar size="sm" src={selectedOption.src} /> 
                   <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
-                    ETH
+                    {selectedOption.label}
                   </p>
                 </div>
                 <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">

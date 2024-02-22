@@ -128,10 +128,10 @@ const BuyCard = () => {
           }
         );
 
-        // setTxhash(tx.hash);
-        // setIsOpenModalTx(true);
+        setTxhash(tx.hash);
+        setIsOpenModalTx(true);
         const response = await tx.wait();
-        // setIsOpenModalTx(false);
+        setIsOpenModalTx(false);
         console.log("responseTxSwap1: ", response);
       }
     } catch (error) {

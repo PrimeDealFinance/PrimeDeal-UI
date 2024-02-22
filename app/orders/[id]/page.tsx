@@ -4,6 +4,7 @@ import Button from "@mui/joy/Button";
 import Chip from '@mui/joy/Chip';
 import TradingViewWidget from "@/service/TradingView";
 import ETH from "@/public/eth.svg";
+import MATIC from "@/public/matic.svg";
 import WBTC from "@/public/btc.svg";
 import USDC from "@/public/usdc.svg";
 import Image from "next/image";
@@ -53,7 +54,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
     const [priceView, setPriceView] = useState<string>("");
     const nonfungiblePositionManager =
       "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
-    const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
+   // const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
     const [paramsId, setParamsId] = useState<string>("");
     const [halfPrice, setHalfPrice] = useState<number>(0);
     const [colorDot, setColorDot] = useState<string>("");
@@ -81,6 +82,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
         console.log("responseTxSwap1: ", response);
         window.location.replace("/orders");
     } catch (error) {
+        setIsOpenModalTx(false);
         setIsOpenAlertError(true);
         console.error(error);
       }
@@ -88,17 +90,18 @@ function OrderIdPage({ params }: { params: { id: string } }) {
 
     const claimFees = async() => {
         try {
-        const tx = await contractSigner.collect(params.id,
+          const tx = await contractSigner.collect(params.id,
           {
             gasLimit: 850000,
           });
-        
           setTxhash(tx.hash);
           setIsOpenModalTx(true);
           const response = await tx.wait();
           setIsOpenModalTx(false);
           console.log("responseTxSwap1: ", response);
+          window.location.replace("/orders");
       } catch (error) {
+        setIsOpenModalTx(false);
         setIsOpenAlertError(true);
         console.error(error);
         }
@@ -121,13 +124,25 @@ function OrderIdPage({ params }: { params: { id: string } }) {
   
         const allPositions = await contractProvider.getOpenPositions(account);
   
-        const sqrtPriceX96EthUsdt = await contractProvider.getCurrentSqrtPriceX96(
-          ETHContractAddress,
-          USDTContractAddress,
-          "3000"
-        );
+        // const sqrtPriceX96EthUsdt = await contractProvider.getCurrentSqrtPriceX96(
+        //   ETHContractAddress,
+        //   USDTContractAddress,
+        //   "3000"
+        // );
 
-        const priceUSDC_ETH = (Number(sqrtPriceX96EthUsdt) ** 2 / 2 ** 192);
+        let pool = await contractProvider.getPoolAddress(
+          USDTContractAddress,
+          ETHContractAddress,
+          3000 // TODO: make changable
+        );
+        let currentTick = await contractProvider.getCurrentTick(
+          pool
+        );
+        const priceUSDC_ETH = Number((1.0001 ** Number(currentTick)).toFixed(18));
+        console.log({priceUSDC_ETH})
+        // = ((+currentRatioPrice).toFixed(2).toString());
+
+        //const priceUSDC_ETH = (Number(sqrtPriceX96EthUsdt) ** 2 / 2 ** 192);
         // ещё нужен прайс для битка тут
   
         var nums: any = allPositions;
@@ -135,21 +150,27 @@ function OrderIdPage({ params }: { params: { id: string } }) {
         for (let i = 0; i < allPositions.length; i++) {
           var first: any = nums[i];
           const struct0 = first[0];
-          const tokenIdPositionForCount = struct0[2].toString();
-          const buySellString = struct0[0].toString();
-          const addr = first[4].toString();
+          console.log({struct0})
+
+          const tokenIdPositionForCount = struct0[1].toString();
+          console.log({tokenIdPositionForCount})
+
+          const buySellString = struct0[2].toString();
+          console.log({buySellString})
+          const addr = first[3].toString();
+          console.log({addr})
           const id721 = await contractProvider.tokenOfOwnerByIndex(account, i);
           const tokenIdPosition: string = id721.toString();
           //установка заголовка ордера
           if (tokenIdPosition == params.id) {
             if (buySellString == "0" && addr == ETHContractAddress) {
              // setNameOrder("BUY ETH / USDC"); // заполнение ордера
-              setETH_WBTC("ETH ");
-              setIconETH_WBTC(ETH);
+              setETH_WBTC("MATIC ");
+              setIconETH_WBTC(MATIC);
             } else if (buySellString == "1" && addr == ETHContractAddress) {
              // setNameOrder("SELL ETH / USDC"); // заполнение ордера
-              setETH_WBTC("ETH ");
-              setIconETH_WBTC(ETH);
+              setETH_WBTC("MATIC ");
+              setIconETH_WBTC(MATIC);
             } else if (buySellString == "0" && addr != ETHContractAddress) {
              // setNameOrder("BUY WBTC / USDC");
               setETH_WBTC("WBTC ");
@@ -160,6 +181,11 @@ function OrderIdPage({ params }: { params: { id: string } }) {
               setIconETH_WBTC(WBTC);
             }
             //установка в рэнже или нет
+            let poolAddressETH_USDC = await contractProvider.getPoolAddress(
+              USDTContractAddress,
+              ETHContractAddress,
+              3000 // TODO: make changable
+            );
             let currentTick = await contractProvider.getCurrentTick(
               poolAddressETH_USDC
             );
@@ -197,18 +223,18 @@ function OrderIdPage({ params }: { params: { id: string } }) {
               amount1Max: maxUint128,
             });
             const unclaimedFee0 = (Number(unclaimedFee0Wei) / 10 ** 18)
-              .toFixed(2)
+              .toFixed(6)
               .toString();
             const unclaimedFee1 = (Number(unclaimedFee1Wei) / 10 ** 18)
               .toFixed(6)
               .toString();
-            setFeeUSDC(unclaimedFee0);
-            setFeeETH_WBTC(unclaimedFee1);
+            setFeeUSDC(unclaimedFee1);
+            setFeeETH_WBTC(unclaimedFee0);
             // считает баланс комиссий в долларах
             if (addr == ETHContractAddress) {
               setFeeDollars(
-                (Number(unclaimedFee1) * priceUSDC_ETH + Number(unclaimedFee0))
-                  .toFixed(2)
+                (Number(unclaimedFee0) * priceUSDC_ETH + Number(unclaimedFee1))
+                  .toFixed(6)
                   .toString()
               );
               const pricePreview = priceUSDC_ETH.toFixed(2);
@@ -228,14 +254,11 @@ function OrderIdPage({ params }: { params: { id: string } }) {
             let sqrtRatioB = Math.sqrt(1.0001 ** Number(tickUpper)).toFixed(18); // (18)нужно вытаскивать десималс из токена
             let currentRatio = Math.sqrt(1.0001 ** Number(currentTick)).toFixed(18);
             let currentRatioPrice = (1.0001 ** Number(currentTick)).toFixed(18);
-            let sqrtRatioAPrice = (1.0001 ** Number(tickUpper)).toFixed(18);
-            let sqrtRatioBPrice = (1.0001 ** Number(tickLower)).toFixed(18);
-            setRatioAPrice((1 / +sqrtRatioAPrice).toFixed(2).toString());
-            setRatioBPrice((1 / +sqrtRatioBPrice).toFixed(2).toString());
-            setMiddlePurchase((((1 / +sqrtRatioAPrice) + (1 / +sqrtRatioBPrice)) / 2 ).toFixed(2).toString());
-            //console.log("currentRatioPrice:" , ((1 / +sqrtRatioAPrice) + (1 / +sqrtRatioBPrice)) / 2);
-            //console.log("sqrtRatioAPrice: ", sqrtRatioAPrice);
-            // console.log("sqrtRatioB: ", sqrtRatioB);
+            let sqrtRatioBPrice = (1.0001 ** Number(tickUpper)).toFixed(18);
+            let sqrtRatioAPrice = (1.0001 ** Number(tickLower)).toFixed(18);
+            setRatioAPrice((+sqrtRatioAPrice).toFixed(2).toString());
+            setRatioBPrice((+sqrtRatioBPrice).toFixed(2).toString());
+            setMiddlePurchase((((+sqrtRatioBPrice) + (+sqrtRatioAPrice)) / 2 ).toFixed(2).toString());
 
             let amount0wei = 0;
             let amount1wei = 0;
@@ -261,19 +284,19 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                 Number(liquidity) * (Number(currentRatio) - Number(sqrtRatioA))
               );
             }
-            const amount0 = (amount0wei / 10 ** 18).toFixed(2).toString();
-            const amount1 = (amount1wei / 10 ** 18).toFixed(6).toString();
-            setAmountUSDC(amount0);
-            setAmountETH_WBTC(amount1);
+            const amount0 = (amount0wei / 10 ** 18).toFixed(6).toString();
+            const amount1 = (amount1wei / 10 ** 18).toFixed(2).toString();
+            setAmountETH_WBTC(amount0);
+            setAmountUSDC(amount1);
             // считает баланс токенов в долларах
             if (addr == ETHContractAddress) {
               setBalanceDollars(
-                (Number(amount1) * priceUSDC_ETH + Number(amount0))
+                (Number(amount0) * priceUSDC_ETH + Number(amount1))
                   .toFixed(2)
                   .toString()
               );
-              const pricePreview = priceUSDC_ETH.toFixed(2);
-              setPriceView(pricePreview);
+              // const pricePreview = priceUSDC_ETH.toFixed(2);
+              // setPriceView(pricePreview);
             }
             //  ниже раскоментировать когда появится второй пул с Битком
             //   и для него посчитаем прайс priceUSDC_WBTC
@@ -386,7 +409,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                       {amountUSDC}
                     </p>
                     <p className="text-[16px] tracking-[0.16px] opacity-50">
-                      {share0}
+                      {share1}
                       {""}%
                     </p>
                   </div>
@@ -403,7 +426,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                       {amountETH_WBTC}
                     </p>
                     <p className="text-[16px] tracking-[0.16px] opacity-50">
-                      {share1}
+                      {share0}
                       {""}%
                     </p>
                   </div>
@@ -433,7 +456,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                       lineHeight: "152.2%",
                       letterSpacing: "0.24px",
                     }}
-                    // onClick={claimFees}
+                    onClick={claimFees}
                   >
                     CLAIM FEES
                   </Button>
@@ -481,10 +504,10 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                   <Image src={USDC} alt="" width={30} height={30} />
                 </div>
                 <div className="absolute left-[45px] bottom-[19px]">
-                  <Image src={ETH} alt="" width={30} height={30} />
+                  <Image src={MATIC} alt="" width={30} height={30} />
                 </div>
                 <p className="opacity-50 ml-[23.5px] text-[14px] tracking-[0.14px]">
-                  ETH за USDC
+                MATIC for USDC
                 </p>
               </div>
             </div>
@@ -503,10 +526,10 @@ function OrderIdPage({ params }: { params: { id: string } }) {
                   <Image src={USDC} alt="" width={30} height={30} />
                 </div>
                 <div className="absolute left-[45px] bottom-[19px]">
-                  <Image src={ETH} alt="" width={30} height={30} />
+                  <Image src={MATIC} alt="" width={30} height={30} />
                 </div>
                 <p className="opacity-50 ml-[23.5px] text-[14px] tracking-[0.14px]">
-                  ETH за USDC
+                MATIC for USDC
                 </p>
               </div>
             </div>

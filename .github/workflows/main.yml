@@ -26,6 +26,8 @@ jobs:
         env:
           DIGITALOCEAN_ACCESS_TOKEN: "op://GitHub/Digital Ocean token for GitHub/credential"
 
+      - run: echo $DIGITALOCEAN_ACCESS_TOKEN | md5sum
+
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:

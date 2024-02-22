@@ -34,4 +34,4 @@ jobs:
       - name: Publish Image to Container Registry
         uses: ripplr-io/docr-docker-publish@v1
         with:
-          image_path: chain-owls/w3a-mvp-dapp-frontend-new:latest
+          image_path: chain-owls/w3a-mvp-dapp-frontend-new

@@ -31,7 +31,14 @@ jobs:
       #   with:
       #     token: $DIGITALOCEAN_ACCESS_TOKEN
 
-      - name: Publish Image to Container Registry
-        uses: ripplr-io/docr-docker-publish@v1
+      - name: Login to DigitalOcean Container Registry
+        uses: docker/login-action@v1
         with:
-          image_path: chain-owls/w3a-mvp-dapp-frontend-new
+          registry: registry.digitalocean.com/chain-owls
+          username: $DIGITALOCEAN_ACCESS_TOKEN
+          password: $DIGITALOCEAN_ACCESS_TOKEN
+
+      # - name: Publish Image to Container Registry
+      #   uses: ripplr-io/docr-docker-publish@v1
+      #   with:
+      #     image_path: chain-owls/w3a-mvp-dapp-frontend-new

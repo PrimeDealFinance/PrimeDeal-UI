@@ -9,6 +9,8 @@ import abiContract from '@/components/abiContract';
 import { ProtectedRoute, TableOrders, Spinner } from '@/components';
 import { abi as INonfungiblePositionManagerABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { PositionInfo, Positions, UserPosition } from "../types";
+import "@/app/font.css"
+
 
 const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";

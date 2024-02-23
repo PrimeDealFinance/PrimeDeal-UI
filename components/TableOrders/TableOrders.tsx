@@ -69,11 +69,11 @@ export const TableOrders = ({loading, orders}: Props) => {
 
   const updateVisibleColumns = () => {
     const width = window.innerWidth;
-    if (width >= 769) {
+    if (width >= 922) {
       setVisibleColumnsCount(5);
-    } else if (width >= 621 && width < 769) {
+    } else if (width >= 756 && width < 922) {
       setVisibleColumnsCount(4); 
-    } else if (width >= 490 && width < 621) {
+    } else if (width >= 576 && width < 756) {
       setVisibleColumnsCount(3); 
     } else {
       setVisibleColumnsCount(2);
@@ -92,28 +92,28 @@ export const TableOrders = ({loading, orders}: Props) => {
     <Sheet color="primary" className={`p-5 mt-5 rounded-3xl ${loading ? 'hidden' : 'visible'}`}>
     <Table variant="plain" sx={{ fontFamily: 'GothamPro' }}>
       <thead>
-        <MediaQuery minWidth={769}>
+        <MediaQuery minWidth={922}>
           <tr>
             {COLUMNS.map((column) => (
               <th key={column.uid}>{column.name}</th>
             ))}
           </tr>
         </MediaQuery>
-        <MediaQuery maxWidth={768} minWidth={621}>
+        <MediaQuery maxWidth={921} minWidth={756}>
           <tr>
             {COLUMNS.filter(column => column.minWidth < 768).map((column) => (
               <th key={column.uid}>{column.name}</th>
             ))}
           </tr>
         </MediaQuery>
-        <MediaQuery maxWidth={620} minWidth={490}>
+        <MediaQuery maxWidth={755} minWidth={576}>
           <tr>
             {COLUMNS.filter(column => column.minWidth < 620).map((column) => (
               <th key={column.uid}>{column.name}</th>
             ))}
           </tr>
         </MediaQuery>
-        <MediaQuery maxWidth={489}>
+        <MediaQuery maxWidth={575}>
           <tr>
             {COLUMNS.filter(column => column.minWidth < 490).map((column) => (
               <th key={column.uid}>{column.name}</th>
@@ -127,17 +127,17 @@ export const TableOrders = ({loading, orders}: Props) => {
             <td>
               <Link href={row.link} className="flex items-center">
                 <Avatar alt="Avatar" src={row.avatar} className="mr-3" />
-                <span>{row.asset}</span>
+                <span className='max-[395px]:text-[12px]'>{row.asset}</span>
               </Link>
             </td>
             <td className={row.type === 'Sell' ? 'text-[#EF3131]' : 'text-[#6FEE8E]'}>{row.type}</td>
-            <MediaQuery minWidth={620}>
+            <MediaQuery minWidth={756}>
               <td>{row.feeBalance}</td>
             </MediaQuery>
-            <MediaQuery minWidth={490}>
+            <MediaQuery minWidth={576}>
               <td>{row.orderBalance}</td>
             </MediaQuery>
-            <MediaQuery minWidth={769}>
+            <MediaQuery minWidth={922}>
               <td>{row.usdBalance}</td>
             </MediaQuery>
           </tr>

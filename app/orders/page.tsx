@@ -9,6 +9,8 @@ import abiContract from '@/components/abiContract';
 import { ProtectedRoute, TableOrders, Spinner } from '@/components';
 import { abi as INonfungiblePositionManagerABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { PositionInfo, Positions, UserPosition } from "../types";
+import "@/app/font.css"
+
 
 const nonfungiblePositionManager = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
@@ -18,7 +20,7 @@ const PATH_TO_ASSETS = 'https://raw.githubusercontent.com/PrimeDealFinance/Prime
 // const PATH_TO_ASSETS = '';
 
 const ERC20_ABI = [
-  "function name() public view returns (string)",
+  "function symbol() public view returns (string)",
 ];
 
 const TEXT_ORDERS = {
@@ -29,11 +31,19 @@ function Orders() {
   const {
     account,
     positionManagerContractAddress,
+    
+    USDTContractAddress,
     ETHContractAddress,
   } = useWalletStore();
+
   const [loading, setLoading] = useState(true);
   const [dataOrders, setDataOrders] = useState<UserPosition[]>([]);
   // type Order = typeof dataOrders[0];
+  const contractProvider = new ethers.Contract(
+    positionManagerContractAddress,
+    abiContract,
+    defaultProvider
+  );
 
   useEffect(() => {
     (async () => {
@@ -43,7 +53,7 @@ function Orders() {
         address: string,
         abi: string[],
         provider: ethers.JsonRpcApiProvider,) {
-        return await (new Contract(address, abi, defaultProvider)).name();
+        return await (new Contract(address, abi, defaultProvider)).symbol();
       }
 
       dataOrders.length = 0;
@@ -61,6 +71,10 @@ function Orders() {
       );
 
       const allPositions: Positions[] = await contractView.getOpenPositions(account);
+      
+      if (!allPositions.length) {
+        setLoading(false);
+      }
 
       allPositions.forEach(async (position: Positions, index: number) => {
         const positionItem: UserPosition = {
@@ -86,10 +100,12 @@ function Orders() {
         positionItem.usdBalance = (
           (Number(positionInfo.amount) / 10 ** 18).toFixed(2)
         );
-
+        
+        const tokenIdPosition: string = positionInfo.uniswapTokenId.toString();
         const id721: string = await contractView.tokenOfOwnerByIndex(account, index);
         const linkOrder = "/orders/" + id721;
-        const tokenIdPosition = id721.toString();
+        //const tokenIdPosition = id721.toString();
+        
 
         // ?
         const {
@@ -109,9 +125,18 @@ function Orders() {
         const unclaimedFee1 = (Number(unclaimedFee1Wei) / 10 ** 18)
           .toFixed(6)
           .toString();
+          
 
         // format: ETH / USDT
-        const unclaimedTokensText = `${unclaimedFee1} ${tickerForToken1.toLocaleUpperCase()} / ${unclaimedFee0} ${tickerForToken0.toLocaleUpperCase()}`;
+        let pool = await contractProvider.getPoolAddress(
+          USDTContractAddress,
+          ETHContractAddress,
+          3000 // TODO: make changable
+        );
+        let currentTick = await contractProvider.getCurrentTick(
+          pool
+        );
+        const unclaimedTokensText = `${unclaimedFee0} ${tickerForToken0.toLocaleUpperCase()} / ${unclaimedFee1} ${tickerForToken1.toLocaleUpperCase()}`;
 
         const tickLower = Number(position.tickLower);
         const tickUpper = Number(position.tickUpper);
@@ -119,7 +144,6 @@ function Orders() {
 
         const sqrtRatioA = Number(Math.sqrt(1.0001 ** Number(tickLower)).toFixed(18)); // (18)нужно вытаскивать десималс из токена
         const sqrtRatioB = Number(Math.sqrt(1.0001 ** Number(tickUpper)).toFixed(18)); // (18)нужно вытаскивать десималс из токена
-        const currentTick = await contractView.getCurrentTick(poolAddressETH_USDC);
 
         let currentRatio = Number(Math.sqrt(1.0001 ** Number(currentTick)).toFixed(18));
 
@@ -139,13 +163,13 @@ function Orders() {
         }
 
         const amount0 = (amount0wei / 10 ** 18).toFixed(2).toString();
-        const amount1 = (amount1wei / 10 ** 18).toFixed(6).toString();
+        const amount1 = (amount1wei / 10 ** 18).toFixed(2).toString();
 
-        const amountTicker1divTicker0 = `${amount1} ${tickerForToken1} / ${amount0} ${tickerForToken0}`;
+        const amountTicker1divTicker0 = `${amount0} ${tickerForToken0} / ${amount1} ${tickerForToken1}`;
 
 
-        positionItem.asset = `${tickerForToken1.toUpperCase()}/${tickerForToken0.toUpperCase()}`;
-        positionItem.avatar = `${PATH_TO_ASSETS}/${tickerForToken1.toLowerCase()}.svg`;
+        positionItem.asset = `${tickerForToken0.toUpperCase()}/${tickerForToken1.toUpperCase()}`;
+        positionItem.avatar = `${PATH_TO_ASSETS}/${tickerForToken0.toLowerCase()}.svg`;
 
         positionItem.feeBalance = unclaimedTokensText;
         positionItem.orderBalance = amountTicker1divTicker0;

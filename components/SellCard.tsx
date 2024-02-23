@@ -28,36 +28,54 @@ import { useWalletStore } from "@/service/store";
 import "@/app/font.css";
 import defaultProvider from "../app/provider/defaultProvider";
 import abiContract from "../components/abiContract";
+import MediaQuery from "react-responsive";
+import ModalTsxInprogress from "./ModalTsxInpogress";
+import AlertError from "./AlertError";
 
-const options = [
+type Options = {
+  value: string;
+  label: string;
+  src: string;
+};
+
+const options: Options[] = [
   { value: "eth", label: "ETH", src: "/eth.svg" },
-  { value: "matic", label: "MATIC", src: "/matic.svg" },
+  { value: "matic", label: "MATIC", src: "/wmatic.svg" },
 ];
 
 const TEXT_CELL_CARD = {
   btn: "Create Order",
 };
 
+const ETH_MAX_COST = 100000000000;
+
 const SellCard = () => {
   const {
     isConnect,
     account,
     positionManagerContractAddress,
-    usdtSigner,
+    ethSigner,
     contractSigner,
     USDTContractAddress,
-      ETHContractAddress,
+    ETHContractAddress,
     reinitializeContracts,
   } = useWalletStore();
 
-  const [amountDisable, setAmountDisable] = useState(true);
   const [count, setCount] = useState("");
-  const [targetPrice, setTargetPrice] = useState(0);
+  const [targetPrice, setTargetPrice] = useState("");
+  const [selectedOption, setSelectedOption] = useState<Options>(options[0]);
+
   const [open, setOpen] = React.useState<boolean>(false);
-  const [currentRatioPrice, setCurrentRatioPrice] = useState("");
-  const [middlePurchase, setMiddlePurchase] = useState("");
+  const [currentRatioPrice, setCurrentRatioPrice] = useState('');
+  const [middlePurchase, setMiddlePurchase] = useState('');
   const [futureAmount, setFutureAmount] = useState("");
-  const poolAddressETH_USDC = "0xeC617F1863bdC08856Eb351301ae5412CE2bf58B";
+
+  const [isOpenAlertError, setIsOpenAlertError] = React.useState<boolean>(false);
+  const [isOpenModalTx, setIsOpenModalTx] = React.useState<boolean>(false);
+  const [txhash, setTxhash] = useState("");
+  const miniTxhash = txhash.substring(0, 5) + "....." + txhash.slice(45);
+  const hashLink = process.env.NEXT_PUBLIC_HASH_LINK_MUMBAI;
+  const hashLinkPlus = hashLink + txhash;
 
   const contractProvider = new ethers.Contract(
     positionManagerContractAddress,
@@ -65,15 +83,20 @@ const SellCard = () => {
     defaultProvider
   );
   // вытаскиваем данные для расчетов курсов и тд
-    useEffect(() => {
-      reinitializeContracts();
+  useEffect(() => {
+    reinitializeContracts();
     (async () => {
       try {
+        let pool = await contractProvider.getPoolAddress(
+          USDTContractAddress,
+          ETHContractAddress,
+          3000 // TODO: make changable
+        );
         let currentTick = await contractProvider.getCurrentTick(
-          poolAddressETH_USDC
+          pool
         );
         let currentRatioPrice = (1.0001 ** Number(currentTick)).toFixed(18);
-        setCurrentRatioPrice((1 / +currentRatioPrice).toFixed(2).toString());
+        setCurrentRatioPrice((+currentRatioPrice).toFixed(2).toString());
       } catch (error) {
         console.error(error);
       }
@@ -81,8 +104,9 @@ const SellCard = () => {
   }, []);
 
   const getOpenSellPosition = async () => {
+    setOpen(false);
     try {
-      const allowance = await usdtSigner.allowance(
+      const allowance = await ethSigner.allowance(
         account,
         positionManagerContractAddress
       );
@@ -91,18 +115,18 @@ const SellCard = () => {
       const allowanceToNumber = +allowanceToString / 10 ** 18;
       const amountCoinBigint = ethers.parseUnits(count.toString(), 18);
       const amountCoin_ = ethers.formatUnits(amountCoinBigint, 0);
-      let targetPriceReady = BigInt(Math.sqrt(1 / +targetPrice) * 2 ** 96);
+      let targetPriceReady = BigInt(Math.sqrt(Number(targetPrice)) * 2 ** 96);
       let targetReady_ = targetPriceReady.toString();
 
       const maxUint256 = ethers.MaxInt256;
 
       allowanceToNumber < +count
-        ? await usdtSigner.approve(positionManagerContractAddress, maxUint256)
+        ? await ethSigner.approve(positionManagerContractAddress, maxUint256)
         : null;
 
       const tx = await contractSigner.openSellPosition(
-        USDTContractAddress,
         ETHContractAddress,
+        USDTContractAddress,
         "3000",
         targetReady_,
         amountCoin_,
@@ -112,41 +136,72 @@ const SellCard = () => {
         }
       );
 
-      // setTxhash(tx.hash);
-      // setIsOpenModalTx(true);
+      setTxhash(tx.hash);
+      setIsOpenModalTx(true);
       const response = await tx.wait();
-      // setIsOpenModalTx(false);
+      setIsOpenModalTx(false);
       console.log("responseTxSwap1: ", response);
+      window.location.replace("/orders");
     } catch (error) {
+      setIsOpenModalTx(false);
+      setIsOpenAlertError(true);
       console.error(error);
     }
   };
 
-  const handleCountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    (Number(event.target.value) * Number(currentRatioPrice)) > 50 || event.target.value === ""
-      ? setAmountDisable(true)
-      : setAmountDisable(false);
-      console.log(Number(event.target.value) * Number(currentRatioPrice));
-      console.log(amountDisable);
+  const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const amountInputValue = event.target.value;
 
-    const parseValue = parseInt(event.target.value);
-    if (middlePurchase) {
-      setFutureAmount((parseValue * +middlePurchase).toFixed(2).toString());
+    if (!amountInputValue) {
+      setCount("");
+      return;
     }
-    if (!isNaN(parseValue)) {
-      setCount(parseValue.toFixed(2));
+
+    if (isNaN(Number(amountInputValue))) {
+      return;
+    }
+
+    setCount(amountInputValue)
+  };
+
+  const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const targetPriceInputValue = Number(event.target.value);
+
+    if (!targetPriceInputValue) {
+      setTargetPrice('');
+      setMiddlePurchase('');
+      setFutureAmount('');
+      return;
+    }
+
+    if (isNaN(targetPriceInputValue)) {
+      return;
+    }
+
+    const targetPrice = String(targetPriceInputValue);
+    setTargetPrice(targetPrice);
+
+    if (targetPriceInputValue > Number(currentRatioPrice) && targetPriceInputValue < ETH_MAX_COST) {
+
+      const middlePurchase = ((Number(currentRatioPrice) + targetPriceInputValue) / 2).toFixed(2);
+      const futureAmount = (Number(count) * Number(middlePurchase)).toFixed(2);
+
+      setMiddlePurchase(middlePurchase);
+      setFutureAmount(futureAmount);
+    } else {
+      setMiddlePurchase('');
+      setFutureAmount('');
     }
   };
-  const handleTargetPrice = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const parseValue = parseInt(event.target.value);
-    let middlePurchase = ((+currentRatioPrice + parseValue) / 2)
-      .toFixed(2)
-      .toString();
-    setMiddlePurchase(middlePurchase);
-    setFutureAmount((+count * +middlePurchase).toFixed(2).toString());
-    if (!isNaN(parseValue)) {
-      setTargetPrice(parseValue);
-    }
+
+  const isButtonDisabled = !isConnect || Number(targetPrice) < Number(currentRatioPrice) || Number(count) <= 0 || Number(count) > 1 || Number(targetPrice) > ETH_MAX_COST;
+
+  const handleOpenModalTx = async () => {
+    setIsOpenModalTx(false);
+  };
+
+  const handleOpenAlertError = async () => {
+    setIsOpenAlertError(false);
   };
 
   function renderValue(option: SelectOption<string> | null) {
@@ -164,10 +219,16 @@ const SellCard = () => {
   }
 
   return (
-    <div className="flex relative flex-col items-center bg-[#0A0914] w-[540px] h-[621px] rounded-[32px] font-['GothamPro']">
+    <div className="flex relative flex-col items-center bg-[#0A0914] max-[539px]:pb-[30px] w-[98%] min-[540px]:w-[540px] h-fit min-[540px]:h-[621px] rounded-[32px] font-['GothamPro']">
       <Select
         indicator={<KeyboardArrowDown />}
-        defaultValue="eth"
+        defaultValue={selectedOption ? selectedOption.value : 'eth'}
+        onChange={(_, value) => {
+          const selectedOption = options.find(option => option.value === value);
+          if (selectedOption) {
+            setSelectedOption(selectedOption);
+          }
+        }}
         slotProps={{
           listbox: {
             sx: {
@@ -176,13 +237,14 @@ const SellCard = () => {
           },
         }}
         sx={{
-          width: "476px",
           height: "50px",
           borderRadius: "100px",
           marginTop: "38px",
           backgroundColor: "#0A0914",
+          fontFamily: 'GothamPro'
         }}
         renderValue={renderValue}
+        className="w-11/12 min-[540px]:w-[476px]"
       >
         {options.map((option, index) => (
           <React.Fragment key={option.value}>
@@ -192,7 +254,8 @@ const SellCard = () => {
             <Option
               value={option.value}
               label={option.label}
-              sx={{ borderRadius: "100px", width: "456px", marginLeft: "10px" }}
+              sx={{ borderRadius: "100px", fontFamily: "GothamPro", marginLeft: '2%' }}
+              className="w-[96%] min-[540px]:w-456px"
             >
               <ListItemDecorator>
                 <Avatar size="sm" src={option.src} />
@@ -202,52 +265,56 @@ const SellCard = () => {
           </React.Fragment>
         ))}
       </Select>
-      <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
-        <div
-          style={{
-            borderTop: "1px solid #433F72",
-            borderBottom: "1px solid #6FEE8E",
-            backgroundPosition: "center",
-            backgroundSize: "100%",
-          }}
-          className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
-        ></div>
-        <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
-          <div>
-            <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-              Current price
+      <MediaQuery minWidth={540}>
+        <div className="flex w-[464px] h-[160px] justify-start mt-[50px]">
+          <div
+            style={{
+              borderTop: "1px solid #433F72",
+              borderBottom: "1px solid #6FEE8E",
+              backgroundPosition: "center",
+              backgroundSize: "100%",
+            }}
+            className="w-[242px] mr-[22px] h-[157px] bg-[url('/vectorDown.svg')]"
+          ></div>
+          <div className="absolute flex flex-col items-start justify-between top-[133px] right-[24px] w-[205px] h-[159px]">
+            <div>
+              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                Current price
+              </div>
+              <div className="text-[16px] font-normal leading-[24.32px]">
+                $ {currentRatioPrice}
+              </div>
             </div>
-            <div className="text-[16px] font-normal leading-[24.32px]">
-              $ {currentRatioPrice}
+            <div>
+              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                Middle purchase
+              </div>
+              <div className="text-[16px] font-normal leading-[24.32px]">
+                $ {middlePurchase}
+              </div>
             </div>
-          </div>
-          <div>
-            <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-              Middle purchase
-            </div>
-            <div className="text-[16px] font-normal leading-[24.32px]">
-              $ {middlePurchase}
-            </div>
-          </div>
-          <div>
-            <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
-              You will get
-            </div>
-            <div className="text-[16px] font-normal leading-[24.32px]">
-              ~ $ {futureAmount}
+            <div>
+              <div className="text-[#8A8997] text-[12px] font-normal tracking-[0.12px]">
+                You will get
+              </div>
+              <div className="text-[16px] font-normal leading-[24.32px]">
+                ~ $ {futureAmount}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </MediaQuery>
       <Input
+        className="w-11/12 min-[540px]:w-[476px] max-[539px]:my-[30px] min-[540px]:mt-[59px]"
         placeholder="Amount"
         variant="outlined"
+        value={count || ''}
         endDecorator={
           <React.Fragment>
             <Select
               sx={{
                 fontFamily: "GothamPro",
-                width: "130px",
+                width: "135px",
                 [`&:hover`]: {
                   borderRadius: "1000px",
                 },
@@ -276,8 +343,8 @@ const SellCard = () => {
                     label={option.label}
                     sx={{
                       borderRadius: "100px",
-                      width: "120px",
-                      marginLeft: "5px",
+                      width: "125px",
+                      marginLeft: "4.5px",
                       fontFamily: "GothamPro",
                     }}
                   >
@@ -292,14 +359,12 @@ const SellCard = () => {
           </React.Fragment>
         }
         sx={{
-          width: "476px",
           height: "50px",
           borderRadius: "100px",
-          marginTop: "59px",
           backgroundColor: "#0A0914",
           fontFamily: "GothamPro",
         }}
-        onChange={handleCountChange}
+        onChange={handleAmountChange}
       />
       <FormControl sx={{ marginTop: "21px" }}>
         <FormLabel
@@ -311,10 +376,10 @@ const SellCard = () => {
             fontFamily: "GothamPro",
           }}
         >
-          Верхняя граница
+          Target Price
         </FormLabel>
         <Input
-          placeholder=""
+          className="w-[100%] min-[540px]:w-[476px] max-[539px]:mb-[10px]"
           variant="outlined"
           endDecorator={
             <ButtonGroup
@@ -323,15 +388,23 @@ const SellCard = () => {
               variant="plain"
             >
               <IconButton
-                disabled={amountDisable}
-                onClick={() => setTargetPrice(targetPrice + 1)}
+                disabled={!targetPrice || Number(targetPrice) >= ETH_MAX_COST}
+                onClick={() => {
+                  if (targetPrice !== null && Number(targetPrice) < ETH_MAX_COST) {
+                    setTargetPrice(String(Number(targetPrice) + 1));
+                  }
+                }}
                 variant="plain"
               >
                 <Plus />
               </IconButton>
               <IconButton
-                disabled={amountDisable}
-                onClick={() => setTargetPrice(targetPrice - 1)}
+                disabled={Number(targetPrice) <= 1}
+                onClick={() => {
+                  if (targetPrice !== null && Number(targetPrice) > 1) {
+                    setTargetPrice(String(Number(targetPrice) - 1));
+                  }
+                }}
                 variant="plain"
               >
                 <Minus />
@@ -339,19 +412,18 @@ const SellCard = () => {
             </ButtonGroup>
           }
           sx={{
-            width: "476px",
             height: "50px",
             borderRadius: "100px",
             backgroundColor: "#0A0914",
             fontFamily: "GothamPro",
           }}
-          value={targetPrice}
+          value={targetPrice ?? ''}
           onChange={handleTargetPrice}
         />
       </FormControl>
       <React.Fragment>
         <Button
-          disabled={!isConnect || amountDisable}
+          disabled={isButtonDisabled}
           sx={{
             color: "#FFF",
             textAlign: "center",
@@ -376,17 +448,20 @@ const SellCard = () => {
         <Modal open={open} onClose={() => setOpen(false)}>
           <ModalDialog
             variant="plain"
-            sx={{
-              width: "500px",
+            sx={(theme) => ({
+              width: '500px',
               position: "relative",
               borderRadius: "12px",
               fontFamily: "GothamPro",
-            }}
+              [theme.breakpoints.only('xs')]: {
+                width: '80%',
+              }
+            })}
           >
             <ModalClose
               sx={{
                 position: "absolute",
-                top: "0",
+                top: "5px",
                 right: "0",
                 opacity: "0.5",
               }}
@@ -401,21 +476,21 @@ const SellCard = () => {
                 alignItems: "center",
               }}
             >
-              <div className="relative flex items-center w-[455px] justify-between mt-[40px]">
+              <div className="relative flex items-center w-11/12 min-[540px]:w-[455px] justify-between mt-[40px]">
                 <div className="absolute left-0 top-[-23px]">
                   <p className="text-[14px]">From</p>
                 </div>
                 <div className="flex items-center">
-                  <Avatar size="sm" src="/eth.svg" />
+                  <Avatar size="sm" src={selectedOption.src} /> 
                   <p className="text-[25px] text-[#FFF] ml-[5px] tracking-[-0.64px]">
-                    ETH
+                    {selectedOption.label}
                   </p>
                 </div>
                 <p className="text-[25px] text-[#FFF] tracking-[-0.64px]">
                   {count}
                 </p>
               </div>
-              <div className="relative flex items-center w-[455px] justify-between mt-[30px]">
+              <div className="relative flex items-center w-11/12 min-[540px]:w-[455px] justify-between mt-[30px]">
                 <div className="absolute left-0 top-[-23px]">
                   <p className="text-[14px]">To</p>
                 </div>
@@ -429,8 +504,8 @@ const SellCard = () => {
                   {futureAmount}
                 </p>
               </div>
-              <div className="flex flex-col items-center w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
-                <div className="flex items-center justify-between w-[415px] mt-[10px]">
+              <div className="flex flex-col items-center w-11/12 min-[540px]:w-[455px] rounded-[12px] bg-[#141320] mt-[30px]">
+                <div className="flex items-center justify-between w-10/12 min-[540px]:w-[415px] my-[10px]">
                   <p className="text-[16px]">Middle price</p>
                   <p className="text-[16px] text-[#FFF]">$ {middlePurchase}</p>
                 </div>
@@ -460,6 +535,20 @@ const SellCard = () => {
           </ModalDialog>
         </Modal>
       </React.Fragment>
+      <div aria-disabled={true} role="alert">
+        <ModalTsxInprogress
+          onOpenModalTx={handleOpenModalTx}
+          isOpenModalTx={isOpenModalTx}
+          miniTxhash={miniTxhash}
+          hashLinkPlus={hashLinkPlus}
+        />
+      </div>
+      <div aria-disabled={true} role="alert">
+        <AlertError
+          onOpenAlertError={handleOpenAlertError}
+          isOpenAlertError={isOpenAlertError}
+        />
+      </div>
     </div>
   );
 };

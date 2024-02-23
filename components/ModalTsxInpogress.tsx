@@ -8,6 +8,7 @@ import DialogTitle from '@mui/joy/DialogTitle';
 import DialogContent from '@mui/joy/DialogContent';
 import LinearProgress from '@mui/joy/LinearProgress';
 import Link from '@mui/joy/Link';
+import "@/app/font.css";
 
 interface Props {
     isOpenModalTx: boolean;
@@ -29,7 +30,13 @@ export default function ModalTsxInprogress({
       <Stack direction="row" alignItems="center" spacing={1}>
       </Stack>
       <Modal open={isOpenModalTx} onClose={onOpenModalTx}>
-        <ModalDialog variant="solid">
+        <ModalDialog 
+            variant="plain"
+            sx={{
+              borderRadius: '12px',
+              fontFamily: 'GothamPro'
+            }}
+          >
           <ModalClose />
           <DialogTitle>Tx in progress</DialogTitle>
           <DialogContent>
@@ -41,14 +48,17 @@ export default function ModalTsxInprogress({
           </DialogContent>
           <LinearProgress
           variant="solid"
-          color="success"
           value={40}
           sx={{
+            color: '#5706FF',
             position: 'absolute',
             bottom: 0,
             left: 0,
             right: 0,
-            borderRadius: 0,
+            borderRadius: '12px',
+            "--LinearProgress-radius": "12px",
+            "--LinearProgress-progressRadius": "12px",
+            background: '#0A0914'
           }}
         />
         </ModalDialog>

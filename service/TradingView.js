@@ -13,7 +13,7 @@ function TradingViewWidget() {
       script.innerHTML = `
         {
           "autosize": true,
-          "symbol": "DYDX:ETHUSD.P",
+          "symbol": "DYDX:MATICUSD.P",
           "interval": "D",
           "timezone": "Etc/UTC",
           "theme": "dark",

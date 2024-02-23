@@ -341,6 +341,7 @@ const BuyCard = () => {
           Target Price
         </FormLabel>
         <Input
+          id="Amount"
           placeholder=""
           variant="outlined"
           endDecorator={

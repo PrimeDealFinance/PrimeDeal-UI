@@ -64,6 +64,10 @@ function Orders() {
       );
 
       const allPositions: Positions[] = await contractView.getOpenPositions(account);
+      
+      if (!allPositions.length) {
+        setLoading(false);
+      }
 
       allPositions.forEach(async (position: Positions, index: number) => {
         const positionItem: UserPosition = {

@@ -40,7 +40,7 @@ type Options = {
 
 const options: Options[] = [
   { value: "eth", label: "ETH", src: "/eth.svg" },
-  { value: "matic", label: "MATIC", src: "/matic.svg" },
+  { value: "matic", label: "MATIC", src: "/wmatic.svg" },
 ];
 
 const TEXT_CELL_CARD = {

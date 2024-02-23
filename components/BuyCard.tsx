@@ -40,7 +40,7 @@ type Options = {
 
 const options: Options[] = [
   { value: "eth", label: "ETH", src: "/eth.svg" },
-  { value: "matic", label: "MATIC", src: "/matic.svg" },
+  { value: "matic", label: "MATIC", src: "/wmatic.svg" },
 ];
 
 const TEXT_BUY_CARD = {
@@ -192,7 +192,7 @@ const BuyCard = () => {
     }
   };
 
-  const isButtonDisabled = !isConnect || !targetPrice || !count || Number(targetPrice) > Number(currentRatioPrice) || Number(count) >= 50;
+  const isButtonDisabled = !isConnect || !targetPrice || !count || Number(targetPrice) > Number(currentRatioPrice) || Number(count) >= 51;
 
   const handleOpenModalTx = async () => {
     setIsOpenModalTx(false);

@@ -4,7 +4,7 @@ import Button from "@mui/joy/Button";
 import Chip from '@mui/joy/Chip';
 import TradingViewWidget from "@/service/TradingView";
 import ETH from "@/public/eth.svg";
-import MATIC from "@/public/matic.svg";
+import MATIC from "@/public/wmatic.svg";
 import WBTC from "@/public/btc.svg";
 import USDC from "@/public/usdc.svg";
 import Image from "next/image";
@@ -139,7 +139,6 @@ function OrderIdPage({ params }: { params: { id: string } }) {
           pool
         );
         const priceUSDC_ETH = Number((1.0001 ** Number(currentTick)).toFixed(18));
-        console.log({priceUSDC_ETH})
         // = ((+currentRatioPrice).toFixed(2).toString());
 
         //const priceUSDC_ETH = (Number(sqrtPriceX96EthUsdt) ** 2 / 2 ** 192);
@@ -150,15 +149,11 @@ function OrderIdPage({ params }: { params: { id: string } }) {
         for (let i = 0; i < allPositions.length; i++) {
           var first: any = nums[i];
           const struct0 = first[0];
-          console.log({struct0})
 
           const tokenIdPositionForCount = struct0[1].toString();
-          console.log({tokenIdPositionForCount})
 
           const buySellString = struct0[2].toString();
-          console.log({buySellString})
           const addr = first[3].toString();
-          console.log({addr})
           const id721 = await contractProvider.tokenOfOwnerByIndex(account, i);
           const tokenIdPosition: string = id721.toString();
           //установка заголовка ордера

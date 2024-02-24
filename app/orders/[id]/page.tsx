@@ -334,7 +334,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
           <div className="absolute flex justify-between items-center top-[-58px] left-[0]">
             <div className="flex">
               <Image src={iconETH_WBTC} alt="" width={29} height={29} />
-              <p className="color-[#FFF] text-[32px] font-normal tracking-[-0.64px] mx-[11px]">
+              <p className="color-[#FFF] text-[32px] max-[395px]:text-[28px] font-normal tracking-[-0.64px] mx-[11px]">
                 {ETH_WBTC}
               </p>
             </div>

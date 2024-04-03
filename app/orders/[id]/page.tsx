@@ -39,7 +39,7 @@ function OrderIdPage({ params }: { params: { id: string } }) {
     const [isOpenAlertError, setIsOpenAlertError] = React.useState<boolean>(false);
     const [txhash, setTxhash] = useState("");
     const miniTxhash = txhash.substring(0, 5) + "....." + txhash.slice(45);
-    const hashLink = process.env.NEXT_PUBLIC_HASH_LINK_MUMBAI;
+    const hashLink = process.env.NEXT_PUBLIC_HASH_LINK;
     const hashLinkPlus = hashLink + txhash;
     const [inRange, setInRange] = useState<string>("");
     const [colorRange, setColorRange] = useState<string>("");

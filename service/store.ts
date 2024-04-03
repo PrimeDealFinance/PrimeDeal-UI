@@ -54,21 +54,17 @@ export const useWalletStore = create<WalletState>(
       usdtSigner: "",
       ethSigner: "",
       positionManagerContractAddress: process.env
-        .NEXT_PUBLIC_POSITION_MANAGER_ADDRESS_MUMBAI!,
-      USDTContractAddress: process.env.NEXT_PUBLIC_USDT_ERC20_ADDRESS_MUMBAI!,
-      ETHContractAddress: process.env.NEXT_PUBLIC_ETH_ERC20_ADDRESS_MUMBAI!,
+        .NEXT_PUBLIC_POSITION_MANAGER_ADDRESS!,
+      USDTContractAddress: process.env.NEXT_PUBLIC_USDC_ERC20_ADDRESS!,
+      ETHContractAddress: process.env.NEXT_PUBLIC_WETH_ERC20_ADDRESS!,
       positionManagerContractAbi: process.env.NEXT_PUBLIC_POSITION_MANAGER_ABI!,
       USDTContractAbi: ERC20abi,
       ETHContractAbi: ERC20abi,
       isOpenModalConnect: false,
       networks: [
         {
-          name: "Polygon",
-          chainId: "0x89",
-        },
-        {
-          name: "Polygon Mumbai",
-          chainId: "0x13881",
+          name: "Arbitrum One",
+          chainId: "0xA4B1",
         },
       ],
       switchNetwork: async (chainId) => {
@@ -164,7 +160,7 @@ export const useWalletStore = create<WalletState>(
           await get().reinitializeContracts();
           const { network } = get();
           if (network) {
-            if (Number(network.chainId) !== 80001) {
+            if (Number(network.chainId) !== 0xA4B1) {
               console.log("Wrong network. Need POL");
               // Обновите состояние, используя методы set
 
@@ -173,7 +169,7 @@ export const useWalletStore = create<WalletState>(
                   method: "wallet_switchEthereumChain",
                   params: [
                     {
-                      chainId: "0x13881",
+                      chainId: "0xA4B1",
                     },
                   ],
                 });
@@ -184,15 +180,15 @@ export const useWalletStore = create<WalletState>(
                       method: "wallet_addEthereumChain",
                       params: [
                         {
-                          chainId: "0x13881",
-                          chainName: "Mumbai",
-                          rpcUrls: ["https://rpc-mumbai.maticvigil.com/"],
+                          chainId: "0xA4B1",
+                          chainName: "Arbitrum One",
+                          rpcUrls: ["https://arb1.arbitrum.io/rpc/"],
                           nativeCurrency: {
-                            name: "MATIC",
-                            symbol: "MATIC",
+                            name: "ETH",
+                            symbol: "ETH",
                             decimals: 18,
                           },
-                          blockExplorerUrls: ["https://mumbai.polygonscan.com/"],
+                          blockExplorerUrls: ["https://arbiscan.io/"],
                         },
                       ],
                     });
